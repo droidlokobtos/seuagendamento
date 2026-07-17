@@ -69,6 +69,12 @@ export const Route = createFileRoute("/api/public/book")({
         const start = new Date(starts_at);
         if (Number.isNaN(start.getTime()) || start.getTime() < Date.now() - 60_000)
           return Response.json({ error: "Horário inválido" }, { status: 400 });
+        const minAdv = (company as any).min_advance_min ?? 0;
+        const maxAdv = (company as any).max_advance_days ?? 60;
+        if (start.getTime() < Date.now() + minAdv * 60_000)
+          return Response.json({ error: `Agende com ao menos ${minAdv} min de antecedência` }, { status: 400 });
+        if (start.getTime() > Date.now() + maxAdv * 86_400_000)
+          return Response.json({ error: `Agende com no máximo ${maxAdv} dias de antecedência` }, { status: 400 });
         const end = new Date(start.getTime() + totalMin * 60_000);
 
         if (staff_id) {
