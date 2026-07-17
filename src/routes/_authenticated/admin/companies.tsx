@@ -139,7 +139,20 @@ function Companies() {
                           </span>
                         </td>
                         <td className="p-3 text-muted-foreground">{dateBR(c.next_due_at)}</td>
-                        <td className="p-3 pr-6 text-muted-foreground">{dateBR(c.created_at)}</td>
+                        <td className="p-3 text-muted-foreground">{dateBR(c.created_at)}</td>
+                        <td className="p-3 pr-6 text-right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={async () => {
+                              await startImpersonation({ id: c.id, name: c.name });
+                              toast.success(`Entrando como admin de ${c.name}`);
+                              void navigate({ to: "/app" });
+                            }}
+                          >
+                            <LogIn className="h-3.5 w-3.5 mr-1.5" /> Entrar como admin
+                          </Button>
+                        </td>
                       </tr>
                     );
                   })}
