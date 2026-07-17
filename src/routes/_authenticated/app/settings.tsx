@@ -33,6 +33,8 @@ function SettingsPage() {
   const [form, setForm] = useState({
     name: "", slug: "", phone: "", whatsapp: "", email: "",
     logo_url: "", primary_color: "#3b2a1f", secondary_color: "#c9a961",
+    app_icon_url: "", custom_domain: "", short_description: "", city: "", state: "",
+    listed_in_marketplace: false,
   });
 
   const { data: company } = useQuery({
@@ -51,6 +53,12 @@ function SettingsPage() {
         logo_url: company.logo_url ?? "",
         primary_color: company.primary_color ?? "#3b2a1f",
         secondary_color: company.secondary_color ?? "#c9a961",
+        app_icon_url: (company as any).app_icon_url ?? "",
+        custom_domain: (company as any).custom_domain ?? "",
+        short_description: (company as any).short_description ?? "",
+        city: (company as any).city ?? "",
+        state: (company as any).state ?? "",
+        listed_in_marketplace: !!(company as any).listed_in_marketplace,
       });
     }
   }, [company]);
@@ -134,6 +142,38 @@ function SettingsPage() {
           </div>
           <div className="pt-2">
             <Button onClick={() => saveCompany.mutate()} disabled={saveCompany.isPending}>Salvar dados</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <div>
+            <h2 className="font-semibold">White label & Marketplace</h2>
+            <p className="text-xs text-muted-foreground">Publique sua marca com identidade e domínio próprios, e apareça no marketplace público.</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-3">
+            <div className="md:col-span-2"><Label>Descrição curta (marketplace)</Label>
+              <Input value={form.short_description} onChange={(e) => setForm({ ...form, short_description: e.target.value })} placeholder="Ex.: Barbearia premium no centro" /></div>
+            <div><Label>Cidade</Label>
+              <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
+            <div><Label>Estado (UF)</Label>
+              <Input maxLength={2} value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value.toUpperCase() })} /></div>
+            <div className="md:col-span-2"><Label>URL do ícone do app (PWA)</Label>
+              <Input value={form.app_icon_url} onChange={(e) => setForm({ ...form, app_icon_url: e.target.value })} placeholder="https://…/icon-512.png" /></div>
+            <div className="md:col-span-2"><Label>Domínio próprio</Label>
+              <Input value={form.custom_domain} onChange={(e) => setForm({ ...form, custom_domain: e.target.value.toLowerCase() })} placeholder="agenda.minhamarca.com.br" />
+              <p className="text-xs text-muted-foreground mt-1">Aponte um CNAME do seu domínio para o endereço da plataforma. Configuração de DNS/SSL feita pelo suporte.</p></div>
+            <div className="md:col-span-2 flex items-center justify-between rounded-lg border border-border/60 px-3 py-2">
+              <div>
+                <p className="text-sm font-medium">Aparecer no marketplace público</p>
+                <p className="text-xs text-muted-foreground">/marketplace lista sua empresa para novos clientes.</p>
+              </div>
+              <Switch checked={form.listed_in_marketplace} onCheckedChange={(v) => setForm({ ...form, listed_in_marketplace: v })} />
+            </div>
+          </div>
+          <div className="pt-2">
+            <Button onClick={() => saveCompany.mutate()} disabled={saveCompany.isPending}>Salvar white label</Button>
           </div>
         </CardContent>
       </Card>

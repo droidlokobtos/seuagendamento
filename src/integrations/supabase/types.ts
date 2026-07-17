@@ -286,24 +286,33 @@ export type Database = {
       companies: {
         Row: {
           address: string | null
+          app_icon_url: string | null
           banner_url: string | null
+          city: string | null
           created_at: string
+          custom_domain: string | null
           document: string | null
           due_day: number
           email: string | null
           id: string
           last_payment_at: string | null
+          latitude: number | null
           legal_name: string | null
+          listed_in_marketplace: boolean
           logo_url: string | null
+          longitude: number | null
           monthly_fee: number
           name: string
           next_due_at: string | null
           niche_id: string | null
+          parent_company_id: string | null
           phone: string | null
           primary_color: string
           responsible_name: string | null
           secondary_color: string
+          short_description: string | null
           slug: string
+          state: string | null
           status: Database["public"]["Enums"]["company_status"]
           suspended_at: string | null
           theme: string
@@ -312,24 +321,33 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          app_icon_url?: string | null
           banner_url?: string | null
+          city?: string | null
           created_at?: string
+          custom_domain?: string | null
           document?: string | null
           due_day?: number
           email?: string | null
           id?: string
           last_payment_at?: string | null
+          latitude?: number | null
           legal_name?: string | null
+          listed_in_marketplace?: boolean
           logo_url?: string | null
+          longitude?: number | null
           monthly_fee?: number
           name: string
           next_due_at?: string | null
           niche_id?: string | null
+          parent_company_id?: string | null
           phone?: string | null
           primary_color?: string
           responsible_name?: string | null
           secondary_color?: string
+          short_description?: string | null
           slug: string
+          state?: string | null
           status?: Database["public"]["Enums"]["company_status"]
           suspended_at?: string | null
           theme?: string
@@ -338,24 +356,33 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          app_icon_url?: string | null
           banner_url?: string | null
+          city?: string | null
           created_at?: string
+          custom_domain?: string | null
           document?: string | null
           due_day?: number
           email?: string | null
           id?: string
           last_payment_at?: string | null
+          latitude?: number | null
           legal_name?: string | null
+          listed_in_marketplace?: boolean
           logo_url?: string | null
+          longitude?: number | null
           monthly_fee?: number
           name?: string
           next_due_at?: string | null
           niche_id?: string | null
+          parent_company_id?: string | null
           phone?: string | null
           primary_color?: string
           responsible_name?: string | null
           secondary_color?: string
+          short_description?: string | null
           slug?: string
+          state?: string | null
           status?: Database["public"]["Enums"]["company_status"]
           suspended_at?: string | null
           theme?: string
@@ -368,6 +395,13 @@ export type Database = {
             columns: ["niche_id"]
             isOneToOne: false
             referencedRelation: "niches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companies_parent_company_id_fkey"
+            columns: ["parent_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
