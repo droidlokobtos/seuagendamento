@@ -453,7 +453,13 @@ function BookingPage() {
           {step < 4 ? (
             <Button size="lg" style={{ background: primary }}
               disabled={step === 1 && !selected.length}
-              onClick={() => setStep((s) => (s + 1) as any)}>
+              onClick={() => {
+                setStep((s) => {
+                  let next = (s + 1) as 1 | 2 | 3 | 4;
+                  if (next === 2 && !company.show_staff_on_portal) next = 3;
+                  return next;
+                });
+              }}>
               Continuar <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           ) : (
