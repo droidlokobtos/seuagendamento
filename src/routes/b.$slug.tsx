@@ -455,14 +455,14 @@ function BookingPage() {
   );
 }
 
-function Hero({ company, primary, accent }: { company: any; primary: string; accent: string }) {
+function Hero({ company, primary, accent, slug, loggedIn }: { company: any; primary: string; accent: string; slug: string; loggedIn: boolean }) {
   return (
     <div className="relative" style={{ background: `linear-gradient(135deg, ${primary}, ${accent})` }}>
       {company.banner_url && (
         <img src={company.banner_url} className="absolute inset-0 h-full w-full object-cover opacity-40" alt="" />
       )}
       <div className="relative max-w-lg mx-auto px-6 py-10 text-white">
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3">
           {company.logo_url ? (
             <img src={company.logo_url} className="h-14 w-14 rounded-2xl object-cover ring-2 ring-white/40" alt="" />
           ) : (
@@ -470,14 +470,21 @@ function Hero({ company, primary, accent }: { company: any; primary: string; acc
               <Sparkles className="h-7 w-7" />
             </div>
           )}
-          <div>
-            <h1 className="text-2xl font-semibold leading-tight">{company.name}</h1>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-semibold leading-tight truncate">{company.name}</h1>
             {company.address && (
               <p className="text-xs text-white/80 flex items-center gap-1 mt-0.5">
                 <MapPin className="h-3 w-3" /> {company.address}
               </p>
             )}
           </div>
+          <Link
+            to={loggedIn ? "/b/$slug/minha-conta" : "/b/$slug/entrar"}
+            params={{ slug }}
+            className="shrink-0 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur px-3 py-1.5 text-xs font-medium ring-1 ring-white/30 flex items-center gap-1.5"
+          >
+            <User className="h-3.5 w-3.5" /> {loggedIn ? "Minha conta" : "Entrar"}
+          </Link>
         </div>
       </div>
     </div>
