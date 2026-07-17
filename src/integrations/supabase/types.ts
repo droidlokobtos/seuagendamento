@@ -450,6 +450,7 @@ export type Database = {
           phone: string | null
           tags: string[] | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           birthdate?: string | null
@@ -462,6 +463,7 @@ export type Database = {
           phone?: string | null
           tags?: string[] | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           birthdate?: string | null
@@ -474,6 +476,7 @@ export type Database = {
           phone?: string | null
           tags?: string[] | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {

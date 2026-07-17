@@ -1,5 +1,5 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, notFound, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, MapPin, Phone, Check, Calendar, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Sparkles, MapPin, Phone, Check, Calendar, Clock, ChevronLeft, ChevronRight, User } from "lucide-react";
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
 
@@ -76,6 +76,22 @@ function BookingPage() {
   const [validating, setValidating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ starts_at: string } | null>(null);
+  const [session, setSession] = useState<{ userId: string; email?: string | null } | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setSession({ userId: data.user.id, email: data.user.email });
+        const meta = (data.user.user_metadata ?? {}) as { full_name?: string; phone?: string };
+        setForm((f) => ({
+          ...f,
+          name: f.name || meta.full_name || "",
+          phone: f.phone || meta.phone || "",
+          email: f.email || data.user.email || "",
+        }));
+      }
+    });
+  }, []);
 
   const { data: services = [] } = useQuery({
     queryKey: ["pub_services", companyId],
@@ -212,9 +228,12 @@ function BookingPage() {
     setSubmitting(true);
     try {
       const iso = `${dateStr}T${timeStr}:00`;
+      const { data: s } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (s.session?.access_token) headers.Authorization = `Bearer ${s.session.access_token}`;
       const res = await fetch("/api/public/book", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           slug: company.slug,
           service_ids: selected.map((s) => s.id),
@@ -241,7 +260,7 @@ function BookingPage() {
     const d = new Date(done.starts_at);
     return (
       <div className="min-h-screen bg-background">
-        <Hero company={company} primary={primary} accent={accent} />
+        <Hero company={company} primary={primary} accent={accent} slug={company.slug} loggedIn={!!session} />
         <div className="max-w-lg mx-auto p-6">
           <Card>
             <CardContent className="p-8 text-center space-y-4">
@@ -253,11 +272,22 @@ function BookingPage() {
                 {d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })} às{" "}
                 {d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
               </p>
-              {company.whatsapp && (
-                <a href={`https://wa.me/${company.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
-                  <Button variant="outline" className="mt-2"><Phone className="h-4 w-4 mr-2" /> Falar no WhatsApp</Button>
-                </a>
-              )}
+              <div className="flex flex-col gap-2 items-center pt-2">
+                {session ? (
+                  <Link to="/b/$slug/minha-conta" params={{ slug: company.slug }}>
+                    <Button style={{ background: primary }}>Ver meus agendamentos</Button>
+                  </Link>
+                ) : (
+                  <Link to="/b/$slug/entrar" params={{ slug: company.slug }}>
+                    <Button style={{ background: primary }}>Criar conta e acompanhar</Button>
+                  </Link>
+                )}
+                {company.whatsapp && (
+                  <a href={`https://wa.me/${company.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
+                    <Button variant="outline"><Phone className="h-4 w-4 mr-2" /> Falar no WhatsApp</Button>
+                  </a>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -267,7 +297,7 @@ function BookingPage() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <Hero company={company} primary={primary} accent={accent} />
+      <Hero company={company} primary={primary} accent={accent} slug={company.slug} loggedIn={!!session} />
       <div className="max-w-lg mx-auto p-4 md:p-6 space-y-4">
         <Steps step={step} accent={accent} />
 
@@ -436,14 +466,14 @@ function BookingPage() {
   );
 }
 
-function Hero({ company, primary, accent }: { company: any; primary: string; accent: string }) {
+function Hero({ company, primary, accent, slug, loggedIn }: { company: any; primary: string; accent: string; slug: string; loggedIn: boolean }) {
   return (
     <div className="relative" style={{ background: `linear-gradient(135deg, ${primary}, ${accent})` }}>
       {company.banner_url && (
         <img src={company.banner_url} className="absolute inset-0 h-full w-full object-cover opacity-40" alt="" />
       )}
       <div className="relative max-w-lg mx-auto px-6 py-10 text-white">
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3">
           {company.logo_url ? (
             <img src={company.logo_url} className="h-14 w-14 rounded-2xl object-cover ring-2 ring-white/40" alt="" />
           ) : (
@@ -451,14 +481,21 @@ function Hero({ company, primary, accent }: { company: any; primary: string; acc
               <Sparkles className="h-7 w-7" />
             </div>
           )}
-          <div>
-            <h1 className="text-2xl font-semibold leading-tight">{company.name}</h1>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-semibold leading-tight truncate">{company.name}</h1>
             {company.address && (
               <p className="text-xs text-white/80 flex items-center gap-1 mt-0.5">
                 <MapPin className="h-3 w-3" /> {company.address}
               </p>
             )}
           </div>
+          <Link
+            to={loggedIn ? "/b/$slug/minha-conta" : "/b/$slug/entrar"}
+            params={{ slug }}
+            className="shrink-0 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur px-3 py-1.5 text-xs font-medium ring-1 ring-white/30 flex items-center gap-1.5"
+          >
+            <User className="h-3.5 w-3.5" /> {loggedIn ? "Minha conta" : "Entrar"}
+          </Link>
         </div>
       </div>
     </div>

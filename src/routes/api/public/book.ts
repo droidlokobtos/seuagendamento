@@ -82,14 +82,42 @@ export const Route = createFileRoute("/api/public/book")({
             return Response.json({ error: "Horário já ocupado" }, { status: 409 });
         }
 
-        const { data: existing } = await supabaseAdmin
-          .from("customers").select("id")
-          .eq("company_id", company.id).eq("phone", customer.phone).maybeSingle();
-        let customerId = existing?.id ?? null;
+        // Optional: identify signed-in customer via bearer token
+        let authUserId: string | null = null;
+        const authHeader = request.headers.get("authorization") ?? request.headers.get("Authorization");
+        if (authHeader?.startsWith("Bearer ")) {
+          const token = authHeader.slice(7);
+          const { data: u } = await supabaseAdmin.auth.getUser(token);
+          authUserId = u?.user?.id ?? null;
+        }
+
+        let customerId: string | null = null;
+        if (authUserId) {
+          const { data: byUser } = await supabaseAdmin
+            .from("customers").select("id")
+            .eq("company_id", company.id).eq("user_id", authUserId).maybeSingle();
+          customerId = byUser?.id ?? null;
+        }
+        if (!customerId) {
+          const { data: byPhone } = await supabaseAdmin
+            .from("customers").select("id,user_id")
+            .eq("company_id", company.id).eq("phone", customer.phone).maybeSingle();
+          if (byPhone) {
+            customerId = byPhone.id;
+            if (authUserId && !byPhone.user_id) {
+              await supabaseAdmin.from("customers").update({ user_id: authUserId } as any).eq("id", byPhone.id);
+            }
+          }
+        }
         if (!customerId) {
           const { data: created, error: cuErr } = await supabaseAdmin
             .from("customers")
-            .insert({ company_id: company.id, name: customer.name, phone: customer.phone, email: customer.email || null } as any)
+            .insert({
+              company_id: company.id,
+              name: customer.name, phone: customer.phone,
+              email: customer.email || null,
+              user_id: authUserId,
+            } as any)
             .select("id").single();
           if (cuErr) return Response.json({ error: cuErr.message }, { status: 500 });
           customerId = created.id;
