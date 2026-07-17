@@ -15,6 +15,7 @@ import {
 import { Plus, Pencil, Trash2, Scissors } from "lucide-react";
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export const Route = createFileRoute("/_authenticated/app/services")({
   component: Services,
@@ -152,15 +153,9 @@ function ServiceDialog({
         <DialogTitle>{edit ? "Editar serviço" : "Novo serviço"}</DialogTitle>
       </DialogHeader>
       <div className="space-y-3">
-        {f.photo_url && (
-          <div className="h-32 w-full rounded-md overflow-hidden bg-muted">
-            <img src={f.photo_url} alt="" className="h-full w-full object-cover" />
-          </div>
-        )}
         <div>
-          <Label>URL da foto</Label>
-          <Input placeholder="https://…" value={f.photo_url ?? ""}
-            onChange={(e) => setF({ ...f, photo_url: e.target.value })} />
+          <Label>Foto</Label>
+          <ImageUpload value={f.photo_url} folder="services" aspect="wide" onChange={(url) => setF({ ...f, photo_url: url })} />
         </div>
         <div>
           <Label>Nome</Label>

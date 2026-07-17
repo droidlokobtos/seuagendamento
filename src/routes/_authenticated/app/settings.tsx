@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { slugify } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
@@ -151,13 +152,11 @@ function SettingsPage() {
         <CardContent className="p-6 space-y-4">
           <h2 className="font-semibold">Identidade visual</h2>
           <div className="grid md:grid-cols-2 gap-3">
-            <div className="md:col-span-2"><Label>Logotipo (URL)</Label>
-              <Input value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} placeholder="https://…/logo.png" />
-              {form.logo_url && <img src={form.logo_url} alt="logo" className="mt-2 h-16 w-16 rounded object-cover border" />}
+            <div className="md:col-span-2"><Label>Logotipo</Label>
+              <ImageUpload value={form.logo_url} folder="branding" onChange={(url) => setForm({ ...form, logo_url: url ?? "" })} />
             </div>
-            <div className="md:col-span-2"><Label>Imagem de capa (URL)</Label>
-              <Input value={form.banner_url} onChange={(e) => setForm({ ...form, banner_url: e.target.value })} placeholder="https://…/capa.jpg" />
-              {form.banner_url && <img src={form.banner_url} alt="capa" className="mt-2 h-24 w-full rounded object-cover border" />}
+            <div className="md:col-span-2"><Label>Imagem de capa</Label>
+              <ImageUpload value={form.banner_url} folder="branding" aspect="wide" onChange={(url) => setForm({ ...form, banner_url: url ?? "" })} />
             </div>
             <div><Label>Cor primária</Label>
               <Input type="color" value={form.primary_color} onChange={(e) => setForm({ ...form, primary_color: e.target.value })} /></div>
@@ -219,8 +218,8 @@ function SettingsPage() {
               <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
             <div><Label>Estado (UF)</Label>
               <Input maxLength={2} value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value.toUpperCase() })} /></div>
-            <div className="md:col-span-2"><Label>URL do ícone do app (PWA)</Label>
-              <Input value={form.app_icon_url} onChange={(e) => setForm({ ...form, app_icon_url: e.target.value })} placeholder="https://…/icon-512.png" /></div>
+            <div className="md:col-span-2"><Label>Ícone do app (PWA)</Label>
+              <ImageUpload value={form.app_icon_url} folder="branding" onChange={(url) => setForm({ ...form, app_icon_url: url ?? "" })} /></div>
             <div className="md:col-span-2"><Label>Domínio próprio</Label>
               <Input value={form.custom_domain} onChange={(e) => setForm({ ...form, custom_domain: e.target.value.toLowerCase() })} placeholder="agenda.minhamarca.com.br" />
               <p className="text-xs text-muted-foreground mt-1">Aponte um CNAME do seu domínio para o endereço da plataforma. Configuração de DNS/SSL feita pelo suporte.</p></div>

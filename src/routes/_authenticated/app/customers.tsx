@@ -15,6 +15,7 @@ import {
 import { Plus, Pencil, Trash2, Search, Users, Phone, Mail, MessageCircle, History } from "lucide-react";
 import { dateBR, brl } from "@/lib/format";
 import { toast } from "sonner";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export const Route = createFileRoute("/_authenticated/app/customers")({
   component: Customers,
@@ -164,16 +165,9 @@ function CustomerDialog({
     <DialogContent className="sm:max-w-md">
       <DialogHeader><DialogTitle>{edit ? "Editar cliente" : "Novo cliente"}</DialogTitle></DialogHeader>
       <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-14 w-14">
-            {f.photo_url && <AvatarImage src={f.photo_url} alt="" />}
-            <AvatarFallback>{(f.name ?? "?").slice(0, 1).toUpperCase()}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <Label>URL da foto</Label>
-            <Input placeholder="https://…" value={f.photo_url ?? ""}
-              onChange={(e) => setF({ ...f, photo_url: e.target.value })} />
-          </div>
+        <div>
+          <Label>Foto</Label>
+          <ImageUpload value={f.photo_url} folder="customers" onChange={(url) => setF({ ...f, photo_url: url })} />
         </div>
         <div><Label>Nome</Label>
           <Input value={f.name ?? ""} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
