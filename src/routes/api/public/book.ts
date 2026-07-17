@@ -125,6 +125,8 @@ export const Route = createFileRoute("/api/public/book")({
               name: customer.name, phone: customer.phone,
               email: customer.email || null,
               user_id: authUserId,
+              source: "portal_publico",
+              notes: customer.notes ? `[Portal público] ${customer.notes}` : null,
             } as any)
             .select("id").single();
           if (cuErr) return Response.json({ error: cuErr.message }, { status: 500 });

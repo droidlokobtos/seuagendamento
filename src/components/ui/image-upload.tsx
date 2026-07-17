@@ -6,6 +6,24 @@ import { toast } from "sonner";
 
 const TEN_YEARS = 60 * 60 * 24 * 365 * 10;
 
+async function optimizeImage(file: File, maxW: number, quality: number): Promise<Blob> {
+  if (!file.type.startsWith("image/") || file.type === "image/gif" || file.type === "image/svg+xml") {
+    return file;
+  }
+  const bitmap = await createImageBitmap(file).catch(() => null);
+  if (!bitmap) return file;
+  const scale = Math.min(1, maxW / bitmap.width);
+  const w = Math.round(bitmap.width * scale);
+  const h = Math.round(bitmap.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return file;
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  const blob: Blob | null = await new Promise((res) => canvas.toBlob(res, "image/jpeg", quality));
+  return blob ?? file;
+}
+
 export function ImageUpload({
   value,
   onChange,
@@ -33,12 +51,13 @@ export function ImageUpload({
     }
     setBusy(true);
     try {
-      const ext = file.name.split(".").pop() || "png";
-      const path = `${folder}/${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("company-assets").upload(path, file, {
+      const maxW = aspect === "wide" ? 1920 : 1200;
+      const optimized = await optimizeImage(file, maxW, 0.85);
+      const path = `${folder}/${crypto.randomUUID()}.jpg`;
+      const { error: upErr } = await supabase.storage.from("company-assets").upload(path, optimized, {
         cacheControl: "31536000",
         upsert: false,
-        contentType: file.type,
+        contentType: "image/jpeg",
       });
       if (upErr) throw upErr;
       const { data, error } = await supabase.storage
@@ -46,7 +65,7 @@ export function ImageUpload({
         .createSignedUrl(path, TEN_YEARS);
       if (error) throw error;
       onChange(data.signedUrl);
-      toast.success("Imagem enviada");
+      toast.success("Imagem enviada e otimizada");
     } catch (e: any) {
       toast.error(e.message || "Falha ao enviar");
     } finally {
