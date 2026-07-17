@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 /**
- * Processes appointment reminders due for delivery.
- * Cron via pg_cron (every 15 min): calls this endpoint to convert due reminders
- * into in-app notifications for the company. WhatsApp delivery is opened
- * manually from the notification (no external gateway required).
+ * Processes appointment reminders (24h, 1h, review) due for delivery.
+ * Called by pg_cron every 15 min. Turns due reminders into in-app
+ * notifications carrying a ready-to-send wa.me link, so staff can click
+ * "Enviar no WhatsApp" and the message opens pre-filled.
  */
 export const Route = createFileRoute("/api/public/hooks/reminders")({
   server: {
@@ -18,44 +18,120 @@ export const Route = createFileRoute("/api/public/hooks/reminders")({
           .select("id, appointment_id, company_id, kind, scheduled_for")
           .is("sent_at", null)
           .lte("scheduled_for", now)
-          .limit(200);
+          .limit(500);
 
         if (!due?.length) {
           return Response.json({ processed: 0 });
         }
 
+        // Preload companies for name / slug / whatsapp signature
+        const companyIds = Array.from(new Set(due.map((r) => r.company_id)));
+        const { data: companies } = await supabaseAdmin
+          .from("companies")
+          .select("id, name, slug")
+          .in("id", companyIds);
+        const cmap = new Map((companies ?? []).map((c: any) => [c.id, c]));
+
+        let processed = 0;
+
         for (const r of due) {
           const { data: appt } = await supabaseAdmin
             .from("appointments")
-            .select("id, starts_at, status, customer_id, company_id")
+            .select("id, starts_at, ends_at, status, customer_id, company_id, staff_id")
             .eq("id", r.appointment_id)
             .maybeSingle();
 
-          if (!appt || appt.status === "cancelled" || appt.status === "completed" || appt.status === "no_show") {
+          if (!appt) {
+            await supabaseAdmin.from("appointment_reminders").update({ sent_at: now }).eq("id", r.id);
+            continue;
+          }
+
+          const skipStatuses = ["cancelled", "no_show"];
+          if (skipStatuses.includes(appt.status)) {
+            await supabaseAdmin.from("appointment_reminders").update({ sent_at: now }).eq("id", r.id);
+            continue;
+          }
+          if (r.kind !== "review" && appt.status === "completed") {
+            await supabaseAdmin.from("appointment_reminders").update({ sent_at: now }).eq("id", r.id);
+            continue;
+          }
+          if (r.kind === "review" && appt.status !== "completed") {
             await supabaseAdmin.from("appointment_reminders").update({ sent_at: now }).eq("id", r.id);
             continue;
           }
 
           const { data: cust } = await supabaseAdmin
-            .from("customers").select("name, phone").eq("id", appt.customer_id!).maybeSingle();
+            .from("customers")
+            .select("name, phone")
+            .eq("id", appt.customer_id!)
+            .maybeSingle();
 
-          const when = new Date(appt.starts_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-          const title = r.kind === "24h" ? "Lembrete 24h" : "Lembrete 1h";
-          const body = `${cust?.name ?? "Cliente"} · ${when}${cust?.phone ? ` · ${cust.phone}` : ""}`;
+          const company = cmap.get(appt.company_id) as any;
+          const companyName = company?.name ?? "";
+          const slug = company?.slug ?? "";
+          const origin = process.env.PUBLIC_APP_URL ?? "";
+          const portalUrl = slug ? `${origin}/b/${slug}` : "";
+
+          const whenDate = new Date(appt.starts_at);
+          const whenPretty = whenDate.toLocaleString("pt-BR", {
+            weekday: "long",
+            day: "2-digit",
+            month: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          const shortWhen = whenDate.toLocaleString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+          let title = "Lembrete";
+          let message = "";
+          if (r.kind === "24h") {
+            title = "Lembrete 24h";
+            message =
+              `Olá ${cust?.name ?? ""}! 👋\n\nPassando para lembrar do seu agendamento em *${companyName}* amanhã, ${whenPretty}.\n\n` +
+              `Se precisar remarcar ou cancelar, é só responder por aqui. Até breve! ✨`;
+          } else if (r.kind === "1h") {
+            title = "Lembrete 1h";
+            message =
+              `Oi ${cust?.name ?? ""}! Seu horário em *${companyName}* é daqui a pouco (${shortWhen}). Já estamos te esperando! 💇`;
+          } else if (r.kind === "review") {
+            title = "Pedir avaliação";
+            message =
+              `Oi ${cust?.name ?? ""}! 💛\n\nObrigado por escolher a *${companyName}*. Que tal deixar uma avaliação rápida do seu atendimento?` +
+              (portalUrl ? `\n\n${portalUrl}` : "") +
+              `\n\nSua opinião ajuda muito!`;
+          }
+
+          const phoneDigits = (cust?.phone ?? "").replace(/\D/g, "");
+          const waUrl = phoneDigits
+            ? `https://wa.me/${phoneDigits.startsWith("55") ? phoneDigits : "55" + phoneDigits}?text=${encodeURIComponent(message)}`
+            : null;
 
           await supabaseAdmin.from("notifications").insert({
             company_id: r.company_id,
-            kind: "appointment_reminder",
+            kind: `reminder_${r.kind}`,
             title,
-            body,
-            link: "/app/agenda",
-            metadata: { appointment_id: appt.id, phone: cust?.phone },
+            body: `${cust?.name ?? "Cliente"}${cust?.phone ? ` · ${cust.phone}` : ""} · ${shortWhen}`,
+            link: r.kind === "review" ? "/app/reviews" : "/app/agenda",
+            metadata: {
+              appointment_id: appt.id,
+              customer_name: cust?.name,
+              phone: cust?.phone,
+              message,
+              wa_url: waUrl,
+              kind: r.kind,
+            },
           } as any);
 
           await supabaseAdmin.from("appointment_reminders").update({ sent_at: now }).eq("id", r.id);
+          processed++;
         }
 
-        return Response.json({ processed: due.length });
+        return Response.json({ processed });
       },
     },
   },
