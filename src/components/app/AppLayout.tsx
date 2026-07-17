@@ -34,6 +34,7 @@ import { NotificationsBell } from "@/components/app/NotificationsBell";
 const NAV = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/app/agenda", label: "Agenda", icon: Calendar },
+  { to: "/app/blocks", label: "Bloqueios", icon: Calendar },
   { to: "/app/customers", label: "Clientes", icon: Users },
   { to: "/app/staff", label: "Funcionários", icon: UserCog },
   { to: "/app/services", label: "Serviços", icon: Scissors },
