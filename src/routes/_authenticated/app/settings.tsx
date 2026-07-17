@@ -33,6 +33,8 @@ function SettingsPage() {
   const [form, setForm] = useState({
     name: "", slug: "", phone: "", whatsapp: "", email: "",
     logo_url: "", primary_color: "#3b2a1f", secondary_color: "#c9a961",
+    app_icon_url: "", custom_domain: "", short_description: "", city: "", state: "",
+    listed_in_marketplace: false,
   });
 
   const { data: company } = useQuery({
@@ -51,6 +53,12 @@ function SettingsPage() {
         logo_url: company.logo_url ?? "",
         primary_color: company.primary_color ?? "#3b2a1f",
         secondary_color: company.secondary_color ?? "#c9a961",
+        app_icon_url: (company as any).app_icon_url ?? "",
+        custom_domain: (company as any).custom_domain ?? "",
+        short_description: (company as any).short_description ?? "",
+        city: (company as any).city ?? "",
+        state: (company as any).state ?? "",
+        listed_in_marketplace: !!(company as any).listed_in_marketplace,
       });
     }
   }, [company]);
