@@ -8,10 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Search, Building2, LogIn } from "lucide-react";
+import { Plus, Search, Building2, LogIn, KeyRound } from "lucide-react";
 import { dateBR, slugify, statusLabel } from "@/lib/format";
 import { toast } from "sonner";
 import { startImpersonation } from "@/lib/impersonation";
+import { useServerFn } from "@tanstack/react-start";
+import { resetUserPassword } from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/companies")({
   component: Companies,
@@ -23,13 +25,15 @@ function Companies() {
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [open, setOpen] = useState(false);
+  const [pwOpen, setPwOpen] = useState<{ email: string } | null>(null);
+  const resetPw = useServerFn(resetUserPassword);
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["admin-companies"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("companies")
-        .select("id, name, slug, status, niche_id, created_at, next_due_at, monthly_fee, niches(name)")
+        .select("id, name, slug, status, niche_id, email, created_at, next_due_at, monthly_fee, niches(name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -140,7 +144,7 @@ function Companies() {
                         </td>
                         <td className="p-3 text-muted-foreground">{dateBR(c.next_due_at)}</td>
                         <td className="p-3 text-muted-foreground">{dateBR(c.created_at)}</td>
-                        <td className="p-3 pr-6 text-right">
+                        <td className="p-3 pr-6 text-right space-x-2 whitespace-nowrap">
                           <Button
                             size="sm"
                             variant="outline"
@@ -152,6 +156,11 @@ function Companies() {
                           >
                             <LogIn className="h-3.5 w-3.5 mr-1.5" /> Entrar como admin
                           </Button>
+                          {c.email && (
+                            <Button size="sm" variant="ghost" onClick={() => setPwOpen({ email: c.email })}>
+                              <KeyRound className="h-3.5 w-3.5 mr-1.5" /> Resetar senha
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     );
@@ -162,7 +171,44 @@ function Companies() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!pwOpen} onOpenChange={(o) => !o && setPwOpen(null)}>
+        {pwOpen && (
+          <ResetPasswordDialog
+            email={pwOpen.email}
+            busy={false}
+            onSubmit={async (pw) => {
+              try {
+                await resetPw({ data: { email: pwOpen.email, new_password: pw } });
+                toast.success("Senha redefinida. O usuário deverá trocar no próximo login.");
+                setPwOpen(null);
+              } catch (e: any) {
+                toast.error(e.message);
+              }
+            }}
+          />
+        )}
+      </Dialog>
     </div>
+  );
+}
+
+function ResetPasswordDialog({ email, onSubmit, busy }: { email: string; onSubmit: (pw: string) => void; busy: boolean }) {
+  const [pw, setPw] = useState("");
+  return (
+    <DialogContent>
+      <DialogHeader><DialogTitle>Redefinir senha</DialogTitle></DialogHeader>
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">Definir nova senha para <b>{email}</b>. O usuário será obrigado a trocá-la no próximo login.</p>
+        <div>
+          <Label>Nova senha (mín. 8 caracteres)</Label>
+          <Input type="text" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="nova senha temporária" />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button onClick={() => onSubmit(pw)} disabled={busy || pw.length < 8}>Redefinir</Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }
 
