@@ -26,6 +26,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as BSlugMinhaContaRouteImport } from './routes/b.$slug.minha-conta'
 import { Route as BSlugEntrarRouteImport } from './routes/b.$slug.entrar'
 import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
+import { Route as AuthenticatedAppWhatsappRouteImport } from './routes/_authenticated/app/whatsapp'
 import { Route as AuthenticatedAppUsersRouteImport } from './routes/_authenticated/app/users'
 import { Route as AuthenticatedAppStaffRouteImport } from './routes/_authenticated/app/staff'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app/settings'
@@ -136,6 +137,12 @@ const ApiPublicBookRoute = ApiPublicBookRouteImport.update({
   path: '/api/public/book',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppWhatsappRoute =
+  AuthenticatedAppWhatsappRouteImport.update({
+    id: '/whatsapp',
+    path: '/whatsapp',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
 const AuthenticatedAppUsersRoute = AuthenticatedAppUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -302,6 +309,7 @@ export interface FileRoutesByFullPath {
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/staff': typeof AuthenticatedAppStaffRoute
   '/app/users': typeof AuthenticatedAppUsersRoute
+  '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
@@ -342,6 +350,7 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/staff': typeof AuthenticatedAppStaffRoute
   '/app/users': typeof AuthenticatedAppUsersRoute
+  '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
@@ -386,6 +395,7 @@ export interface FileRoutesById {
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/app/staff': typeof AuthenticatedAppStaffRoute
   '/_authenticated/app/users': typeof AuthenticatedAppUsersRoute
+  '/_authenticated/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
@@ -430,6 +440,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/staff'
     | '/app/users'
+    | '/app/whatsapp'
     | '/api/public/book'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
@@ -470,6 +481,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/staff'
     | '/app/users'
+    | '/app/whatsapp'
     | '/api/public/book'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
@@ -513,6 +525,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/settings'
     | '/_authenticated/app/staff'
     | '/_authenticated/app/users'
+    | '/_authenticated/app/whatsapp'
     | '/api/public/book'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
@@ -658,6 +671,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/book'
       preLoaderRoute: typeof ApiPublicBookRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/app/whatsapp': {
+      id: '/_authenticated/app/whatsapp'
+      path: '/whatsapp'
+      fullPath: '/app/whatsapp'
+      preLoaderRoute: typeof AuthenticatedAppWhatsappRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
     }
     '/_authenticated/app/users': {
       id: '/_authenticated/app/users'
@@ -871,6 +891,7 @@ interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
   AuthenticatedAppStaffRoute: typeof AuthenticatedAppStaffRoute
   AuthenticatedAppUsersRoute: typeof AuthenticatedAppUsersRoute
+  AuthenticatedAppWhatsappRoute: typeof AuthenticatedAppWhatsappRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
@@ -893,6 +914,7 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
   AuthenticatedAppStaffRoute: AuthenticatedAppStaffRoute,
   AuthenticatedAppUsersRoute: AuthenticatedAppUsersRoute,
+  AuthenticatedAppWhatsappRoute: AuthenticatedAppWhatsappRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
 
