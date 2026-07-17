@@ -122,9 +122,6 @@ function SettingsPage() {
 
       <Card>
         <CardContent className="p-6 space-y-4">
-          <h2 className="font-semibold">Dados</h2>
-      <Card>
-        <CardContent className="p-6 space-y-4">
           <h2 className="font-semibold">Dados da empresa</h2>
           <div className="grid md:grid-cols-2 gap-3">
             <div><Label>Nome fantasia</Label>
