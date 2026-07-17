@@ -58,19 +58,33 @@ export function NotificationsBell() {
           {!data.length ? (
             <p className="text-sm text-muted-foreground text-center py-6">Sem notificações.</p>
           ) : (
-            data.map((n: any) => (
-              <Link
-                key={n.id}
-                to={n.link ?? "/app"}
-                className={`block px-3 py-2 border-b hover:bg-muted/50 ${!n.read_at ? "bg-primary/5" : ""}`}
-              >
-                <p className="text-sm font-medium">{n.title}</p>
-                {n.body && <p className="text-xs text-muted-foreground">{n.body}</p>}
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  {new Date(n.created_at).toLocaleString("pt-BR")}
-                </p>
-              </Link>
-            ))
+            data.map((n: any) => {
+              const waUrl = n.metadata?.wa_url as string | undefined;
+              return (
+                <div
+                  key={n.id}
+                  className={`block px-3 py-2 border-b hover:bg-muted/50 ${!n.read_at ? "bg-primary/5" : ""}`}
+                >
+                  <Link to={n.link ?? "/app"} className="block">
+                    <p className="text-sm font-medium">{n.title}</p>
+                    {n.body && <p className="text-xs text-muted-foreground">{n.body}</p>}
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {new Date(n.created_at).toLocaleString("pt-BR")}
+                    </p>
+                  </Link>
+                  {waUrl && (
+                    <a
+                      href={waUrl}
+                      target="_blank"
+                      rel="noopener"
+                      className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:underline"
+                    >
+                      Enviar no WhatsApp →
+                    </a>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </PopoverContent>
