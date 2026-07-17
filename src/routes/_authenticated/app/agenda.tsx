@@ -278,14 +278,14 @@ function Agenda() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Tabs value={view} onValueChange={(v) => navigate({ search: (p) => ({ ...p, view: v as any }) })}>
+          <Tabs value={view} onValueChange={(v) => navigate({ search: (p: any) => ({ ...p, view: v as any }) })}>
             <TabsList>
               <TabsTrigger value="day">Dia</TabsTrigger>
               <TabsTrigger value="week">Semana</TabsTrigger>
               <TabsTrigger value="month">Mês</TabsTrigger>
             </TabsList>
           </Tabs>
-          <Select value={staffFilter || "all"} onValueChange={(v) => navigate({ search: (p) => ({ ...p, staff: v === "all" ? undefined : v }) })}>
+          <Select value={staffFilter || "all"} onValueChange={(v) => navigate({ search: (p: any) => ({ ...p, staff: v === "all" ? undefined : v }) })}>
             <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos profissionais</SelectItem>
@@ -351,7 +351,7 @@ function Agenda() {
         <MonthView
           monthStart={startOfMonth(anchor)}
           appts={appts as any[]}
-          onDayClick={(d) => { setAnchor(d); navigate({ search: (p) => ({ ...p, view: "day" }) }); }}
+          onDayClick={(d) => { setAnchor(d); navigate({ search: (p: any) => ({ ...p, view: "day" }) }); }}
         />
       )}
 
