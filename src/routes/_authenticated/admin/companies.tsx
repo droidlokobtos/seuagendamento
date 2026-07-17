@@ -1,0 +1,208 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Plus, Search, Building2 } from "lucide-react";
+import { dateBR, slugify, statusLabel } from "@/lib/format";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/_authenticated/admin/companies")({
+  component: Companies,
+});
+
+function Companies() {
+  const qc = useQueryClient();
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [open, setOpen] = useState(false);
+
+  const { data: companies = [], isLoading } = useQuery({
+    queryKey: ["admin-companies"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id, name, slug, status, niche_id, created_at, next_due_at, monthly_fee, niches(name)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: niches = [] } = useQuery({
+    queryKey: ["niches"],
+    queryFn: async () => (await supabase.from("niches").select("id, name").order("name")).data ?? [],
+  });
+
+  const filtered = companies.filter((c: any) => {
+    const matchQ = !q || c.name.toLowerCase().includes(q.toLowerCase()) || c.slug?.toLowerCase().includes(q.toLowerCase());
+    const matchS = statusFilter === "all" || c.status === statusFilter;
+    return matchQ && matchS;
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (v: { name: string; slug: string; niche_id: string; email: string; monthly_fee: number }) => {
+      const { error } = await supabase.from("companies").insert({
+        name: v.name,
+        slug: v.slug,
+        niche_id: v.niche_id,
+        email: v.email,
+        monthly_fee: v.monthly_fee,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Empresa criada");
+      qc.invalidateQueries({ queryKey: ["admin-companies"] });
+      setOpen(false);
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
+  });
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">Empresas</h2>
+          <p className="text-sm text-muted-foreground mt-1">Gerencie todos os clientes da plataforma.</p>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button><Plus className="h-4 w-4 mr-2" /> Nova empresa</Button>
+          </DialogTrigger>
+          <NewCompanyDialog niches={niches as any} onSubmit={(v) => createMutation.mutate(v)} busy={createMutation.isPending} />
+        </Dialog>
+      </div>
+
+      <Card>
+        <CardContent className="p-4 flex flex-wrap gap-3 items-center">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar por nome ou slug…" className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              <SelectItem value="active">Ativas</SelectItem>
+              <SelectItem value="due_soon">Próximo venc.</SelectItem>
+              <SelectItem value="overdue">Em atraso</SelectItem>
+              <SelectItem value="suspended">Suspensas</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <p className="p-8 text-center text-sm text-muted-foreground">Carregando…</p>
+          ) : filtered.length === 0 ? (
+            <div className="p-12 text-center">
+              <Building2 className="h-10 w-10 mx-auto text-muted-foreground/40" />
+              <p className="mt-3 text-sm text-muted-foreground">Nenhuma empresa encontrada.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+                  <tr>
+                    <th className="text-left p-3 pl-6">Empresa</th>
+                    <th className="text-left p-3">Nicho</th>
+                    <th className="text-left p-3">Status</th>
+                    <th className="text-left p-3">Próx. venc.</th>
+                    <th className="text-left p-3 pr-6">Criada</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((c: any) => {
+                    const s = statusLabel[c.status] ?? { label: c.status, className: "bg-muted", dot: "bg-muted-foreground" };
+                    return (
+                      <tr key={c.id} className="border-t border-border/60 hover:bg-muted/30">
+                        <td className="p-3 pl-6">
+                          <p className="font-medium">{c.name}</p>
+                          <p className="text-xs text-muted-foreground">/{c.slug}</p>
+                        </td>
+                        <td className="p-3 text-muted-foreground">{c.niches?.name ?? "—"}</td>
+                        <td className="p-3">
+                          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${s.className}`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+                            {s.label}
+                          </span>
+                        </td>
+                        <td className="p-3 text-muted-foreground">{dateBR(c.next_due_at)}</td>
+                        <td className="p-3 pr-6 text-muted-foreground">{dateBR(c.created_at)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function NewCompanyDialog({
+  niches,
+  onSubmit,
+  busy,
+}: {
+  niches: { id: string; name: string }[];
+  onSubmit: (v: { name: string; slug: string; niche_id: string; email: string; monthly_fee: number }) => void;
+  busy: boolean;
+}) {
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [niche, setNiche] = useState("");
+  const [email, setEmail] = useState("");
+  const [fee, setFee] = useState("49.90");
+
+  return (
+    <DialogContent>
+      <DialogHeader><DialogTitle>Nova empresa</DialogTitle></DialogHeader>
+      <div className="space-y-3">
+        <div>
+          <Label>Nome</Label>
+          <Input value={name} onChange={(e) => { setName(e.target.value); setSlug(slugify(e.target.value)); }} placeholder="Ex.: Studio Bella" />
+        </div>
+        <div>
+          <Label>Slug (URL pública)</Label>
+          <Input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} placeholder="studio-bella" />
+        </div>
+        <div>
+          <Label>Nicho</Label>
+          <Select value={niche} onValueChange={setNiche}>
+            <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+            <SelectContent>
+              {niches.map((n) => <SelectItem key={n.id} value={n.id}>{n.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>E-mail do responsável</Label>
+          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="dono@empresa.com" />
+        </div>
+        <div>
+          <Label>Mensalidade (R$)</Label>
+          <Input type="number" step="0.01" value={fee} onChange={(e) => setFee(e.target.value)} />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button
+          onClick={() => onSubmit({ name, slug, niche_id: niche, email, monthly_fee: Number(fee) })}
+          disabled={busy || !name || !slug || !niche || !email}
+        >
+          {busy ? "Criando…" : "Criar empresa"}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
