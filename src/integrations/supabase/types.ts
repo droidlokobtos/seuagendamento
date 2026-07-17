@@ -320,6 +320,144 @@ export type Database = {
           },
         ]
       }
+      financial_transactions: {
+        Row: {
+          amount: number
+          appointment_id: string | null
+          category: string
+          company_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          occurred_on: string
+          payment_method_id: string | null
+          staff_id: string | null
+          type: Database["public"]["Enums"]["transaction_type"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          appointment_id?: string | null
+          category: string
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          occurred_on?: string
+          payment_method_id?: string | null
+          staff_id?: string | null
+          type: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          appointment_id?: string | null
+          category?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          occurred_on?: string
+          payment_method_id?: string | null
+          staff_id?: string | null
+          type?: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_movements: {
+        Row: {
+          appointment_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          product_id: string
+          quantity: number
+          reason: string | null
+          type: Database["public"]["Enums"]["movement_type"]
+          unit_cost: number | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id: string
+          quantity: number
+          reason?: string | null
+          type: Database["public"]["Enums"]["movement_type"]
+          unit_cost?: number | null
+        }
+        Update: {
+          appointment_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id?: string
+          quantity?: number
+          reason?: string | null
+          type?: Database["public"]["Enums"]["movement_type"]
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       niches: {
         Row: {
           banner_url: string | null
@@ -449,6 +587,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      products: {
+        Row: {
+          active: boolean
+          brand: string | null
+          company_id: string
+          cost_price: number
+          created_at: string
+          id: string
+          min_stock: number
+          name: string
+          notes: string | null
+          sale_price: number
+          sku: string | null
+          stock_qty: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          brand?: string | null
+          company_id: string
+          cost_price?: number
+          created_at?: string
+          id?: string
+          min_stock?: number
+          name: string
+          notes?: string | null
+          sale_price?: number
+          sku?: string | null
+          stock_qty?: number
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          brand?: string | null
+          company_id?: string
+          cost_price?: number
+          created_at?: string
+          id?: string
+          min_stock?: number
+          name?: string
+          notes?: string | null
+          sale_price?: number
+          sku?: string | null
+          stock_qty?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -692,6 +889,7 @@ export type Database = {
         | "cancelled"
         | "no_show"
       company_status: "active" | "due_soon" | "overdue" | "suspended"
+      movement_type: "in" | "out" | "adjustment"
       payment_method_kind:
         | "cash"
         | "pix"
@@ -699,6 +897,7 @@ export type Database = {
         | "debit_card"
         | "bank_transfer"
         | "other"
+      transaction_type: "income" | "expense"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -836,6 +1035,7 @@ export const Constants = {
         "no_show",
       ],
       company_status: ["active", "due_soon", "overdue", "suspended"],
+      movement_type: ["in", "out", "adjustment"],
       payment_method_kind: [
         "cash",
         "pix",
@@ -844,6 +1044,7 @@ export const Constants = {
         "bank_transfer",
         "other",
       ],
+      transaction_type: ["income", "expense"],
     },
   },
 } as const
