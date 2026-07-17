@@ -25,6 +25,8 @@ function Companies() {
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [open, setOpen] = useState(false);
+  const [pwOpen, setPwOpen] = useState<{ email: string } | null>(null);
+  const resetPw = useServerFn(resetUserPassword);
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["admin-companies"],
