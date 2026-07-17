@@ -99,7 +99,7 @@ function Loyalty() {
   const addTx = useMutation({
     mutationFn: async (payload: Partial<Tx>) => {
       const { error } = await supabase.from("loyalty_transactions")
-        .insert({ ...payload, company_id: activeCompany!.id });
+        .insert({ ...payload, company_id: activeCompany!.id } as never);
       if (error) throw error;
     },
     onSuccess: () => {

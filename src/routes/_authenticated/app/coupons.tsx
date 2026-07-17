@@ -50,10 +50,10 @@ function Coupons() {
     mutationFn: async (payload: Partial<C>) => {
       const row = { ...payload, company_id: activeCompany!.id };
       if (editing) {
-        const { error } = await supabase.from("coupons").update(row).eq("id", editing.id);
+        const { error } = await supabase.from("coupons").update(row as never).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("coupons").insert(row);
+        const { error } = await supabase.from("coupons").insert(row as never);
         if (error) throw error;
       }
     },
