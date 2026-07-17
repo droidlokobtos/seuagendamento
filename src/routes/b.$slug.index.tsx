@@ -12,7 +12,7 @@ import { Sparkles, MapPin, Phone, Check, Calendar, Clock, ChevronLeft, ChevronRi
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/b/$slug")({
+export const Route = createFileRoute("/b/$slug/")({
   loader: async ({ params }) => {
     const { data: company, error } = await supabase
       .from("companies")

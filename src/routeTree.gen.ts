@@ -14,13 +14,13 @@ import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as AdminLogsRouteImport } from './routes/admin/logs'
 import { Route as AuthenticatedNoAccessRouteImport } from './routes/_authenticated/no-access'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
 import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticated/app/route'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as BSlugIndexRouteImport } from './routes/b.$slug.index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as BSlugMinhaContaRouteImport } from './routes/b.$slug.minha-conta'
@@ -75,11 +75,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BSlugRoute = BSlugRouteImport.update({
-  id: '/b/$slug',
-  path: '/b/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminLogsRoute = AdminLogsRouteImport.update({
   id: '/admin/logs',
   path: '/admin/logs',
@@ -111,6 +106,11 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const BSlugIndexRoute = BSlugIndexRouteImport.update({
+  id: '/b/$slug/',
+  path: '/b/$slug/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -122,14 +122,14 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
 const BSlugMinhaContaRoute = BSlugMinhaContaRouteImport.update({
-  id: '/minha-conta',
-  path: '/minha-conta',
-  getParentRoute: () => BSlugRoute,
+  id: '/b/$slug/minha-conta',
+  path: '/b/$slug/minha-conta',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const BSlugEntrarRoute = BSlugEntrarRouteImport.update({
-  id: '/entrar',
-  path: '/entrar',
-  getParentRoute: () => BSlugRoute,
+  id: '/b/$slug/entrar',
+  path: '/b/$slug/entrar',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicBookRoute = ApiPublicBookRouteImport.update({
   id: '/api/public/book',
@@ -259,9 +259,9 @@ const AuthenticatedAdminCompaniesRoute =
   } as any)
 const BSlugAvaliarAppointmentIdRoute =
   BSlugAvaliarAppointmentIdRouteImport.update({
-    id: '/avaliar/$appointmentId',
-    path: '/avaliar/$appointmentId',
-    getParentRoute: () => BSlugRoute,
+    id: '/b/$slug/avaliar/$appointmentId',
+    path: '/b/$slug/avaliar/$appointmentId',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksRemindersRoute = ApiPublicHooksRemindersRouteImport.update({
   id: '/api/public/hooks/reminders',
@@ -280,7 +280,6 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
   '/admin/logs': typeof AdminLogsRoute
-  '/b/$slug': typeof BSlugRouteWithChildren
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
@@ -308,6 +307,7 @@ export interface FileRoutesByFullPath {
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/b/$slug/': typeof BSlugIndexRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
   '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
@@ -320,7 +320,6 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
   '/admin/logs': typeof AdminLogsRoute
-  '/b/$slug': typeof BSlugRouteWithChildren
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
@@ -348,6 +347,7 @@ export interface FileRoutesByTo {
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/b/$slug': typeof BSlugIndexRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
   '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
@@ -364,7 +364,6 @@ export interface FileRoutesById {
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/no-access': typeof AuthenticatedNoAccessRoute
   '/admin/logs': typeof AdminLogsRoute
-  '/b/$slug': typeof BSlugRouteWithChildren
   '/_authenticated/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/_authenticated/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
@@ -392,6 +391,7 @@ export interface FileRoutesById {
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/b/$slug/': typeof BSlugIndexRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
   '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
@@ -408,7 +408,6 @@ export interface FileRouteTypes {
     | '/home'
     | '/no-access'
     | '/admin/logs'
-    | '/b/$slug'
     | '/admin/companies'
     | '/admin/niches'
     | '/admin/payments'
@@ -436,6 +435,7 @@ export interface FileRouteTypes {
     | '/b/$slug/minha-conta'
     | '/admin/'
     | '/app/'
+    | '/b/$slug/'
     | '/api/public/hooks/reminders'
     | '/b/$slug/avaliar/$appointmentId'
   fileRoutesByTo: FileRoutesByTo
@@ -448,7 +448,6 @@ export interface FileRouteTypes {
     | '/home'
     | '/no-access'
     | '/admin/logs'
-    | '/b/$slug'
     | '/admin/companies'
     | '/admin/niches'
     | '/admin/payments'
@@ -476,6 +475,7 @@ export interface FileRouteTypes {
     | '/b/$slug/minha-conta'
     | '/admin'
     | '/app'
+    | '/b/$slug'
     | '/api/public/hooks/reminders'
     | '/b/$slug/avaliar/$appointmentId'
   id:
@@ -491,7 +491,6 @@ export interface FileRouteTypes {
     | '/_authenticated/home'
     | '/_authenticated/no-access'
     | '/admin/logs'
-    | '/b/$slug'
     | '/_authenticated/admin/companies'
     | '/_authenticated/admin/niches'
     | '/_authenticated/admin/payments'
@@ -519,6 +518,7 @@ export interface FileRouteTypes {
     | '/b/$slug/minha-conta'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
+    | '/b/$slug/'
     | '/api/public/hooks/reminders'
     | '/b/$slug/avaliar/$appointmentId'
   fileRoutesById: FileRoutesById
@@ -530,9 +530,12 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   AdminLogsRoute: typeof AdminLogsRoute
-  BSlugRoute: typeof BSlugRouteWithChildren
   ApiPublicBookRoute: typeof ApiPublicBookRoute
+  BSlugEntrarRoute: typeof BSlugEntrarRoute
+  BSlugMinhaContaRoute: typeof BSlugMinhaContaRoute
+  BSlugIndexRoute: typeof BSlugIndexRoute
   ApiPublicHooksRemindersRoute: typeof ApiPublicHooksRemindersRoute
+  BSlugAvaliarAppointmentIdRoute: typeof BSlugAvaliarAppointmentIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -570,13 +573,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/b/$slug': {
-      id: '/b/$slug'
-      path: '/b/$slug'
-      fullPath: '/b/$slug'
-      preLoaderRoute: typeof BSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/logs': {
@@ -621,6 +617,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/b/$slug/': {
+      id: '/b/$slug/'
+      path: '/b/$slug'
+      fullPath: '/b/$slug/'
+      preLoaderRoute: typeof BSlugIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/app/': {
       id: '/_authenticated/app/'
       path: '/'
@@ -637,17 +640,17 @@ declare module '@tanstack/react-router' {
     }
     '/b/$slug/minha-conta': {
       id: '/b/$slug/minha-conta'
-      path: '/minha-conta'
+      path: '/b/$slug/minha-conta'
       fullPath: '/b/$slug/minha-conta'
       preLoaderRoute: typeof BSlugMinhaContaRouteImport
-      parentRoute: typeof BSlugRoute
+      parentRoute: typeof rootRouteImport
     }
     '/b/$slug/entrar': {
       id: '/b/$slug/entrar'
-      path: '/entrar'
+      path: '/b/$slug/entrar'
       fullPath: '/b/$slug/entrar'
       preLoaderRoute: typeof BSlugEntrarRouteImport
-      parentRoute: typeof BSlugRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/book': {
       id: '/api/public/book'
@@ -812,10 +815,10 @@ declare module '@tanstack/react-router' {
     }
     '/b/$slug/avaliar/$appointmentId': {
       id: '/b/$slug/avaliar/$appointmentId'
-      path: '/avaliar/$appointmentId'
+      path: '/b/$slug/avaliar/$appointmentId'
       fullPath: '/b/$slug/avaliar/$appointmentId'
       preLoaderRoute: typeof BSlugAvaliarAppointmentIdRouteImport
-      parentRoute: typeof BSlugRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/reminders': {
       id: '/api/public/hooks/reminders'
@@ -917,20 +920,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
-interface BSlugRouteChildren {
-  BSlugEntrarRoute: typeof BSlugEntrarRoute
-  BSlugMinhaContaRoute: typeof BSlugMinhaContaRoute
-  BSlugAvaliarAppointmentIdRoute: typeof BSlugAvaliarAppointmentIdRoute
-}
-
-const BSlugRouteChildren: BSlugRouteChildren = {
-  BSlugEntrarRoute: BSlugEntrarRoute,
-  BSlugMinhaContaRoute: BSlugMinhaContaRoute,
-  BSlugAvaliarAppointmentIdRoute: BSlugAvaliarAppointmentIdRoute,
-}
-
-const BSlugRouteWithChildren = BSlugRoute._addFileChildren(BSlugRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -938,9 +927,12 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   AdminLogsRoute: AdminLogsRoute,
-  BSlugRoute: BSlugRouteWithChildren,
   ApiPublicBookRoute: ApiPublicBookRoute,
+  BSlugEntrarRoute: BSlugEntrarRoute,
+  BSlugMinhaContaRoute: BSlugMinhaContaRoute,
+  BSlugIndexRoute: BSlugIndexRoute,
   ApiPublicHooksRemindersRoute: ApiPublicHooksRemindersRoute,
+  BSlugAvaliarAppointmentIdRoute: BSlugAvaliarAppointmentIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
