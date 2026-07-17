@@ -1502,6 +1502,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_company_admin: { Args: { _company: string }; Returns: boolean }
       is_company_member: { Args: { _company: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       user_company_ids: { Args: { _user_id: string }; Returns: string[] }
@@ -1518,7 +1519,12 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "super_admin" | "company_admin" | "staff" | "customer"
+      app_role:
+        | "super_admin"
+        | "company_admin"
+        | "staff"
+        | "customer"
+        | "receptionist"
       appointment_status:
         | "scheduled"
         | "confirmed"
@@ -1663,7 +1669,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["super_admin", "company_admin", "staff", "customer"],
+      app_role: [
+        "super_admin",
+        "company_admin",
+        "staff",
+        "customer",
+        "receptionist",
+      ],
       appointment_status: [
         "scheduled",
         "confirmed",

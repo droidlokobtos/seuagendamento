@@ -48,6 +48,7 @@ const NAV = [
   { to: "/app/birthdays", label: "Aniversariantes", icon: Cake },
   { to: "/app/reviews", label: "Avaliações", icon: Star },
   { to: "/app/ai", label: "Assistente IA", icon: Sparkles },
+  { to: "/app/users", label: "Usuários", icon: UserCog },
   { to: "/app/settings", label: "Configurações", icon: Settings },
 ];
 
