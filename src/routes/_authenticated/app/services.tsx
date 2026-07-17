@@ -15,6 +15,7 @@ import {
 import { Plus, Pencil, Trash2, Scissors } from "lucide-react";
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export const Route = createFileRoute("/_authenticated/app/services")({
   component: Services,

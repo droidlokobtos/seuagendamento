@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, UserCog, Calendar } from "lucide-react";
 import { toast } from "sonner";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export const Route = createFileRoute("/_authenticated/app/staff")({
   component: Staff,

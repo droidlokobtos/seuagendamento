@@ -15,6 +15,7 @@ import {
 import { Plus, Pencil, Trash2, Search, Users, Phone, Mail, MessageCircle, History } from "lucide-react";
 import { dateBR, brl } from "@/lib/format";
 import { toast } from "sonner";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export const Route = createFileRoute("/_authenticated/app/customers")({
   component: Customers,
