@@ -542,9 +542,11 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
+          photo_url: string | null
           tags: string[] | null
           updated_at: string
           user_id: string | null
+          whatsapp: string | null
         }
         Insert: {
           birthdate?: string | null
@@ -555,9 +557,11 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
+          photo_url?: string | null
           tags?: string[] | null
           updated_at?: string
           user_id?: string | null
+          whatsapp?: string | null
         }
         Update: {
           birthdate?: string | null
@@ -568,9 +572,11 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          photo_url?: string | null
           tags?: string[] | null
           updated_at?: string
           user_id?: string | null
+          whatsapp?: string | null
         }
         Relationships: [
           {
@@ -1215,6 +1221,7 @@ export type Database = {
           duration_min: number
           id: string
           name: string
+          photo_url: string | null
           price_cents: number
           updated_at: string
         }
@@ -1228,6 +1235,7 @@ export type Database = {
           duration_min?: number
           id?: string
           name: string
+          photo_url?: string | null
           price_cents?: number
           updated_at?: string
         }
@@ -1241,6 +1249,7 @@ export type Database = {
           duration_min?: number
           id?: string
           name?: string
+          photo_url?: string | null
           price_cents?: number
           updated_at?: string
         }
