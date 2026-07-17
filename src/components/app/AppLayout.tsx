@@ -16,7 +16,11 @@ import {
   BarChart3,
   Ticket,
   Award,
+  Star,
+  Megaphone,
+  Cake,
 } from "lucide-react";
+
 
 
 import { useState, type ReactNode } from "react";
