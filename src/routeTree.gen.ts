@@ -14,9 +14,15 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedNoAccessRouteImport } from './routes/_authenticated/no-access'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
-import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticated/app/route'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAppStaffRouteImport } from './routes/_authenticated/app/staff'
+import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app/settings'
+import { Route as AuthenticatedAppServicesRouteImport } from './routes/_authenticated/app/services'
+import { Route as AuthenticatedAppCustomersRouteImport } from './routes/_authenticated/app/customers'
+import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app/agenda'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
 import { Route as AuthenticatedAdminNichesRouteImport } from './routes/_authenticated/admin/niches'
@@ -46,7 +52,7 @@ const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   path: '/home',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
+const AuthenticatedAppRouteRoute = AuthenticatedAppRouteRouteImport.update({
   id: '/app',
   path: '/app',
   getParentRoute: () => AuthenticatedRouteRoute,
@@ -56,10 +62,43 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const AuthenticatedAppStaffRoute = AuthenticatedAppStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any)
+const AuthenticatedAppSettingsRoute =
+  AuthenticatedAppSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedAppServicesRoute =
+  AuthenticatedAppServicesRouteImport.update({
+    id: '/services',
+    path: '/services',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedAppCustomersRoute =
+  AuthenticatedAppCustomersRouteImport.update({
+    id: '/customers',
+    path: '/customers',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedAppAgendaRoute = AuthenticatedAppAgendaRouteImport.update({
+  id: '/agenda',
+  path: '/agenda',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
 } as any)
 const AuthenticatedAdminSettingsRoute =
   AuthenticatedAdminSettingsRouteImport.update({
@@ -90,26 +129,37 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
-  '/app': typeof AuthenticatedAppRoute
+  '/app': typeof AuthenticatedAppRouteRouteWithChildren
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/customers': typeof AuthenticatedAppCustomersRoute
+  '/app/services': typeof AuthenticatedAppServicesRoute
+  '/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/app/staff': typeof AuthenticatedAppStaffRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/app/': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/app': typeof AuthenticatedAppRoute
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/customers': typeof AuthenticatedAppCustomersRoute
+  '/app/services': typeof AuthenticatedAppServicesRoute
+  '/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/app/staff': typeof AuthenticatedAppStaffRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/app': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -117,14 +167,20 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
-  '/_authenticated/app': typeof AuthenticatedAppRoute
+  '/_authenticated/app': typeof AuthenticatedAppRouteRouteWithChildren
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/no-access': typeof AuthenticatedNoAccessRoute
   '/_authenticated/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/_authenticated/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/_authenticated/app/customers': typeof AuthenticatedAppCustomersRoute
+  '/_authenticated/app/services': typeof AuthenticatedAppServicesRoute
+  '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/_authenticated/app/staff': typeof AuthenticatedAppStaffRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -139,19 +195,30 @@ export interface FileRouteTypes {
     | '/admin/niches'
     | '/admin/payments'
     | '/admin/settings'
+    | '/app/agenda'
+    | '/app/customers'
+    | '/app/services'
+    | '/app/settings'
+    | '/app/staff'
     | '/admin/'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
-    | '/app'
     | '/home'
     | '/no-access'
     | '/admin/companies'
     | '/admin/niches'
     | '/admin/payments'
     | '/admin/settings'
+    | '/app/agenda'
+    | '/app/customers'
+    | '/app/services'
+    | '/app/settings'
+    | '/app/staff'
     | '/admin'
+    | '/app'
   id:
     | '__root__'
     | '/'
@@ -165,7 +232,13 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/niches'
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/settings'
+    | '/_authenticated/app/agenda'
+    | '/_authenticated/app/customers'
+    | '/_authenticated/app/services'
+    | '/_authenticated/app/settings'
+    | '/_authenticated/app/staff'
     | '/_authenticated/admin/'
+    | '/_authenticated/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -215,7 +288,7 @@ declare module '@tanstack/react-router' {
       id: '/_authenticated/app'
       path: '/app'
       fullPath: '/app'
-      preLoaderRoute: typeof AuthenticatedAppRouteImport
+      preLoaderRoute: typeof AuthenticatedAppRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin': {
@@ -225,12 +298,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/app/': {
+      id: '/_authenticated/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/app/staff': {
+      id: '/_authenticated/app/staff'
+      path: '/staff'
+      fullPath: '/app/staff'
+      preLoaderRoute: typeof AuthenticatedAppStaffRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/settings': {
+      id: '/_authenticated/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AuthenticatedAppSettingsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/services': {
+      id: '/_authenticated/app/services'
+      path: '/services'
+      fullPath: '/app/services'
+      preLoaderRoute: typeof AuthenticatedAppServicesRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/customers': {
+      id: '/_authenticated/app/customers'
+      path: '/customers'
+      fullPath: '/app/customers'
+      preLoaderRoute: typeof AuthenticatedAppCustomersRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/agenda': {
+      id: '/_authenticated/app/agenda'
+      path: '/agenda'
+      fullPath: '/app/agenda'
+      preLoaderRoute: typeof AuthenticatedAppAgendaRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
     }
     '/_authenticated/admin/settings': {
       id: '/_authenticated/admin/settings'
@@ -285,16 +400,39 @@ const AuthenticatedAdminRouteRouteWithChildren =
     AuthenticatedAdminRouteRouteChildren,
   )
 
+interface AuthenticatedAppRouteRouteChildren {
+  AuthenticatedAppAgendaRoute: typeof AuthenticatedAppAgendaRoute
+  AuthenticatedAppCustomersRoute: typeof AuthenticatedAppCustomersRoute
+  AuthenticatedAppServicesRoute: typeof AuthenticatedAppServicesRoute
+  AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
+  AuthenticatedAppStaffRoute: typeof AuthenticatedAppStaffRoute
+  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+}
+
+const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
+  AuthenticatedAppAgendaRoute: AuthenticatedAppAgendaRoute,
+  AuthenticatedAppCustomersRoute: AuthenticatedAppCustomersRoute,
+  AuthenticatedAppServicesRoute: AuthenticatedAppServicesRoute,
+  AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
+  AuthenticatedAppStaffRoute: AuthenticatedAppStaffRoute,
+  AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+}
+
+const AuthenticatedAppRouteRouteWithChildren =
+  AuthenticatedAppRouteRoute._addFileChildren(
+    AuthenticatedAppRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
-  AuthenticatedAppRoute: typeof AuthenticatedAppRoute
+  AuthenticatedAppRouteRoute: typeof AuthenticatedAppRouteRouteWithChildren
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedNoAccessRoute: typeof AuthenticatedNoAccessRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
-  AuthenticatedAppRoute: AuthenticatedAppRoute,
+  AuthenticatedAppRouteRoute: AuthenticatedAppRouteRouteWithChildren,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedNoAccessRoute: AuthenticatedNoAccessRoute,
 }
@@ -310,13 +448,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
