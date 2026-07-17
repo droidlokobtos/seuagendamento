@@ -6,8 +6,24 @@ import { useCompany } from "@/lib/company";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CalendarDays, DollarSign, Users, Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CalendarDays, DollarSign, Users, Package, Download, Printer } from "lucide-react";
 import { brl } from "@/lib/format";
+
+function downloadCsv(filename: string, rows: (string | number)[][]) {
+  const escape = (v: string | number) => {
+    const s = String(v ?? "");
+    return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const csv = "\uFEFF" + rows.map((r) => r.map(escape).join(";")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export const Route = createFileRoute("/_authenticated/app/reports")({
   component: Reports,
@@ -92,11 +108,44 @@ function Reports() {
           <h1 className="text-2xl font-semibold">Relatórios</h1>
           <p className="text-sm text-muted-foreground">Desempenho do seu negócio.</p>
         </div>
-        <div className="flex gap-2 items-end">
+        <div className="flex gap-2 items-end flex-wrap">
           <div><Label className="text-xs">De</Label>
             <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-40" /></div>
           <div><Label className="text-xs">Até</Label>
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-40" /></div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const rows: (string | number)[][] = [
+                ["Relatório", `${from} a ${to}`],
+                [],
+                ["Resumo"],
+                ["Faturamento", totals.income],
+                ["Despesas", totals.expense],
+                ["Saldo", totals.balance],
+                ["Ticket médio", totals.ticket],
+                ["Agendamentos", totals.apptTotal],
+                ["Concluídos", totals.done],
+                ["Cancelados/faltas", totals.cancelled],
+                ["Clientes atendidos", totals.uniqueCustomers],
+                [],
+                ["Financeiro por categoria"],
+                ["Categoria", "Entradas", "Saídas"],
+                ...byCategory.map(([cat, v]) => [cat, v.in, v.out]),
+                [],
+                ["Estoque baixo"],
+                ["Produto", "Estoque", "Mínimo", "Unidade"],
+                ...lowStock.map((p: any) => [p.name, Number(p.stock_qty), Number(p.min_stock), p.unit ?? ""]),
+              ];
+              downloadCsv(`relatorio_${from}_a_${to}.csv`, rows);
+            }}
+          >
+            <Download className="h-4 w-4 mr-1" /> Exportar CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            <Printer className="h-4 w-4 mr-1" /> Imprimir / PDF
+          </Button>
         </div>
       </div>
 
