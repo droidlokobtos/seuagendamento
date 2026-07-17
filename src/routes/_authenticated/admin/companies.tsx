@@ -165,6 +165,16 @@ function Companies() {
                               <KeyRound className="h-3.5 w-3.5 mr-1.5" /> Resetar senha
                             </Button>
                           )}
+                          {isSuperAdmin && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => setDelOpen({ id: c.id, name: c.name })}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Excluir
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     );
