@@ -42,7 +42,7 @@ const NAV = [
   { to: "/app/reports", label: "Relatórios", icon: BarChart3 },
   { to: "/app/coupons", label: "Cupons", icon: Ticket },
   { to: "/app/loyalty", label: "Fidelidade", icon: Award },
-  { to: "/app/rewards", label: "Recompensas", icon: Gift as any },
+  { to: "/app/rewards", label: "Recompensas", icon: Gift },
   { to: "/app/campaigns", label: "Campanhas", icon: Megaphone },
   { to: "/app/birthdays", label: "Aniversariantes", icon: Cake },
   { to: "/app/reviews", label: "Avaliações", icon: Star },
