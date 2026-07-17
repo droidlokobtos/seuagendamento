@@ -33,7 +33,7 @@ function Companies() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("companies")
-        .select("id, name, slug, status, niche_id, created_at, next_due_at, monthly_fee, niches(name)")
+        .select("id, name, slug, status, niche_id, email, created_at, next_due_at, monthly_fee, niches(name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
