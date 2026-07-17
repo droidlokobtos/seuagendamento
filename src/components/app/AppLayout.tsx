@@ -14,7 +14,11 @@ import {
   Wallet,
   Package,
   BarChart3,
+  Ticket,
+  Award,
 } from "lucide-react";
+
+
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -29,6 +33,8 @@ const NAV = [
   { to: "/app/finances", label: "Financeiro", icon: Wallet },
   { to: "/app/products", label: "Estoque", icon: Package },
   { to: "/app/reports", label: "Relatórios", icon: BarChart3 },
+  { to: "/app/coupons", label: "Cupons", icon: Ticket },
+  { to: "/app/loyalty", label: "Fidelidade", icon: Award },
   { to: "/app/settings", label: "Configurações", icon: Settings },
 ];
 
