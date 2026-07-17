@@ -302,10 +302,13 @@ export type Database = {
           listed_in_marketplace: boolean
           logo_url: string | null
           longitude: number | null
+          max_advance_days: number
+          min_advance_min: number
           monthly_fee: number
           name: string
           next_due_at: string | null
           niche_id: string | null
+          online_booking_enabled: boolean
           parent_company_id: string | null
           phone: string | null
           primary_color: string
@@ -338,10 +341,13 @@ export type Database = {
           listed_in_marketplace?: boolean
           logo_url?: string | null
           longitude?: number | null
+          max_advance_days?: number
+          min_advance_min?: number
           monthly_fee?: number
           name: string
           next_due_at?: string | null
           niche_id?: string | null
+          online_booking_enabled?: boolean
           parent_company_id?: string | null
           phone?: string | null
           primary_color?: string
@@ -374,10 +380,13 @@ export type Database = {
           listed_in_marketplace?: boolean
           logo_url?: string | null
           longitude?: number | null
+          max_advance_days?: number
+          min_advance_min?: number
           monthly_fee?: number
           name?: string
           next_due_at?: string | null
           niche_id?: string | null
+          online_booking_enabled?: boolean
           parent_company_id?: string | null
           phone?: string | null
           primary_color?: string
