@@ -19,13 +19,13 @@ export const askAssistant = createServerFn({ method: "POST" })
       supabase.from("appointments").select("id,status,starts_at,total_cents,discount_cents").eq("company_id", data.company_id).gte("starts_at", new Date(Date.now() - 90 * 864e5).toISOString()).limit(500),
       supabase.from("services").select("id,name,price_cents,duration_min").eq("company_id", data.company_id).limit(100),
       supabase.from("staff").select("id,name").eq("company_id", data.company_id).limit(50),
-      supabase.from("financial_transactions").select("type,amount_cents,occurred_at").eq("company_id", data.company_id).gte("occurred_at", new Date(Date.now() - 90 * 864e5).toISOString()).limit(500),
+      supabase.from("financial_transactions").select("type,amount,occurred_on").eq("company_id", data.company_id).gte("occurred_on", new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10)).limit(500),
       supabase.from("customers").select("id,birthdate").eq("company_id", data.company_id).limit(500),
     ]);
 
     const appts = apptsRes.data ?? [];
     const completed = appts.filter((a) => a.status === "completed");
-    const revenue90 = completed.reduce((s, a) => s + (a.total_cents - (a.discount_cents ?? 0)), 0);
+    const revenue90 = completed.reduce((s, a) => s + ((a.total_cents ?? 0) - (a.discount_cents ?? 0)), 0);
     const ticketAvg = completed.length ? revenue90 / completed.length : 0;
 
     const byWeekday: Record<number, number> = {};
@@ -36,8 +36,8 @@ export const askAssistant = createServerFn({ method: "POST" })
       byHour[d.getHours()] = (byHour[d.getHours()] ?? 0) + 1;
     }
 
-    const income = (financeRes.data ?? []).filter((t) => t.type === "income").reduce((s, t) => s + t.amount_cents, 0);
-    const expense = (financeRes.data ?? []).filter((t) => t.type === "expense").reduce((s, t) => s + t.amount_cents, 0);
+    const income = (financeRes.data ?? []).filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount), 0);
+    const expense = (financeRes.data ?? []).filter((t) => t.type === "expense").reduce((s, t) => s + Number(t.amount), 0);
 
     const snapshot = {
       empresa: companyRes.data,
