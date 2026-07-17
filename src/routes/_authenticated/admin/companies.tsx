@@ -27,7 +27,10 @@ function Companies() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [open, setOpen] = useState(false);
   const [pwOpen, setPwOpen] = useState<{ email: string } | null>(null);
+  const [delOpen, setDelOpen] = useState<{ id: string; name: string } | null>(null);
   const resetPw = useServerFn(resetUserPassword);
+  const delCompany = useServerFn(deleteCompany);
+  const { isSuperAdmin } = useAuth();
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["admin-companies"],
