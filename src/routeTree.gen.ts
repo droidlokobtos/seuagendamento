@@ -38,6 +38,7 @@ import { Route as AuthenticatedAppFinancesRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppCustomersRouteImport } from './routes/_authenticated/app/customers'
 import { Route as AuthenticatedAppCouponsRouteImport } from './routes/_authenticated/app/coupons'
 import { Route as AuthenticatedAppCampaignsRouteImport } from './routes/_authenticated/app/campaigns'
+import { Route as AuthenticatedAppBlocksRouteImport } from './routes/_authenticated/app/blocks'
 import { Route as AuthenticatedAppBirthdaysRouteImport } from './routes/_authenticated/app/birthdays'
 import { Route as AuthenticatedAppAiRouteImport } from './routes/_authenticated/app/ai'
 import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app/agenda'
@@ -199,6 +200,11 @@ const AuthenticatedAppCampaignsRoute =
     path: '/campaigns',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
+const AuthenticatedAppBlocksRoute = AuthenticatedAppBlocksRouteImport.update({
+  id: '/blocks',
+  path: '/blocks',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any)
 const AuthenticatedAppBirthdaysRoute =
   AuthenticatedAppBirthdaysRouteImport.update({
     id: '/birthdays',
@@ -270,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
   '/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
+  '/app/blocks': typeof AuthenticatedAppBlocksRoute
   '/app/campaigns': typeof AuthenticatedAppCampaignsRoute
   '/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/app/customers': typeof AuthenticatedAppCustomersRoute
@@ -307,6 +314,7 @@ export interface FileRoutesByTo {
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
   '/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
+  '/app/blocks': typeof AuthenticatedAppBlocksRoute
   '/app/campaigns': typeof AuthenticatedAppCampaignsRoute
   '/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/app/customers': typeof AuthenticatedAppCustomersRoute
@@ -348,6 +356,7 @@ export interface FileRoutesById {
   '/_authenticated/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
   '/_authenticated/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
+  '/_authenticated/app/blocks': typeof AuthenticatedAppBlocksRoute
   '/_authenticated/app/campaigns': typeof AuthenticatedAppCampaignsRoute
   '/_authenticated/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/_authenticated/app/customers': typeof AuthenticatedAppCustomersRoute
@@ -389,6 +398,7 @@ export interface FileRouteTypes {
     | '/app/agenda'
     | '/app/ai'
     | '/app/birthdays'
+    | '/app/blocks'
     | '/app/campaigns'
     | '/app/coupons'
     | '/app/customers'
@@ -426,6 +436,7 @@ export interface FileRouteTypes {
     | '/app/agenda'
     | '/app/ai'
     | '/app/birthdays'
+    | '/app/blocks'
     | '/app/campaigns'
     | '/app/coupons'
     | '/app/customers'
@@ -466,6 +477,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/agenda'
     | '/_authenticated/app/ai'
     | '/_authenticated/app/birthdays'
+    | '/_authenticated/app/blocks'
     | '/_authenticated/app/campaigns'
     | '/_authenticated/app/coupons'
     | '/_authenticated/app/customers'
@@ -704,6 +716,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCampaignsRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/blocks': {
+      id: '/_authenticated/app/blocks'
+      path: '/blocks'
+      fullPath: '/app/blocks'
+      preLoaderRoute: typeof AuthenticatedAppBlocksRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/birthdays': {
       id: '/_authenticated/app/birthdays'
       path: '/birthdays'
@@ -796,6 +815,7 @@ interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppAgendaRoute: typeof AuthenticatedAppAgendaRoute
   AuthenticatedAppAiRoute: typeof AuthenticatedAppAiRoute
   AuthenticatedAppBirthdaysRoute: typeof AuthenticatedAppBirthdaysRoute
+  AuthenticatedAppBlocksRoute: typeof AuthenticatedAppBlocksRoute
   AuthenticatedAppCampaignsRoute: typeof AuthenticatedAppCampaignsRoute
   AuthenticatedAppCouponsRoute: typeof AuthenticatedAppCouponsRoute
   AuthenticatedAppCustomersRoute: typeof AuthenticatedAppCustomersRoute
@@ -815,6 +835,7 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppAgendaRoute: AuthenticatedAppAgendaRoute,
   AuthenticatedAppAiRoute: AuthenticatedAppAiRoute,
   AuthenticatedAppBirthdaysRoute: AuthenticatedAppBirthdaysRoute,
+  AuthenticatedAppBlocksRoute: AuthenticatedAppBlocksRoute,
   AuthenticatedAppCampaignsRoute: AuthenticatedAppCampaignsRoute,
   AuthenticatedAppCouponsRoute: AuthenticatedAppCouponsRoute,
   AuthenticatedAppCustomersRoute: AuthenticatedAppCustomersRoute,

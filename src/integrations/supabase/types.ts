@@ -288,6 +288,7 @@ export type Database = {
           address: string | null
           app_icon_url: string | null
           banner_url: string | null
+          buffer_min: number
           city: string | null
           created_at: string
           custom_domain: string | null
@@ -323,6 +324,7 @@ export type Database = {
           address?: string | null
           app_icon_url?: string | null
           banner_url?: string | null
+          buffer_min?: number
           city?: string | null
           created_at?: string
           custom_domain?: string | null
@@ -358,6 +360,7 @@ export type Database = {
           address?: string | null
           app_icon_url?: string | null
           banner_url?: string | null
+          buffer_min?: number
           city?: string | null
           created_at?: string
           custom_domain?: string | null
@@ -1374,6 +1377,54 @@ export type Database = {
           },
           {
             foreignKeyName: "staff_services_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_blocks: {
+        Row: {
+          company_id: string
+          created_at: string
+          ends_at: string
+          id: string
+          reason: string | null
+          staff_id: string | null
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          ends_at: string
+          id?: string
+          reason?: string | null
+          staff_id?: string | null
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          ends_at?: string
+          id?: string
+          reason?: string | null
+          staff_id?: string | null
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_blocks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_blocks_staff_id_fkey"
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "staff"
