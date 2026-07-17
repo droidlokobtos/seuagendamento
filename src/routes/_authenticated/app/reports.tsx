@@ -108,11 +108,44 @@ function Reports() {
           <h1 className="text-2xl font-semibold">Relatórios</h1>
           <p className="text-sm text-muted-foreground">Desempenho do seu negócio.</p>
         </div>
-        <div className="flex gap-2 items-end">
+        <div className="flex gap-2 items-end flex-wrap">
           <div><Label className="text-xs">De</Label>
             <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-40" /></div>
           <div><Label className="text-xs">Até</Label>
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-40" /></div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const rows: (string | number)[][] = [
+                ["Relatório", `${from} a ${to}`],
+                [],
+                ["Resumo"],
+                ["Faturamento", totals.income],
+                ["Despesas", totals.expense],
+                ["Saldo", totals.balance],
+                ["Ticket médio", totals.ticket],
+                ["Agendamentos", totals.apptTotal],
+                ["Concluídos", totals.done],
+                ["Cancelados/faltas", totals.cancelled],
+                ["Clientes atendidos", totals.uniqueCustomers],
+                [],
+                ["Financeiro por categoria"],
+                ["Categoria", "Entradas", "Saídas"],
+                ...byCategory.map(([cat, v]) => [cat, v.in, v.out]),
+                [],
+                ["Estoque baixo"],
+                ["Produto", "Estoque", "Mínimo", "Unidade"],
+                ...lowStock.map((p: any) => [p.name, Number(p.stock_qty), Number(p.min_stock), p.unit ?? ""]),
+              ];
+              downloadCsv(`relatorio_${from}_a_${to}.csv`, rows);
+            }}
+          >
+            <Download className="h-4 w-4 mr-1" /> Exportar CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            <Printer className="h-4 w-4 mr-1" /> Imprimir / PDF
+          </Button>
         </div>
       </div>
 
