@@ -31,6 +31,8 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NotificationsBell } from "@/components/app/NotificationsBell";
+import { getImpersonation, stopImpersonation } from "@/lib/impersonation";
+import { ShieldAlert } from "lucide-react";
 
 const NAV = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -57,10 +59,11 @@ const NAV = [
 
 export function AppLayout({ children }: { children?: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const { user, signOut } = useAuth();
+  const { user, signOut, isSuperAdmin } = useAuth();
   const { companies, activeCompany, setActiveCompanyId } = useCompany();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const impersonating = isSuperAdmin && !!getImpersonation();
 
   const isActive = (to: string, end?: boolean) =>
     end ? path === to : path === to || path.startsWith(to + "/");
@@ -110,7 +113,28 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex flex-col">
+      {impersonating && (
+        <div className="bg-amber-500 text-black px-4 py-2 text-sm flex items-center gap-3 flex-wrap sticky top-0 z-40">
+          <ShieldAlert className="h-4 w-4 shrink-0" />
+          <span className="font-medium">
+            Você está operando como Admin Master no ambiente de{" "}
+            <strong>{activeCompany?.name}</strong>.
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto bg-white/90 hover:bg-white border-black/20"
+            onClick={async () => {
+              await stopImpersonation();
+              void navigate({ to: "/admin" });
+            }}
+          >
+            Voltar para Admin Master
+          </Button>
+        </div>
+      )}
+      <div className="flex flex-1 min-h-0">
       <aside className="hidden md:flex md:w-64 shrink-0 border-r border-border/60 bg-card/50 flex-col">
         <div className="h-16 flex items-center gap-2 px-4 border-b border-border/60">
           <Brand />
@@ -178,6 +202,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
           </div>
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">{children ?? <Outlet />}</main>
+      </div>
       </div>
     </div>
   );

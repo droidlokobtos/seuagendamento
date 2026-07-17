@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Search, Building2 } from "lucide-react";
+import { Plus, Search, Building2, LogIn } from "lucide-react";
 import { dateBR, slugify, statusLabel } from "@/lib/format";
 import { toast } from "sonner";
+import { startImpersonation } from "@/lib/impersonation";
 
 export const Route = createFileRoute("/_authenticated/admin/companies")({
   component: Companies,
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/admin/companies")({
 
 function Companies() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [open, setOpen] = useState(false);
@@ -116,7 +118,8 @@ function Companies() {
                     <th className="text-left p-3">Nicho</th>
                     <th className="text-left p-3">Status</th>
                     <th className="text-left p-3">Próx. venc.</th>
-                    <th className="text-left p-3 pr-6">Criada</th>
+                    <th className="text-left p-3">Criada</th>
+                    <th className="text-right p-3 pr-6">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -136,7 +139,20 @@ function Companies() {
                           </span>
                         </td>
                         <td className="p-3 text-muted-foreground">{dateBR(c.next_due_at)}</td>
-                        <td className="p-3 pr-6 text-muted-foreground">{dateBR(c.created_at)}</td>
+                        <td className="p-3 text-muted-foreground">{dateBR(c.created_at)}</td>
+                        <td className="p-3 pr-6 text-right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={async () => {
+                              await startImpersonation({ id: c.id, name: c.name });
+                              toast.success(`Entrando como admin de ${c.name}`);
+                              void navigate({ to: "/app" });
+                            }}
+                          >
+                            <LogIn className="h-3.5 w-3.5 mr-1.5" /> Entrar como admin
+                          </Button>
+                        </td>
                       </tr>
                     );
                   })}
