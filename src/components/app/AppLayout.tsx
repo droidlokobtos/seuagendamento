@@ -23,6 +23,7 @@ import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { NotificationsBell } from "@/components/app/NotificationsBell";
 
 const NAV = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -156,6 +157,9 @@ export function AppLayout({ children }: { children?: ReactNode }) {
               {activeCompany?.name}
             </div>
           )}
+          <div className="ml-auto flex items-center gap-1">
+            <NotificationsBell />
+          </div>
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">{children ?? <Outlet />}</main>
       </div>

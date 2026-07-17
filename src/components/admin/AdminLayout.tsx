@@ -1,6 +1,6 @@
 import { Link, Outlet, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { LayoutDashboard, Building2, Tag, CreditCard, Settings, LogOut, Sparkles, Menu } from "lucide-react";
+import { LayoutDashboard, Building2, Tag, CreditCard, Settings, LogOut, Sparkles, Menu, ShieldCheck } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -10,6 +10,7 @@ const NAV = [
   { to: "/admin/companies", label: "Empresas", icon: Building2 },
   { to: "/admin/niches", label: "Nichos", icon: Tag },
   { to: "/admin/payments", label: "Pagamentos", icon: CreditCard },
+  { to: "/admin/logs", label: "Logs de acesso", icon: ShieldCheck },
   { to: "/admin/settings", label: "Configurações", icon: Settings },
 ];
 

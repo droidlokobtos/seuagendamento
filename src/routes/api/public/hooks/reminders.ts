@@ -31,7 +31,7 @@ export const Route = createFileRoute("/api/public/hooks/reminders")({
             .eq("id", r.appointment_id)
             .maybeSingle();
 
-          if (!appt || appt.status === "cancelled" || appt.status === "done") {
+          if (!appt || appt.status === "cancelled" || appt.status === "completed" || appt.status === "no_show") {
             await supabaseAdmin.from("appointment_reminders").update({ sent_at: now }).eq("id", r.id);
             continue;
           }
