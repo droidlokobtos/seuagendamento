@@ -14,6 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_access_logs: {
+        Row: {
+          created_at: string
+          email: string | null
+          event: string
+          id: string
+          ip: string | null
+          metadata: Json | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          event: string
+          id?: string
+          ip?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          event?: string
+          id?: string
+          ip?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      appointment_reminders: {
+        Row: {
+          appointment_id: string
+          channel: string
+          company_id: string
+          created_at: string
+          id: string
+          kind: string
+          scheduled_for: string
+          sent_at: string | null
+        }
+        Insert: {
+          appointment_id: string
+          channel?: string
+          company_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          scheduled_for: string
+          sent_at?: string | null
+        }
+        Update: {
+          appointment_id?: string
+          channel?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          scheduled_for?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_reminders_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reminders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_services: {
         Row: {
           appointment_id: string
@@ -55,11 +136,17 @@ export type Database = {
       }
       appointments: {
         Row: {
+          cashback_earned_cents: number
           company_id: string
+          coupon_code: string | null
+          coupon_id: string | null
           created_at: string
           customer_id: string | null
+          discount_cents: number
           ends_at: string
           id: string
+          loyalty_credited_at: string | null
+          loyalty_points_earned: number
           notes: string | null
           staff_id: string | null
           starts_at: string
@@ -68,11 +155,17 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cashback_earned_cents?: number
           company_id: string
+          coupon_code?: string | null
+          coupon_id?: string | null
           created_at?: string
           customer_id?: string | null
+          discount_cents?: number
           ends_at: string
           id?: string
+          loyalty_credited_at?: string | null
+          loyalty_points_earned?: number
           notes?: string | null
           staff_id?: string | null
           starts_at: string
@@ -81,11 +174,17 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cashback_earned_cents?: number
           company_id?: string
+          coupon_code?: string | null
+          coupon_id?: string | null
           created_at?: string
           customer_id?: string | null
+          discount_cents?: number
           ends_at?: string
           id?: string
+          loyalty_credited_at?: string | null
+          loyalty_points_earned?: number
           notes?: string | null
           staff_id?: string | null
           starts_at?: string
@@ -99,6 +198,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
             referencedColumns: ["id"]
           },
           {
@@ -285,6 +391,7 @@ export type Database = {
           id: string
           max_uses: number | null
           updated_at: string
+          used_count: number
           uses_count: number
           valid_from: string | null
           valid_until: string | null
@@ -300,6 +407,7 @@ export type Database = {
           id?: string
           max_uses?: number | null
           updated_at?: string
+          used_count?: number
           uses_count?: number
           valid_from?: string | null
           valid_until?: string | null
@@ -315,6 +423,7 @@ export type Database = {
           id?: string
           max_uses?: number | null
           updated_at?: string
+          used_count?: number
           uses_count?: number
           valid_from?: string | null
           valid_until?: string | null
@@ -645,6 +754,50 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string | null
+          company_id: string
+          created_at: string
+          id: string
+          kind: string
+          link: string | null
+          metadata: Json | null
+          read_at: string | null
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          link?: string | null
+          metadata?: Json | null
+          read_at?: string | null
+          title: string
+        }
+        Update: {
+          body?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          link?: string | null
+          metadata?: Json | null
+          read_at?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_methods: {
         Row: {
           company_id: string
@@ -804,6 +957,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          must_change_password: boolean
           phone: string | null
           updated_at: string
         }
@@ -812,6 +966,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          must_change_password?: boolean
           phone?: string | null
           updated_at?: string
         }
@@ -820,6 +975,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          must_change_password?: boolean
           phone?: string | null
           updated_at?: string
         }
@@ -1029,6 +1185,17 @@ export type Database = {
       is_company_member: { Args: { _company: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       user_company_ids: { Args: { _user_id: string }; Returns: string[] }
+      validate_coupon: {
+        Args: { _code: string; _company: string; _subtotal_cents: number }
+        Returns: {
+          code: string
+          discount_cents: number
+          discount_type: string
+          discount_value: number
+          id: string
+          message: string
+        }[]
+      }
     }
     Enums: {
       app_role: "super_admin" | "company_admin" | "staff" | "customer"
