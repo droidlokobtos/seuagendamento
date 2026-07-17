@@ -71,6 +71,9 @@ function BookingPage() {
   const [dateStr, setDateStr] = useState<string>(new Date().toISOString().slice(0, 10));
   const [timeStr, setTimeStr] = useState<string>("");
   const [form, setForm] = useState({ name: "", phone: "", email: "", notes: "" });
+  const [couponCode, setCouponCode] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; discount_cents: number; message: string } | null>(null);
+  const [validating, setValidating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ starts_at: string } | null>(null);
 
@@ -183,6 +186,28 @@ function BookingPage() {
     setStaff(null); setTimeStr("");
   };
 
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setValidating(true);
+    try {
+      const subtotal = selected.reduce((s, x) => s + x.price_cents, 0);
+      const { data, error } = await supabase.rpc("validate_coupon", {
+        _company: companyId, _code: couponCode.trim(), _subtotal_cents: subtotal,
+      });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row || row.message !== "ok") {
+        setCoupon(null);
+        toast.error(row?.message || "Cupom inválido");
+      } else {
+        setCoupon({ code: row.code, discount_cents: row.discount_cents, message: row.message });
+        toast.success(`Cupom aplicado: -${brl(row.discount_cents / 100)}`);
+      }
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally { setValidating(false); }
+  };
+
   const submit = async () => {
     setSubmitting(true);
     try {
@@ -195,6 +220,7 @@ function BookingPage() {
           service_ids: selected.map((s) => s.id),
           staff_id: staff?.id ?? null,
           starts_at: new Date(iso).toISOString(),
+          coupon_code: coupon?.code ?? "",
           customer: form,
         }),
       });
@@ -358,7 +384,19 @@ function BookingPage() {
                 <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
               <div><Label>Observações (opcional)</Label>
                 <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-              <Summary selected={selected} staff={staff} dateStr={dateStr} timeStr={timeStr} totalMin={totalMin} totalPrice={totalPrice} />
+              <div>
+                <Label>Cupom de desconto (opcional)</Label>
+                <div className="flex gap-2">
+                  <Input value={couponCode} onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCoupon(null); }} placeholder="CODIGO" />
+                  <Button type="button" variant="outline" disabled={validating || !couponCode.trim()} onClick={applyCoupon}>
+                    {validating ? "…" : coupon ? "OK" : "Aplicar"}
+                  </Button>
+                </div>
+                {coupon && (
+                  <p className="text-xs text-green-700 mt-1">Desconto de {brl(coupon.discount_cents / 100)} aplicado.</p>
+                )}
+              </div>
+              <Summary selected={selected} staff={staff} dateStr={dateStr} timeStr={timeStr} totalMin={totalMin} totalPrice={totalPrice} discountCents={coupon?.discount_cents ?? 0} />
             </CardContent>
           </Card>
         )}
@@ -449,10 +487,11 @@ function Steps({ step, accent }: { step: number; accent: string }) {
   );
 }
 
-function Summary({ selected, staff, dateStr, timeStr, totalMin, totalPrice }: {
-  selected: Service[]; staff: Staff | null; dateStr: string; timeStr: string; totalMin: number; totalPrice: number;
+function Summary({ selected, staff, dateStr, timeStr, totalMin, totalPrice, discountCents = 0 }: {
+  selected: Service[]; staff: Staff | null; dateStr: string; timeStr: string; totalMin: number; totalPrice: number; discountCents?: number;
 }) {
   const d = dateStr ? new Date(dateStr + "T00:00:00") : null;
+  const final = Math.max(0, totalPrice - discountCents / 100);
   return (
     <div className="rounded-xl bg-muted/40 p-3 text-sm space-y-1">
       <p className="font-semibold">Resumo</p>
@@ -465,8 +504,13 @@ function Summary({ selected, staff, dateStr, timeStr, totalMin, totalPrice }: {
         {staff ? `Com ${staff.name}` : "Qualquer profissional"} ·{" "}
         {d ? d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) : "—"}{timeStr ? ` às ${timeStr}` : ""} · {totalMin} min
       </div>
+      {discountCents > 0 && (
+        <div className="flex justify-between text-xs text-green-700">
+          <span>Desconto</span><span>-{brl(discountCents / 100)}</span>
+        </div>
+      )}
       <div className="flex justify-between font-semibold border-t pt-1 mt-1">
-        <span>Total</span><span>{brl(totalPrice)}</span>
+        <span>Total</span><span>{brl(final)}</span>
       </div>
     </div>
   );
