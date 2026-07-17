@@ -14,7 +14,9 @@ import {
   Wallet,
   Package,
   BarChart3,
-} from "lucide-react";
+  Ticket,
+  Award,
+
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
