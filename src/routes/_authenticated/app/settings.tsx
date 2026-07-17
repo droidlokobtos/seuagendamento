@@ -31,10 +31,12 @@ function SettingsPage() {
   const companyId = activeCompany!.id;
 
   const [form, setForm] = useState({
-    name: "", slug: "", phone: "", whatsapp: "", email: "",
-    logo_url: "", primary_color: "#3b2a1f", secondary_color: "#c9a961",
-    app_icon_url: "", custom_domain: "", short_description: "", city: "", state: "",
-    listed_in_marketplace: false,
+    name: "", slug: "", phone: "", whatsapp: "", email: "", address: "",
+    logo_url: "", banner_url: "", primary_color: "#3b2a1f", secondary_color: "#c9a961",
+    app_icon_url: "", custom_domain: "", short_description: "", description: "",
+    welcome_message: "", city: "", state: "",
+    instagram_url: "", facebook_url: "", tiktok_url: "", website_url: "",
+    listed_in_marketplace: false, show_staff_on_portal: true, show_reviews_on_portal: true,
   });
 
   const { data: company } = useQuery({
@@ -44,21 +46,20 @@ function SettingsPage() {
 
   useEffect(() => {
     if (company) {
+      const c: any = company;
       setForm({
-        name: company.name ?? "",
-        slug: company.slug ?? "",
-        phone: company.phone ?? "",
-        whatsapp: company.whatsapp ?? "",
-        email: company.email ?? "",
-        logo_url: company.logo_url ?? "",
-        primary_color: company.primary_color ?? "#3b2a1f",
-        secondary_color: company.secondary_color ?? "#c9a961",
-        app_icon_url: (company as any).app_icon_url ?? "",
-        custom_domain: (company as any).custom_domain ?? "",
-        short_description: (company as any).short_description ?? "",
-        city: (company as any).city ?? "",
-        state: (company as any).state ?? "",
-        listed_in_marketplace: !!(company as any).listed_in_marketplace,
+        name: c.name ?? "", slug: c.slug ?? "", phone: c.phone ?? "", whatsapp: c.whatsapp ?? "",
+        email: c.email ?? "", address: c.address ?? "",
+        logo_url: c.logo_url ?? "", banner_url: c.banner_url ?? "",
+        primary_color: c.primary_color ?? "#3b2a1f", secondary_color: c.secondary_color ?? "#c9a961",
+        app_icon_url: c.app_icon_url ?? "", custom_domain: c.custom_domain ?? "",
+        short_description: c.short_description ?? "", description: c.description ?? "",
+        welcome_message: c.welcome_message ?? "", city: c.city ?? "", state: c.state ?? "",
+        instagram_url: c.instagram_url ?? "", facebook_url: c.facebook_url ?? "",
+        tiktok_url: c.tiktok_url ?? "", website_url: c.website_url ?? "",
+        listed_in_marketplace: !!c.listed_in_marketplace,
+        show_staff_on_portal: c.show_staff_on_portal !== false,
+        show_reviews_on_portal: c.show_reviews_on_portal !== false,
       });
     }
   }, [company]);
