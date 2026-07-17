@@ -6,8 +6,24 @@ import { useCompany } from "@/lib/company";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CalendarDays, DollarSign, Users, Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CalendarDays, DollarSign, Users, Package, Download, Printer } from "lucide-react";
 import { brl } from "@/lib/format";
+
+function downloadCsv(filename: string, rows: (string | number)[][]) {
+  const escape = (v: string | number) => {
+    const s = String(v ?? "");
+    return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const csv = "\uFEFF" + rows.map((r) => r.map(escape).join(";")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export const Route = createFileRoute("/_authenticated/app/reports")({
   component: Reports,
