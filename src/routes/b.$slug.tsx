@@ -228,9 +228,12 @@ function BookingPage() {
     setSubmitting(true);
     try {
       const iso = `${dateStr}T${timeStr}:00`;
+      const { data: s } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (s.session?.access_token) headers.Authorization = `Bearer ${s.session.access_token}`;
       const res = await fetch("/api/public/book", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           slug: company.slug,
           service_ids: selected.map((s) => s.id),
