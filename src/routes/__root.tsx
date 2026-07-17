@@ -83,14 +83,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Plataforma white label de agendamento para barbearias, salões, manicures e designers de sobrancelhas. Gestão completa com identidade visual própria.",
       },
-      { property: "og:title", content: "BeautySaaS — Agendamento white label" },
+      { property: "og:title", content: "BeautySaaS — Sistema de agendamento white label" },
       {
         property: "og:description",
         content:
-          "Agenda, clientes, financeiro e marca própria em um único sistema. R$ 49,90 por mês.",
+          "Plataforma white label de agendamento para barbearias, salões, manicures e designers de sobrancelhas. Gestão completa com identidade visual própria.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "BeautySaaS — Sistema de agendamento white label" },
+      { name: "twitter:description", content: "Plataforma white label de agendamento para barbearias, salões, manicures e designers de sobrancelhas. Gestão completa com identidade visual própria." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7eccc709-dfdf-413f-934a-462f962c9339/id-preview-71f37bd3--2ca49ee1-054e-42b1-aa32-f886e5da6ed8.lovable.app-1784315384853.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7eccc709-dfdf-413f-934a-462f962c9339/id-preview-71f37bd3--2ca49ee1-054e-42b1-aa32-f886e5da6ed8.lovable.app-1784315384853.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
