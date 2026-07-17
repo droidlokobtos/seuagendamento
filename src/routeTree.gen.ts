@@ -25,8 +25,10 @@ import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppServicesRouteImport } from './routes/_authenticated/app/services'
 import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app/reports'
 import { Route as AuthenticatedAppProductsRouteImport } from './routes/_authenticated/app/products'
+import { Route as AuthenticatedAppLoyaltyRouteImport } from './routes/_authenticated/app/loyalty'
 import { Route as AuthenticatedAppFinancesRouteImport } from './routes/_authenticated/app/finances'
 import { Route as AuthenticatedAppCustomersRouteImport } from './routes/_authenticated/app/customers'
+import { Route as AuthenticatedAppCouponsRouteImport } from './routes/_authenticated/app/coupons'
 import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app/agenda'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
@@ -115,6 +117,11 @@ const AuthenticatedAppProductsRoute =
     path: '/products',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
+const AuthenticatedAppLoyaltyRoute = AuthenticatedAppLoyaltyRouteImport.update({
+  id: '/loyalty',
+  path: '/loyalty',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any)
 const AuthenticatedAppFinancesRoute =
   AuthenticatedAppFinancesRouteImport.update({
     id: '/finances',
@@ -127,6 +134,11 @@ const AuthenticatedAppCustomersRoute =
     path: '/customers',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
+const AuthenticatedAppCouponsRoute = AuthenticatedAppCouponsRouteImport.update({
+  id: '/coupons',
+  path: '/coupons',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any)
 const AuthenticatedAppAgendaRoute = AuthenticatedAppAgendaRouteImport.update({
   id: '/agenda',
   path: '/agenda',
@@ -170,8 +182,10 @@ export interface FileRoutesByFullPath {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/app/customers': typeof AuthenticatedAppCustomersRoute
   '/app/finances': typeof AuthenticatedAppFinancesRoute
+  '/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
   '/app/products': typeof AuthenticatedAppProductsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/services': typeof AuthenticatedAppServicesRoute
@@ -192,8 +206,10 @@ export interface FileRoutesByTo {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/app/customers': typeof AuthenticatedAppCustomersRoute
   '/app/finances': typeof AuthenticatedAppFinancesRoute
+  '/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
   '/app/products': typeof AuthenticatedAppProductsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/services': typeof AuthenticatedAppServicesRoute
@@ -218,8 +234,10 @@ export interface FileRoutesById {
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/_authenticated/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/_authenticated/app/customers': typeof AuthenticatedAppCustomersRoute
   '/_authenticated/app/finances': typeof AuthenticatedAppFinancesRoute
+  '/_authenticated/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
   '/_authenticated/app/products': typeof AuthenticatedAppProductsRoute
   '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
   '/_authenticated/app/services': typeof AuthenticatedAppServicesRoute
@@ -244,8 +262,10 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/settings'
     | '/app/agenda'
+    | '/app/coupons'
     | '/app/customers'
     | '/app/finances'
+    | '/app/loyalty'
     | '/app/products'
     | '/app/reports'
     | '/app/services'
@@ -266,8 +286,10 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/settings'
     | '/app/agenda'
+    | '/app/coupons'
     | '/app/customers'
     | '/app/finances'
+    | '/app/loyalty'
     | '/app/products'
     | '/app/reports'
     | '/app/services'
@@ -291,8 +313,10 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/settings'
     | '/_authenticated/app/agenda'
+    | '/_authenticated/app/coupons'
     | '/_authenticated/app/customers'
     | '/_authenticated/app/finances'
+    | '/_authenticated/app/loyalty'
     | '/_authenticated/app/products'
     | '/_authenticated/app/reports'
     | '/_authenticated/app/services'
@@ -425,6 +449,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppProductsRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/loyalty': {
+      id: '/_authenticated/app/loyalty'
+      path: '/loyalty'
+      fullPath: '/app/loyalty'
+      preLoaderRoute: typeof AuthenticatedAppLoyaltyRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/finances': {
       id: '/_authenticated/app/finances'
       path: '/finances'
@@ -437,6 +468,13 @@ declare module '@tanstack/react-router' {
       path: '/customers'
       fullPath: '/app/customers'
       preLoaderRoute: typeof AuthenticatedAppCustomersRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/coupons': {
+      id: '/_authenticated/app/coupons'
+      path: '/coupons'
+      fullPath: '/app/coupons'
+      preLoaderRoute: typeof AuthenticatedAppCouponsRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
     '/_authenticated/app/agenda': {
@@ -501,8 +539,10 @@ const AuthenticatedAdminRouteRouteWithChildren =
 
 interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppAgendaRoute: typeof AuthenticatedAppAgendaRoute
+  AuthenticatedAppCouponsRoute: typeof AuthenticatedAppCouponsRoute
   AuthenticatedAppCustomersRoute: typeof AuthenticatedAppCustomersRoute
   AuthenticatedAppFinancesRoute: typeof AuthenticatedAppFinancesRoute
+  AuthenticatedAppLoyaltyRoute: typeof AuthenticatedAppLoyaltyRoute
   AuthenticatedAppProductsRoute: typeof AuthenticatedAppProductsRoute
   AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
   AuthenticatedAppServicesRoute: typeof AuthenticatedAppServicesRoute
@@ -513,8 +553,10 @@ interface AuthenticatedAppRouteRouteChildren {
 
 const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppAgendaRoute: AuthenticatedAppAgendaRoute,
+  AuthenticatedAppCouponsRoute: AuthenticatedAppCouponsRoute,
   AuthenticatedAppCustomersRoute: AuthenticatedAppCustomersRoute,
   AuthenticatedAppFinancesRoute: AuthenticatedAppFinancesRoute,
+  AuthenticatedAppLoyaltyRoute: AuthenticatedAppLoyaltyRoute,
   AuthenticatedAppProductsRoute: AuthenticatedAppProductsRoute,
   AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
   AuthenticatedAppServicesRoute: AuthenticatedAppServicesRoute,
