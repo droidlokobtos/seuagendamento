@@ -8,12 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Search, Building2, LogIn, KeyRound } from "lucide-react";
+import { Plus, Search, Building2, LogIn, KeyRound, Trash2 } from "lucide-react";
 import { dateBR, slugify, statusLabel } from "@/lib/format";
 import { toast } from "sonner";
 import { startImpersonation } from "@/lib/impersonation";
 import { useServerFn } from "@tanstack/react-start";
-import { resetUserPassword } from "@/lib/admin-users.functions";
+import { resetUserPassword, deleteCompany } from "@/lib/admin-users.functions";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/admin/companies")({
   component: Companies,
@@ -26,7 +27,10 @@ function Companies() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [open, setOpen] = useState(false);
   const [pwOpen, setPwOpen] = useState<{ email: string } | null>(null);
+  const [delOpen, setDelOpen] = useState<{ id: string; name: string } | null>(null);
   const resetPw = useServerFn(resetUserPassword);
+  const delCompany = useServerFn(deleteCompany);
+  const { isSuperAdmin } = useAuth();
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["admin-companies"],
@@ -161,6 +165,16 @@ function Companies() {
                               <KeyRound className="h-3.5 w-3.5 mr-1.5" /> Resetar senha
                             </Button>
                           )}
+                          {isSuperAdmin && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => setDelOpen({ id: c.id, name: c.name })}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Excluir
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     );
@@ -189,6 +203,24 @@ function Companies() {
           />
         )}
       </Dialog>
+
+      <Dialog open={!!delOpen} onOpenChange={(o) => !o && setDelOpen(null)}>
+        {delOpen && (
+          <DeleteCompanyDialog
+            name={delOpen.name}
+            onConfirm={async () => {
+              try {
+                await delCompany({ data: { company_id: delOpen.id } });
+                toast.success(`Empresa "${delOpen.name}" excluída com sucesso.`);
+                setDelOpen(null);
+                qc.invalidateQueries({ queryKey: ["admin-companies"] });
+              } catch (e: any) {
+                toast.error(e.message ?? "Erro ao excluir empresa.");
+              }
+            }}
+          />
+        )}
+      </Dialog>
     </div>
   );
 }
@@ -207,6 +239,44 @@ function ResetPasswordDialog({ email, onSubmit, busy }: { email: string; onSubmi
       </div>
       <DialogFooter>
         <Button onClick={() => onSubmit(pw)} disabled={busy || pw.length < 8}>Redefinir</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
+function DeleteCompanyDialog({ name, onConfirm }: { name: string; onConfirm: () => Promise<void> }) {
+  const [confirmText, setConfirmText] = useState("");
+  const [busy, setBusy] = useState(false);
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle className="text-destructive flex items-center gap-2">
+          <Trash2 className="h-5 w-5" /> Excluir empresa
+        </DialogTitle>
+      </DialogHeader>
+      <div className="space-y-3">
+        <p className="text-sm">
+          Tem certeza de que deseja excluir <b>{name}</b>? Esta ação é <b>permanente</b> e não poderá ser desfeita.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Todos os dados relacionados (agendamentos, clientes, serviços, financeiro, estoque, fidelidade, etc.) serão removidos.
+        </p>
+        <div>
+          <Label>Para confirmar, digite <b>EXCLUIR</b></Label>
+          <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="EXCLUIR" />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button
+          variant="destructive"
+          disabled={busy || confirmText.trim().toUpperCase() !== "EXCLUIR"}
+          onClick={async () => {
+            setBusy(true);
+            try { await onConfirm(); } finally { setBusy(false); }
+          }}
+        >
+          {busy ? "Excluindo…" : "Excluir permanentemente"}
+        </Button>
       </DialogFooter>
     </DialogContent>
   );
