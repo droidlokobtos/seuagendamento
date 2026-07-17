@@ -26,6 +26,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as BSlugMinhaContaRouteImport } from './routes/b.$slug.minha-conta'
 import { Route as BSlugEntrarRouteImport } from './routes/b.$slug.entrar'
 import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
+import { Route as AuthenticatedAppUsersRouteImport } from './routes/_authenticated/app/users'
 import { Route as AuthenticatedAppStaffRouteImport } from './routes/_authenticated/app/staff'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app/settings'
 import { Route as AuthenticatedAppServicesRouteImport } from './routes/_authenticated/app/services'
@@ -133,6 +134,11 @@ const ApiPublicBookRoute = ApiPublicBookRouteImport.update({
   id: '/api/public/book',
   path: '/api/public/book',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAppUsersRoute = AuthenticatedAppUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
 } as any)
 const AuthenticatedAppStaffRoute = AuthenticatedAppStaffRouteImport.update({
   id: '/staff',
@@ -289,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/app/services': typeof AuthenticatedAppServicesRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/staff': typeof AuthenticatedAppStaffRoute
+  '/app/users': typeof AuthenticatedAppUsersRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
@@ -327,6 +334,7 @@ export interface FileRoutesByTo {
   '/app/services': typeof AuthenticatedAppServicesRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/staff': typeof AuthenticatedAppStaffRoute
+  '/app/users': typeof AuthenticatedAppUsersRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
@@ -369,6 +377,7 @@ export interface FileRoutesById {
   '/_authenticated/app/services': typeof AuthenticatedAppServicesRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/app/staff': typeof AuthenticatedAppStaffRoute
+  '/_authenticated/app/users': typeof AuthenticatedAppUsersRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
@@ -411,6 +420,7 @@ export interface FileRouteTypes {
     | '/app/services'
     | '/app/settings'
     | '/app/staff'
+    | '/app/users'
     | '/api/public/book'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
@@ -449,6 +459,7 @@ export interface FileRouteTypes {
     | '/app/services'
     | '/app/settings'
     | '/app/staff'
+    | '/app/users'
     | '/api/public/book'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
@@ -490,6 +501,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/services'
     | '/_authenticated/app/settings'
     | '/_authenticated/app/staff'
+    | '/_authenticated/app/users'
     | '/api/public/book'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
@@ -631,6 +643,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/book'
       preLoaderRoute: typeof ApiPublicBookRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/app/users': {
+      id: '/_authenticated/app/users'
+      path: '/users'
+      fullPath: '/app/users'
+      preLoaderRoute: typeof AuthenticatedAppUsersRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
     }
     '/_authenticated/app/staff': {
       id: '/_authenticated/app/staff'
@@ -828,6 +847,7 @@ interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppServicesRoute: typeof AuthenticatedAppServicesRoute
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
   AuthenticatedAppStaffRoute: typeof AuthenticatedAppStaffRoute
+  AuthenticatedAppUsersRoute: typeof AuthenticatedAppUsersRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
@@ -848,6 +868,7 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppServicesRoute: AuthenticatedAppServicesRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
   AuthenticatedAppStaffRoute: AuthenticatedAppStaffRoute,
+  AuthenticatedAppUsersRoute: AuthenticatedAppUsersRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
 
