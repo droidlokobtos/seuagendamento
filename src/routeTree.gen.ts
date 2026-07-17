@@ -8,599 +8,599 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root";
-import { Route as ResetPasswordRouteImport } from "./routes/reset-password";
-import { Route as AuthRouteImport } from "./routes/auth";
-import { Route as AuthenticatedRouteRouteImport } from "./routes/_authenticated/route";
-import { Route as IndexRouteImport } from "./routes/index";
-import { Route as BSlugRouteImport } from "./routes/b.$slug";
-import { Route as AdminLogsRouteImport } from "./routes/admin/logs";
-import { Route as AuthenticatedNoAccessRouteImport } from "./routes/_authenticated/no-access";
-import { Route as AuthenticatedHomeRouteImport } from "./routes/_authenticated/home";
-import { Route as AuthenticatedChangePasswordRouteImport } from "./routes/_authenticated/change-password";
-import { Route as AuthenticatedAppRouteRouteImport } from "./routes/_authenticated/app/route";
-import { Route as AuthenticatedAdminRouteRouteImport } from "./routes/_authenticated/admin/route";
-import { Route as AuthenticatedAppIndexRouteImport } from "./routes/_authenticated/app/index";
-import { Route as AuthenticatedAdminIndexRouteImport } from "./routes/_authenticated/admin/index";
-import { Route as ApiPublicBookRouteImport } from "./routes/api/public/book";
-import { Route as AuthenticatedAppStaffRouteImport } from "./routes/_authenticated/app/staff";
-import { Route as AuthenticatedAppSettingsRouteImport } from "./routes/_authenticated/app/settings";
-import { Route as AuthenticatedAppServicesRouteImport } from "./routes/_authenticated/app/services";
-import { Route as AuthenticatedAppReportsRouteImport } from "./routes/_authenticated/app/reports";
-import { Route as AuthenticatedAppProductsRouteImport } from "./routes/_authenticated/app/products";
-import { Route as AuthenticatedAppLoyaltyRouteImport } from "./routes/_authenticated/app/loyalty";
-import { Route as AuthenticatedAppFinancesRouteImport } from "./routes/_authenticated/app/finances";
-import { Route as AuthenticatedAppCustomersRouteImport } from "./routes/_authenticated/app/customers";
-import { Route as AuthenticatedAppCouponsRouteImport } from "./routes/_authenticated/app/coupons";
-import { Route as AuthenticatedAppAgendaRouteImport } from "./routes/_authenticated/app/agenda";
-import { Route as AuthenticatedAdminSettingsRouteImport } from "./routes/_authenticated/admin/settings";
-import { Route as AuthenticatedAdminPaymentsRouteImport } from "./routes/_authenticated/admin/payments";
-import { Route as AuthenticatedAdminNichesRouteImport } from "./routes/_authenticated/admin/niches";
-import { Route as AuthenticatedAdminCompaniesRouteImport } from "./routes/_authenticated/admin/companies";
-import { Route as ApiPublicHooksRemindersRouteImport } from "./routes/api/public/hooks/reminders";
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as BSlugRouteImport } from './routes/b.$slug'
+import { Route as AdminLogsRouteImport } from './routes/admin/logs'
+import { Route as AuthenticatedNoAccessRouteImport } from './routes/_authenticated/no-access'
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
+import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticated/app/route'
+import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
+import { Route as AuthenticatedAppStaffRouteImport } from './routes/_authenticated/app/staff'
+import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app/settings'
+import { Route as AuthenticatedAppServicesRouteImport } from './routes/_authenticated/app/services'
+import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app/reports'
+import { Route as AuthenticatedAppProductsRouteImport } from './routes/_authenticated/app/products'
+import { Route as AuthenticatedAppLoyaltyRouteImport } from './routes/_authenticated/app/loyalty'
+import { Route as AuthenticatedAppFinancesRouteImport } from './routes/_authenticated/app/finances'
+import { Route as AuthenticatedAppCustomersRouteImport } from './routes/_authenticated/app/customers'
+import { Route as AuthenticatedAppCouponsRouteImport } from './routes/_authenticated/app/coupons'
+import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app/agenda'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
+import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
+import { Route as AuthenticatedAdminNichesRouteImport } from './routes/_authenticated/admin/niches'
+import { Route as AuthenticatedAdminCompaniesRouteImport } from './routes/_authenticated/admin/companies'
+import { Route as ApiPublicHooksRemindersRouteImport } from './routes/api/public/hooks/reminders'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: "/reset-password",
-  path: "/reset-password",
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthRoute = AuthRouteImport.update({
-  id: "/auth",
-  path: "/auth",
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: "/_authenticated",
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const IndexRoute = IndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const BSlugRoute = BSlugRouteImport.update({
-  id: "/b/$slug",
-  path: "/b/$slug",
+  id: '/b/$slug',
+  path: '/b/$slug',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AdminLogsRoute = AdminLogsRouteImport.update({
-  id: "/admin/logs",
-  path: "/admin/logs",
+  id: '/admin/logs',
+  path: '/admin/logs',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthenticatedNoAccessRoute = AuthenticatedNoAccessRouteImport.update({
-  id: "/no-access",
-  path: "/no-access",
+  id: '/no-access',
+  path: '/no-access',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
-  id: "/home",
-  path: "/home",
+  id: '/home',
+  path: '/home',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedChangePasswordRoute =
   AuthenticatedChangePasswordRouteImport.update({
-    id: "/change-password",
-    path: "/change-password",
+    id: '/change-password',
+    path: '/change-password',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAppRouteRoute = AuthenticatedAppRouteRouteImport.update({
-  id: "/app",
-  path: "/app",
+  id: '/app',
+  path: '/app',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
-  id: "/admin",
-  path: "/admin",
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any);
+} as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
-} as any);
+} as any)
 const ApiPublicBookRoute = ApiPublicBookRouteImport.update({
-  id: "/api/public/book",
-  path: "/api/public/book",
+  id: '/api/public/book',
+  path: '/api/public/book',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthenticatedAppStaffRoute = AuthenticatedAppStaffRouteImport.update({
-  id: "/staff",
-  path: "/staff",
+  id: '/staff',
+  path: '/staff',
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any);
+} as any)
 const AuthenticatedAppSettingsRoute =
   AuthenticatedAppSettingsRouteImport.update({
-    id: "/settings",
-    path: "/settings",
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => AuthenticatedAppRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAppServicesRoute =
   AuthenticatedAppServicesRouteImport.update({
-    id: "/services",
-    path: "/services",
+    id: '/services',
+    path: '/services',
     getParentRoute: () => AuthenticatedAppRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAppReportsRoute = AuthenticatedAppReportsRouteImport.update({
-  id: "/reports",
-  path: "/reports",
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any);
+} as any)
 const AuthenticatedAppProductsRoute =
   AuthenticatedAppProductsRouteImport.update({
-    id: "/products",
-    path: "/products",
+    id: '/products',
+    path: '/products',
     getParentRoute: () => AuthenticatedAppRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAppLoyaltyRoute = AuthenticatedAppLoyaltyRouteImport.update({
-  id: "/loyalty",
-  path: "/loyalty",
+  id: '/loyalty',
+  path: '/loyalty',
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any);
+} as any)
 const AuthenticatedAppFinancesRoute =
   AuthenticatedAppFinancesRouteImport.update({
-    id: "/finances",
-    path: "/finances",
+    id: '/finances',
+    path: '/finances',
     getParentRoute: () => AuthenticatedAppRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAppCustomersRoute =
   AuthenticatedAppCustomersRouteImport.update({
-    id: "/customers",
-    path: "/customers",
+    id: '/customers',
+    path: '/customers',
     getParentRoute: () => AuthenticatedAppRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAppCouponsRoute = AuthenticatedAppCouponsRouteImport.update({
-  id: "/coupons",
-  path: "/coupons",
+  id: '/coupons',
+  path: '/coupons',
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any);
+} as any)
 const AuthenticatedAppAgendaRoute = AuthenticatedAppAgendaRouteImport.update({
-  id: "/agenda",
-  path: "/agenda",
+  id: '/agenda',
+  path: '/agenda',
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any);
+} as any)
 const AuthenticatedAdminSettingsRoute =
   AuthenticatedAdminSettingsRouteImport.update({
-    id: "/settings",
-    path: "/settings",
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAdminPaymentsRoute =
   AuthenticatedAdminPaymentsRouteImport.update({
-    id: "/payments",
-    path: "/payments",
+    id: '/payments',
+    path: '/payments',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAdminNichesRoute =
   AuthenticatedAdminNichesRouteImport.update({
-    id: "/niches",
-    path: "/niches",
+    id: '/niches',
+    path: '/niches',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAdminCompaniesRoute =
   AuthenticatedAdminCompaniesRouteImport.update({
-    id: "/companies",
-    path: "/companies",
+    id: '/companies',
+    path: '/companies',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any);
+  } as any)
 const ApiPublicHooksRemindersRoute = ApiPublicHooksRemindersRouteImport.update({
-  id: "/api/public/hooks/reminders",
-  path: "/api/public/hooks/reminders",
+  id: '/api/public/hooks/reminders',
+  path: '/api/public/hooks/reminders',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute;
-  "/auth": typeof AuthRoute;
-  "/reset-password": typeof ResetPasswordRoute;
-  "/admin": typeof AuthenticatedAdminRouteRouteWithChildren;
-  "/app": typeof AuthenticatedAppRouteRouteWithChildren;
-  "/change-password": typeof AuthenticatedChangePasswordRoute;
-  "/home": typeof AuthenticatedHomeRoute;
-  "/no-access": typeof AuthenticatedNoAccessRoute;
-  "/admin/logs": typeof AdminLogsRoute;
-  "/b/$slug": typeof BSlugRoute;
-  "/admin/companies": typeof AuthenticatedAdminCompaniesRoute;
-  "/admin/niches": typeof AuthenticatedAdminNichesRoute;
-  "/admin/payments": typeof AuthenticatedAdminPaymentsRoute;
-  "/admin/settings": typeof AuthenticatedAdminSettingsRoute;
-  "/app/agenda": typeof AuthenticatedAppAgendaRoute;
-  "/app/coupons": typeof AuthenticatedAppCouponsRoute;
-  "/app/customers": typeof AuthenticatedAppCustomersRoute;
-  "/app/finances": typeof AuthenticatedAppFinancesRoute;
-  "/app/loyalty": typeof AuthenticatedAppLoyaltyRoute;
-  "/app/products": typeof AuthenticatedAppProductsRoute;
-  "/app/reports": typeof AuthenticatedAppReportsRoute;
-  "/app/services": typeof AuthenticatedAppServicesRoute;
-  "/app/settings": typeof AuthenticatedAppSettingsRoute;
-  "/app/staff": typeof AuthenticatedAppStaffRoute;
-  "/api/public/book": typeof ApiPublicBookRoute;
-  "/admin/": typeof AuthenticatedAdminIndexRoute;
-  "/app/": typeof AuthenticatedAppIndexRoute;
-  "/api/public/hooks/reminders": typeof ApiPublicHooksRemindersRoute;
+  '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/app': typeof AuthenticatedAppRouteRouteWithChildren
+  '/change-password': typeof AuthenticatedChangePasswordRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/no-access': typeof AuthenticatedNoAccessRoute
+  '/admin/logs': typeof AdminLogsRoute
+  '/b/$slug': typeof BSlugRoute
+  '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
+  '/admin/niches': typeof AuthenticatedAdminNichesRoute
+  '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/coupons': typeof AuthenticatedAppCouponsRoute
+  '/app/customers': typeof AuthenticatedAppCustomersRoute
+  '/app/finances': typeof AuthenticatedAppFinancesRoute
+  '/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
+  '/app/products': typeof AuthenticatedAppProductsRoute
+  '/app/reports': typeof AuthenticatedAppReportsRoute
+  '/app/services': typeof AuthenticatedAppServicesRoute
+  '/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/app/staff': typeof AuthenticatedAppStaffRoute
+  '/api/public/book': typeof ApiPublicBookRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/app/': typeof AuthenticatedAppIndexRoute
+  '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
 }
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/auth": typeof AuthRoute;
-  "/reset-password": typeof ResetPasswordRoute;
-  "/change-password": typeof AuthenticatedChangePasswordRoute;
-  "/home": typeof AuthenticatedHomeRoute;
-  "/no-access": typeof AuthenticatedNoAccessRoute;
-  "/admin/logs": typeof AdminLogsRoute;
-  "/b/$slug": typeof BSlugRoute;
-  "/admin/companies": typeof AuthenticatedAdminCompaniesRoute;
-  "/admin/niches": typeof AuthenticatedAdminNichesRoute;
-  "/admin/payments": typeof AuthenticatedAdminPaymentsRoute;
-  "/admin/settings": typeof AuthenticatedAdminSettingsRoute;
-  "/app/agenda": typeof AuthenticatedAppAgendaRoute;
-  "/app/coupons": typeof AuthenticatedAppCouponsRoute;
-  "/app/customers": typeof AuthenticatedAppCustomersRoute;
-  "/app/finances": typeof AuthenticatedAppFinancesRoute;
-  "/app/loyalty": typeof AuthenticatedAppLoyaltyRoute;
-  "/app/products": typeof AuthenticatedAppProductsRoute;
-  "/app/reports": typeof AuthenticatedAppReportsRoute;
-  "/app/services": typeof AuthenticatedAppServicesRoute;
-  "/app/settings": typeof AuthenticatedAppSettingsRoute;
-  "/app/staff": typeof AuthenticatedAppStaffRoute;
-  "/api/public/book": typeof ApiPublicBookRoute;
-  "/admin": typeof AuthenticatedAdminIndexRoute;
-  "/app": typeof AuthenticatedAppIndexRoute;
-  "/api/public/hooks/reminders": typeof ApiPublicHooksRemindersRoute;
+  '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/change-password': typeof AuthenticatedChangePasswordRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/no-access': typeof AuthenticatedNoAccessRoute
+  '/admin/logs': typeof AdminLogsRoute
+  '/b/$slug': typeof BSlugRoute
+  '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
+  '/admin/niches': typeof AuthenticatedAdminNichesRoute
+  '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/coupons': typeof AuthenticatedAppCouponsRoute
+  '/app/customers': typeof AuthenticatedAppCustomersRoute
+  '/app/finances': typeof AuthenticatedAppFinancesRoute
+  '/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
+  '/app/products': typeof AuthenticatedAppProductsRoute
+  '/app/reports': typeof AuthenticatedAppReportsRoute
+  '/app/services': typeof AuthenticatedAppServicesRoute
+  '/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/app/staff': typeof AuthenticatedAppStaffRoute
+  '/api/public/book': typeof ApiPublicBookRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
+  '/app': typeof AuthenticatedAppIndexRoute
+  '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  "/": typeof IndexRoute;
-  "/_authenticated": typeof AuthenticatedRouteRouteWithChildren;
-  "/auth": typeof AuthRoute;
-  "/reset-password": typeof ResetPasswordRoute;
-  "/_authenticated/admin": typeof AuthenticatedAdminRouteRouteWithChildren;
-  "/_authenticated/app": typeof AuthenticatedAppRouteRouteWithChildren;
-  "/_authenticated/change-password": typeof AuthenticatedChangePasswordRoute;
-  "/_authenticated/home": typeof AuthenticatedHomeRoute;
-  "/_authenticated/no-access": typeof AuthenticatedNoAccessRoute;
-  "/admin/logs": typeof AdminLogsRoute;
-  "/b/$slug": typeof BSlugRoute;
-  "/_authenticated/admin/companies": typeof AuthenticatedAdminCompaniesRoute;
-  "/_authenticated/admin/niches": typeof AuthenticatedAdminNichesRoute;
-  "/_authenticated/admin/payments": typeof AuthenticatedAdminPaymentsRoute;
-  "/_authenticated/admin/settings": typeof AuthenticatedAdminSettingsRoute;
-  "/_authenticated/app/agenda": typeof AuthenticatedAppAgendaRoute;
-  "/_authenticated/app/coupons": typeof AuthenticatedAppCouponsRoute;
-  "/_authenticated/app/customers": typeof AuthenticatedAppCustomersRoute;
-  "/_authenticated/app/finances": typeof AuthenticatedAppFinancesRoute;
-  "/_authenticated/app/loyalty": typeof AuthenticatedAppLoyaltyRoute;
-  "/_authenticated/app/products": typeof AuthenticatedAppProductsRoute;
-  "/_authenticated/app/reports": typeof AuthenticatedAppReportsRoute;
-  "/_authenticated/app/services": typeof AuthenticatedAppServicesRoute;
-  "/_authenticated/app/settings": typeof AuthenticatedAppSettingsRoute;
-  "/_authenticated/app/staff": typeof AuthenticatedAppStaffRoute;
-  "/api/public/book": typeof ApiPublicBookRoute;
-  "/_authenticated/admin/": typeof AuthenticatedAdminIndexRoute;
-  "/_authenticated/app/": typeof AuthenticatedAppIndexRoute;
-  "/api/public/hooks/reminders": typeof ApiPublicHooksRemindersRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/_authenticated/app': typeof AuthenticatedAppRouteRouteWithChildren
+  '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
+  '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/_authenticated/no-access': typeof AuthenticatedNoAccessRoute
+  '/admin/logs': typeof AdminLogsRoute
+  '/b/$slug': typeof BSlugRoute
+  '/_authenticated/admin/companies': typeof AuthenticatedAdminCompaniesRoute
+  '/_authenticated/admin/niches': typeof AuthenticatedAdminNichesRoute
+  '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/_authenticated/app/coupons': typeof AuthenticatedAppCouponsRoute
+  '/_authenticated/app/customers': typeof AuthenticatedAppCustomersRoute
+  '/_authenticated/app/finances': typeof AuthenticatedAppFinancesRoute
+  '/_authenticated/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
+  '/_authenticated/app/products': typeof AuthenticatedAppProductsRoute
+  '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
+  '/_authenticated/app/services': typeof AuthenticatedAppServicesRoute
+  '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/_authenticated/app/staff': typeof AuthenticatedAppStaffRoute
+  '/api/public/book': typeof ApiPublicBookRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | "/"
-    | "/auth"
-    | "/reset-password"
-    | "/admin"
-    | "/app"
-    | "/change-password"
-    | "/home"
-    | "/no-access"
-    | "/admin/logs"
-    | "/b/$slug"
-    | "/admin/companies"
-    | "/admin/niches"
-    | "/admin/payments"
-    | "/admin/settings"
-    | "/app/agenda"
-    | "/app/coupons"
-    | "/app/customers"
-    | "/app/finances"
-    | "/app/loyalty"
-    | "/app/products"
-    | "/app/reports"
-    | "/app/services"
-    | "/app/settings"
-    | "/app/staff"
-    | "/api/public/book"
-    | "/admin/"
-    | "/app/"
-    | "/api/public/hooks/reminders";
-  fileRoutesByTo: FileRoutesByTo;
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/admin'
+    | '/app'
+    | '/change-password'
+    | '/home'
+    | '/no-access'
+    | '/admin/logs'
+    | '/b/$slug'
+    | '/admin/companies'
+    | '/admin/niches'
+    | '/admin/payments'
+    | '/admin/settings'
+    | '/app/agenda'
+    | '/app/coupons'
+    | '/app/customers'
+    | '/app/finances'
+    | '/app/loyalty'
+    | '/app/products'
+    | '/app/reports'
+    | '/app/services'
+    | '/app/settings'
+    | '/app/staff'
+    | '/api/public/book'
+    | '/admin/'
+    | '/app/'
+    | '/api/public/hooks/reminders'
+  fileRoutesByTo: FileRoutesByTo
   to:
-    | "/"
-    | "/auth"
-    | "/reset-password"
-    | "/change-password"
-    | "/home"
-    | "/no-access"
-    | "/admin/logs"
-    | "/b/$slug"
-    | "/admin/companies"
-    | "/admin/niches"
-    | "/admin/payments"
-    | "/admin/settings"
-    | "/app/agenda"
-    | "/app/coupons"
-    | "/app/customers"
-    | "/app/finances"
-    | "/app/loyalty"
-    | "/app/products"
-    | "/app/reports"
-    | "/app/services"
-    | "/app/settings"
-    | "/app/staff"
-    | "/api/public/book"
-    | "/admin"
-    | "/app"
-    | "/api/public/hooks/reminders";
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/change-password'
+    | '/home'
+    | '/no-access'
+    | '/admin/logs'
+    | '/b/$slug'
+    | '/admin/companies'
+    | '/admin/niches'
+    | '/admin/payments'
+    | '/admin/settings'
+    | '/app/agenda'
+    | '/app/coupons'
+    | '/app/customers'
+    | '/app/finances'
+    | '/app/loyalty'
+    | '/app/products'
+    | '/app/reports'
+    | '/app/services'
+    | '/app/settings'
+    | '/app/staff'
+    | '/api/public/book'
+    | '/admin'
+    | '/app'
+    | '/api/public/hooks/reminders'
   id:
-    | "__root__"
-    | "/"
-    | "/_authenticated"
-    | "/auth"
-    | "/reset-password"
-    | "/_authenticated/admin"
-    | "/_authenticated/app"
-    | "/_authenticated/change-password"
-    | "/_authenticated/home"
-    | "/_authenticated/no-access"
-    | "/admin/logs"
-    | "/b/$slug"
-    | "/_authenticated/admin/companies"
-    | "/_authenticated/admin/niches"
-    | "/_authenticated/admin/payments"
-    | "/_authenticated/admin/settings"
-    | "/_authenticated/app/agenda"
-    | "/_authenticated/app/coupons"
-    | "/_authenticated/app/customers"
-    | "/_authenticated/app/finances"
-    | "/_authenticated/app/loyalty"
-    | "/_authenticated/app/products"
-    | "/_authenticated/app/reports"
-    | "/_authenticated/app/services"
-    | "/_authenticated/app/settings"
-    | "/_authenticated/app/staff"
-    | "/api/public/book"
-    | "/_authenticated/admin/"
-    | "/_authenticated/app/"
-    | "/api/public/hooks/reminders";
-  fileRoutesById: FileRoutesById;
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/reset-password'
+    | '/_authenticated/admin'
+    | '/_authenticated/app'
+    | '/_authenticated/change-password'
+    | '/_authenticated/home'
+    | '/_authenticated/no-access'
+    | '/admin/logs'
+    | '/b/$slug'
+    | '/_authenticated/admin/companies'
+    | '/_authenticated/admin/niches'
+    | '/_authenticated/admin/payments'
+    | '/_authenticated/admin/settings'
+    | '/_authenticated/app/agenda'
+    | '/_authenticated/app/coupons'
+    | '/_authenticated/app/customers'
+    | '/_authenticated/app/finances'
+    | '/_authenticated/app/loyalty'
+    | '/_authenticated/app/products'
+    | '/_authenticated/app/reports'
+    | '/_authenticated/app/services'
+    | '/_authenticated/app/settings'
+    | '/_authenticated/app/staff'
+    | '/api/public/book'
+    | '/_authenticated/admin/'
+    | '/_authenticated/app/'
+    | '/api/public/hooks/reminders'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren;
-  AuthRoute: typeof AuthRoute;
-  ResetPasswordRoute: typeof ResetPasswordRoute;
-  AdminLogsRoute: typeof AdminLogsRoute;
-  BSlugRoute: typeof BSlugRoute;
-  ApiPublicBookRoute: typeof ApiPublicBookRoute;
-  ApiPublicHooksRemindersRoute: typeof ApiPublicHooksRemindersRoute;
+  IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  AdminLogsRoute: typeof AdminLogsRoute
+  BSlugRoute: typeof BSlugRoute
+  ApiPublicBookRoute: typeof ApiPublicBookRoute
+  ApiPublicHooksRemindersRoute: typeof ApiPublicHooksRemindersRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/reset-password": {
-      id: "/reset-password";
-      path: "/reset-password";
-      fullPath: "/reset-password";
-      preLoaderRoute: typeof ResetPasswordRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/auth": {
-      id: "/auth";
-      path: "/auth";
-      fullPath: "/auth";
-      preLoaderRoute: typeof AuthRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_authenticated": {
-      id: "/_authenticated";
-      path: "";
-      fullPath: "/";
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/b/$slug": {
-      id: "/b/$slug";
-      path: "/b/$slug";
-      fullPath: "/b/$slug";
-      preLoaderRoute: typeof BSlugRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/admin/logs": {
-      id: "/admin/logs";
-      path: "/admin/logs";
-      fullPath: "/admin/logs";
-      preLoaderRoute: typeof AdminLogsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_authenticated/no-access": {
-      id: "/_authenticated/no-access";
-      path: "/no-access";
-      fullPath: "/no-access";
-      preLoaderRoute: typeof AuthenticatedNoAccessRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/home": {
-      id: "/_authenticated/home";
-      path: "/home";
-      fullPath: "/home";
-      preLoaderRoute: typeof AuthenticatedHomeRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/change-password": {
-      id: "/_authenticated/change-password";
-      path: "/change-password";
-      fullPath: "/change-password";
-      preLoaderRoute: typeof AuthenticatedChangePasswordRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/app": {
-      id: "/_authenticated/app";
-      path: "/app";
-      fullPath: "/app";
-      preLoaderRoute: typeof AuthenticatedAppRouteRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/admin": {
-      id: "/_authenticated/admin";
-      path: "/admin";
-      fullPath: "/admin";
-      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/app/": {
-      id: "/_authenticated/app/";
-      path: "/";
-      fullPath: "/app/";
-      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/admin/": {
-      id: "/_authenticated/admin/";
-      path: "/";
-      fullPath: "/admin/";
-      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport;
-      parentRoute: typeof AuthenticatedAdminRouteRoute;
-    };
-    "/api/public/book": {
-      id: "/api/public/book";
-      path: "/api/public/book";
-      fullPath: "/api/public/book";
-      preLoaderRoute: typeof ApiPublicBookRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_authenticated/app/staff": {
-      id: "/_authenticated/app/staff";
-      path: "/staff";
-      fullPath: "/app/staff";
-      preLoaderRoute: typeof AuthenticatedAppStaffRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/app/settings": {
-      id: "/_authenticated/app/settings";
-      path: "/settings";
-      fullPath: "/app/settings";
-      preLoaderRoute: typeof AuthenticatedAppSettingsRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/app/services": {
-      id: "/_authenticated/app/services";
-      path: "/services";
-      fullPath: "/app/services";
-      preLoaderRoute: typeof AuthenticatedAppServicesRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/app/reports": {
-      id: "/_authenticated/app/reports";
-      path: "/reports";
-      fullPath: "/app/reports";
-      preLoaderRoute: typeof AuthenticatedAppReportsRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/app/products": {
-      id: "/_authenticated/app/products";
-      path: "/products";
-      fullPath: "/app/products";
-      preLoaderRoute: typeof AuthenticatedAppProductsRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/app/loyalty": {
-      id: "/_authenticated/app/loyalty";
-      path: "/loyalty";
-      fullPath: "/app/loyalty";
-      preLoaderRoute: typeof AuthenticatedAppLoyaltyRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/app/finances": {
-      id: "/_authenticated/app/finances";
-      path: "/finances";
-      fullPath: "/app/finances";
-      preLoaderRoute: typeof AuthenticatedAppFinancesRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/app/customers": {
-      id: "/_authenticated/app/customers";
-      path: "/customers";
-      fullPath: "/app/customers";
-      preLoaderRoute: typeof AuthenticatedAppCustomersRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/app/coupons": {
-      id: "/_authenticated/app/coupons";
-      path: "/coupons";
-      fullPath: "/app/coupons";
-      preLoaderRoute: typeof AuthenticatedAppCouponsRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/app/agenda": {
-      id: "/_authenticated/app/agenda";
-      path: "/agenda";
-      fullPath: "/app/agenda";
-      preLoaderRoute: typeof AuthenticatedAppAgendaRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/admin/settings": {
-      id: "/_authenticated/admin/settings";
-      path: "/settings";
-      fullPath: "/admin/settings";
-      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport;
-      parentRoute: typeof AuthenticatedAdminRouteRoute;
-    };
-    "/_authenticated/admin/payments": {
-      id: "/_authenticated/admin/payments";
-      path: "/payments";
-      fullPath: "/admin/payments";
-      preLoaderRoute: typeof AuthenticatedAdminPaymentsRouteImport;
-      parentRoute: typeof AuthenticatedAdminRouteRoute;
-    };
-    "/_authenticated/admin/niches": {
-      id: "/_authenticated/admin/niches";
-      path: "/niches";
-      fullPath: "/admin/niches";
-      preLoaderRoute: typeof AuthenticatedAdminNichesRouteImport;
-      parentRoute: typeof AuthenticatedAdminRouteRoute;
-    };
-    "/_authenticated/admin/companies": {
-      id: "/_authenticated/admin/companies";
-      path: "/companies";
-      fullPath: "/admin/companies";
-      preLoaderRoute: typeof AuthenticatedAdminCompaniesRouteImport;
-      parentRoute: typeof AuthenticatedAdminRouteRoute;
-    };
-    "/api/public/hooks/reminders": {
-      id: "/api/public/hooks/reminders";
-      path: "/api/public/hooks/reminders";
-      fullPath: "/api/public/hooks/reminders";
-      preLoaderRoute: typeof ApiPublicHooksRemindersRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/b/$slug': {
+      id: '/b/$slug'
+      path: '/b/$slug'
+      fullPath: '/b/$slug'
+      preLoaderRoute: typeof BSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/logs': {
+      id: '/admin/logs'
+      path: '/admin/logs'
+      fullPath: '/admin/logs'
+      preLoaderRoute: typeof AdminLogsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/no-access': {
+      id: '/_authenticated/no-access'
+      path: '/no-access'
+      fullPath: '/no-access'
+      preLoaderRoute: typeof AuthenticatedNoAccessRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/home': {
+      id: '/_authenticated/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/change-password': {
+      id: '/_authenticated/change-password'
+      path: '/change-password'
+      fullPath: '/change-password'
+      preLoaderRoute: typeof AuthenticatedChangePasswordRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app': {
+      id: '/_authenticated/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AuthenticatedAppRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/': {
+      id: '/_authenticated/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/api/public/book': {
+      id: '/api/public/book'
+      path: '/api/public/book'
+      fullPath: '/api/public/book'
+      preLoaderRoute: typeof ApiPublicBookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/app/staff': {
+      id: '/_authenticated/app/staff'
+      path: '/staff'
+      fullPath: '/app/staff'
+      preLoaderRoute: typeof AuthenticatedAppStaffRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/settings': {
+      id: '/_authenticated/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AuthenticatedAppSettingsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/services': {
+      id: '/_authenticated/app/services'
+      path: '/services'
+      fullPath: '/app/services'
+      preLoaderRoute: typeof AuthenticatedAppServicesRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/reports': {
+      id: '/_authenticated/app/reports'
+      path: '/reports'
+      fullPath: '/app/reports'
+      preLoaderRoute: typeof AuthenticatedAppReportsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/products': {
+      id: '/_authenticated/app/products'
+      path: '/products'
+      fullPath: '/app/products'
+      preLoaderRoute: typeof AuthenticatedAppProductsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/loyalty': {
+      id: '/_authenticated/app/loyalty'
+      path: '/loyalty'
+      fullPath: '/app/loyalty'
+      preLoaderRoute: typeof AuthenticatedAppLoyaltyRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/finances': {
+      id: '/_authenticated/app/finances'
+      path: '/finances'
+      fullPath: '/app/finances'
+      preLoaderRoute: typeof AuthenticatedAppFinancesRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/customers': {
+      id: '/_authenticated/app/customers'
+      path: '/customers'
+      fullPath: '/app/customers'
+      preLoaderRoute: typeof AuthenticatedAppCustomersRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/coupons': {
+      id: '/_authenticated/app/coupons'
+      path: '/coupons'
+      fullPath: '/app/coupons'
+      preLoaderRoute: typeof AuthenticatedAppCouponsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/agenda': {
+      id: '/_authenticated/app/agenda'
+      path: '/agenda'
+      fullPath: '/app/agenda'
+      preLoaderRoute: typeof AuthenticatedAppAgendaRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/payments': {
+      id: '/_authenticated/admin/payments'
+      path: '/payments'
+      fullPath: '/admin/payments'
+      preLoaderRoute: typeof AuthenticatedAdminPaymentsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/niches': {
+      id: '/_authenticated/admin/niches'
+      path: '/niches'
+      fullPath: '/admin/niches'
+      preLoaderRoute: typeof AuthenticatedAdminNichesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/companies': {
+      id: '/_authenticated/admin/companies'
+      path: '/companies'
+      fullPath: '/admin/companies'
+      preLoaderRoute: typeof AuthenticatedAdminCompaniesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/api/public/hooks/reminders': {
+      id: '/api/public/hooks/reminders'
+      path: '/api/public/hooks/reminders'
+      fullPath: '/api/public/hooks/reminders'
+      preLoaderRoute: typeof ApiPublicHooksRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedAdminRouteRouteChildren {
-  AuthenticatedAdminCompaniesRoute: typeof AuthenticatedAdminCompaniesRoute;
-  AuthenticatedAdminNichesRoute: typeof AuthenticatedAdminNichesRoute;
-  AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute;
-  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute;
-  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute;
+  AuthenticatedAdminCompaniesRoute: typeof AuthenticatedAdminCompaniesRoute
+  AuthenticatedAdminNichesRoute: typeof AuthenticatedAdminNichesRoute
+  AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
+  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
@@ -610,25 +610,25 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
     AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
-  };
+  }
 
 const AuthenticatedAdminRouteRouteWithChildren =
   AuthenticatedAdminRouteRoute._addFileChildren(
     AuthenticatedAdminRouteRouteChildren,
-  );
+  )
 
 interface AuthenticatedAppRouteRouteChildren {
-  AuthenticatedAppAgendaRoute: typeof AuthenticatedAppAgendaRoute;
-  AuthenticatedAppCouponsRoute: typeof AuthenticatedAppCouponsRoute;
-  AuthenticatedAppCustomersRoute: typeof AuthenticatedAppCustomersRoute;
-  AuthenticatedAppFinancesRoute: typeof AuthenticatedAppFinancesRoute;
-  AuthenticatedAppLoyaltyRoute: typeof AuthenticatedAppLoyaltyRoute;
-  AuthenticatedAppProductsRoute: typeof AuthenticatedAppProductsRoute;
-  AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute;
-  AuthenticatedAppServicesRoute: typeof AuthenticatedAppServicesRoute;
-  AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute;
-  AuthenticatedAppStaffRoute: typeof AuthenticatedAppStaffRoute;
-  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute;
+  AuthenticatedAppAgendaRoute: typeof AuthenticatedAppAgendaRoute
+  AuthenticatedAppCouponsRoute: typeof AuthenticatedAppCouponsRoute
+  AuthenticatedAppCustomersRoute: typeof AuthenticatedAppCustomersRoute
+  AuthenticatedAppFinancesRoute: typeof AuthenticatedAppFinancesRoute
+  AuthenticatedAppLoyaltyRoute: typeof AuthenticatedAppLoyaltyRoute
+  AuthenticatedAppProductsRoute: typeof AuthenticatedAppProductsRoute
+  AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
+  AuthenticatedAppServicesRoute: typeof AuthenticatedAppServicesRoute
+  AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
+  AuthenticatedAppStaffRoute: typeof AuthenticatedAppStaffRoute
+  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
 const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
@@ -643,19 +643,19 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
   AuthenticatedAppStaffRoute: AuthenticatedAppStaffRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
-};
+}
 
 const AuthenticatedAppRouteRouteWithChildren =
   AuthenticatedAppRouteRoute._addFileChildren(
     AuthenticatedAppRouteRouteChildren,
-  );
+  )
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren;
-  AuthenticatedAppRouteRoute: typeof AuthenticatedAppRouteRouteWithChildren;
-  AuthenticatedChangePasswordRoute: typeof AuthenticatedChangePasswordRoute;
-  AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute;
-  AuthenticatedNoAccessRoute: typeof AuthenticatedNoAccessRoute;
+  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+  AuthenticatedAppRouteRoute: typeof AuthenticatedAppRouteRouteWithChildren
+  AuthenticatedChangePasswordRoute: typeof AuthenticatedChangePasswordRoute
+  AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
+  AuthenticatedNoAccessRoute: typeof AuthenticatedNoAccessRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -664,10 +664,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChangePasswordRoute: AuthenticatedChangePasswordRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedNoAccessRoute: AuthenticatedNoAccessRoute,
-};
+}
 
 const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren);
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -678,7 +678,7 @@ const rootRouteChildren: RootRouteChildren = {
   BSlugRoute: BSlugRoute,
   ApiPublicBookRoute: ApiPublicBookRoute,
   ApiPublicHooksRemindersRoute: ApiPublicHooksRemindersRoute,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
