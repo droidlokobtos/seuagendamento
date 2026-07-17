@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/lib/company";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Users, TrendingUp, Clock } from "lucide-react";
+import { Calendar, Users, TrendingUp, Clock, Link2, Copy } from "lucide-react";
 import { brl } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 
@@ -52,12 +52,34 @@ function Dashboard() {
     { label: "Faturamento do mês", value: brl(stats?.revenue ?? 0), icon: TrendingUp },
   ];
 
+  const bookingUrl = typeof window !== "undefined"
+    ? `${window.location.origin}/b/${activeCompany!.slug}`
+    : `/b/${activeCompany!.slug}`;
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Olá 👋</h1>
         <p className="text-sm text-muted-foreground">Visão geral da sua operação hoje.</p>
       </div>
+
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+        <CardContent className="p-4 flex items-center gap-3 flex-wrap">
+          <Link2 className="h-5 w-5 text-primary" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-muted-foreground">Link público de agendamento</p>
+            <p className="text-sm font-medium truncate">{bookingUrl}</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => {
+            navigator.clipboard.writeText(bookingUrl);
+          }}>
+            <Copy className="h-4 w-4 mr-1" /> Copiar
+          </Button>
+          <a href={bookingUrl} target="_blank" rel="noreferrer">
+            <Button size="sm">Abrir</Button>
+          </a>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         {cards.map((c) => (
