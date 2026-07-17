@@ -116,13 +116,9 @@ function Dashboard() {
                 <li key={i} className="flex items-center justify-between px-6 py-3 text-sm">
                   <div>
                     <p className="font-medium">{brl(Number(p.amount))}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleString("pt-BR")}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(p.paid_at).toLocaleString("pt-BR")}</p>
                   </div>
-                  <span className={`text-xs font-medium rounded-full px-2 py-0.5 border ${
-                    p.status === "paid" ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
-                    p.status === "pending" ? "bg-amber-100 text-amber-700 border-amber-200" :
-                    "bg-red-100 text-red-700 border-red-200"
-                  }`}>{p.status}</span>
+                  <span className="text-xs font-medium rounded-full px-2 py-0.5 border bg-emerald-100 text-emerald-700 border-emerald-200">pago</span>
                 </li>
               ))}
             </ul>
