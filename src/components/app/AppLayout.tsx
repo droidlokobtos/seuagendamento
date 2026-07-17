@@ -59,10 +59,11 @@ const NAV = [
 
 export function AppLayout({ children }: { children?: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const { user, signOut } = useAuth();
+  const { user, signOut, isSuperAdmin } = useAuth();
   const { companies, activeCompany, setActiveCompanyId } = useCompany();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const impersonating = isSuperAdmin && !!getImpersonation();
 
   const isActive = (to: string, end?: boolean) =>
     end ? path === to : path === to || path.startsWith(to + "/");
