@@ -12,12 +12,14 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as AuthenticatedNoAccessRouteImport } from './routes/_authenticated/no-access'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticated/app/route'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
 import { Route as AuthenticatedAppStaffRouteImport } from './routes/_authenticated/app/staff'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app/settings'
 import { Route as AuthenticatedAppServicesRouteImport } from './routes/_authenticated/app/services'
@@ -43,6 +45,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BSlugRoute = BSlugRouteImport.update({
+  id: '/b/$slug',
+  path: '/b/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedNoAccessRoute = AuthenticatedNoAccessRouteImport.update({
@@ -74,6 +81,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const ApiPublicBookRoute = ApiPublicBookRouteImport.update({
+  id: '/api/public/book',
+  path: '/api/public/book',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppStaffRoute = AuthenticatedAppStaffRouteImport.update({
   id: '/staff',
@@ -152,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AuthenticatedAppRouteRouteWithChildren
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
+  '/b/$slug': typeof BSlugRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
@@ -164,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/app/services': typeof AuthenticatedAppServicesRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/staff': typeof AuthenticatedAppStaffRoute
+  '/api/public/book': typeof ApiPublicBookRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
 }
@@ -172,6 +186,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
+  '/b/$slug': typeof BSlugRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
@@ -184,6 +199,7 @@ export interface FileRoutesByTo {
   '/app/services': typeof AuthenticatedAppServicesRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/staff': typeof AuthenticatedAppStaffRoute
+  '/api/public/book': typeof ApiPublicBookRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
 }
@@ -196,6 +212,7 @@ export interface FileRoutesById {
   '/_authenticated/app': typeof AuthenticatedAppRouteRouteWithChildren
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/no-access': typeof AuthenticatedNoAccessRoute
+  '/b/$slug': typeof BSlugRoute
   '/_authenticated/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/_authenticated/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
@@ -208,6 +225,7 @@ export interface FileRoutesById {
   '/_authenticated/app/services': typeof AuthenticatedAppServicesRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/app/staff': typeof AuthenticatedAppStaffRoute
+  '/api/public/book': typeof ApiPublicBookRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
 }
@@ -220,6 +238,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/home'
     | '/no-access'
+    | '/b/$slug'
     | '/admin/companies'
     | '/admin/niches'
     | '/admin/payments'
@@ -232,6 +251,7 @@ export interface FileRouteTypes {
     | '/app/services'
     | '/app/settings'
     | '/app/staff'
+    | '/api/public/book'
     | '/admin/'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
@@ -240,6 +260,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/home'
     | '/no-access'
+    | '/b/$slug'
     | '/admin/companies'
     | '/admin/niches'
     | '/admin/payments'
@@ -252,6 +273,7 @@ export interface FileRouteTypes {
     | '/app/services'
     | '/app/settings'
     | '/app/staff'
+    | '/api/public/book'
     | '/admin'
     | '/app'
   id:
@@ -263,6 +285,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app'
     | '/_authenticated/home'
     | '/_authenticated/no-access'
+    | '/b/$slug'
     | '/_authenticated/admin/companies'
     | '/_authenticated/admin/niches'
     | '/_authenticated/admin/payments'
@@ -275,6 +298,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/services'
     | '/_authenticated/app/settings'
     | '/_authenticated/app/staff'
+    | '/api/public/book'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
   fileRoutesById: FileRoutesById
@@ -283,6 +307,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BSlugRoute: typeof BSlugRoute
+  ApiPublicBookRoute: typeof ApiPublicBookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -306,6 +332,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/b/$slug': {
+      id: '/b/$slug'
+      path: '/b/$slug'
+      fullPath: '/b/$slug'
+      preLoaderRoute: typeof BSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/no-access': {
@@ -349,6 +382,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/api/public/book': {
+      id: '/api/public/book'
+      path: '/api/public/book'
+      fullPath: '/api/public/book'
+      preLoaderRoute: typeof ApiPublicBookRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/staff': {
       id: '/_authenticated/app/staff'
@@ -509,6 +549,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  BSlugRoute: BSlugRoute,
+  ApiPublicBookRoute: ApiPublicBookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
