@@ -301,6 +301,9 @@ function BookingPage() {
       <div className="max-w-lg mx-auto p-4 md:p-6 space-y-4">
         <Steps step={step} accent={accent} />
 
+        {step === 1 && <PortalInfo company={company} hours={hours} primary={primary} accent={accent} />}
+        {step === 1 && company.show_reviews_on_portal && <ReviewsSection companyId={companyId} accent={accent} />}
+
         {step === 1 && (
           <Card>
             <CardContent className="p-4 space-y-3">
