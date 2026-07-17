@@ -14,7 +14,6 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedNoAccessRouteImport } from './routes/_authenticated/no-access'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
-import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
@@ -44,11 +43,6 @@ const AuthenticatedNoAccessRoute = AuthenticatedNoAccessRouteImport.update({
 const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   id: '/home',
   path: '/home',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
-  id: '/app',
-  path: '/app',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
@@ -90,7 +84,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
-  '/app': typeof AuthenticatedAppRoute
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
@@ -102,7 +95,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/app': typeof AuthenticatedAppRoute
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
@@ -117,7 +109,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
-  '/_authenticated/app': typeof AuthenticatedAppRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/no-access': typeof AuthenticatedNoAccessRoute
   '/_authenticated/admin/companies': typeof AuthenticatedAdminCompaniesRoute
@@ -132,7 +123,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
-    | '/app'
     | '/home'
     | '/no-access'
     | '/admin/companies'
@@ -144,7 +134,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-    | '/app'
     | '/home'
     | '/no-access'
     | '/admin/companies'
@@ -158,7 +147,6 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin'
-    | '/_authenticated/app'
     | '/_authenticated/home'
     | '/_authenticated/no-access'
     | '/_authenticated/admin/companies'
@@ -209,13 +197,6 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof AuthenticatedHomeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/app': {
-      id: '/_authenticated/app'
-      path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof AuthenticatedAppRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin': {
@@ -287,14 +268,12 @@ const AuthenticatedAdminRouteRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
-  AuthenticatedAppRoute: typeof AuthenticatedAppRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedNoAccessRoute: typeof AuthenticatedNoAccessRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
-  AuthenticatedAppRoute: AuthenticatedAppRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedNoAccessRoute: AuthenticatedNoAccessRoute,
 }
