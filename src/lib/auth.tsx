@@ -11,6 +11,7 @@ type AuthState = {
   roles: AppRole[];
   isSuperAdmin: boolean;
   companyIds: string[];
+  mustChangePassword: boolean;
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -22,19 +23,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [companyIds, setCompanyIds] = useState<string[]>([]);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
 
   const loadRoles = async (uid: string | undefined) => {
     if (!uid) {
-      setRoles([]);
-      setCompanyIds([]);
+      setRoles([]); setCompanyIds([]); setMustChangePassword(false);
       return;
     }
-    const [{ data: r }, { data: cu }] = await Promise.all([
+    const [{ data: r }, { data: cu }, { data: p }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", uid),
       supabase.from("company_users").select("company_id").eq("user_id", uid),
+      supabase.from("profiles").select("must_change_password").eq("id", uid).maybeSingle(),
     ]);
     setRoles((r ?? []).map((x) => x.role as AppRole));
     setCompanyIds((cu ?? []).map((x) => x.company_id as string));
+    setMustChangePassword(!!(p as any)?.must_change_password);
   };
 
   useEffect(() => {
@@ -56,10 +59,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     roles,
     isSuperAdmin: roles.includes("super_admin"),
     companyIds,
+    mustChangePassword,
     refresh: async () => loadRoles(session?.user.id),
-    signOut: async () => {
-      await supabase.auth.signOut();
-    },
+    signOut: async () => { await supabase.auth.signOut(); },
   };
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
