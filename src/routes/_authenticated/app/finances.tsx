@@ -135,7 +135,7 @@ function Finances() {
                   <div className="min-w-0">
                     <p className="font-medium truncate">{t.category}</p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {brDate(t.occurred_on)}{t.description ? ` · ${t.description}` : ""}
+                      {dateBR(t.occurred_on)}{t.description ? ` · ${t.description}` : ""}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -218,7 +218,7 @@ function TxDialog({ methods, onSave, loading }: {
             <Select value={f.payment_method_id ?? ""} onValueChange={(v) => setF({ ...f, payment_method_id: v || null })}>
               <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
               <SelectContent>
-                {methods.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+                {methods.map((m) => <SelectItem key={m.id} value={m.id}>{m.method}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
