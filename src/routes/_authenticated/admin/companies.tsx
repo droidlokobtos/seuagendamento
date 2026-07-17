@@ -171,7 +171,44 @@ function Companies() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!pwOpen} onOpenChange={(o) => !o && setPwOpen(null)}>
+        {pwOpen && (
+          <ResetPasswordDialog
+            email={pwOpen.email}
+            busy={false}
+            onSubmit={async (pw) => {
+              try {
+                await resetPw({ data: { email: pwOpen.email, new_password: pw } });
+                toast.success("Senha redefinida. O usuário deverá trocar no próximo login.");
+                setPwOpen(null);
+              } catch (e: any) {
+                toast.error(e.message);
+              }
+            }}
+          />
+        )}
+      </Dialog>
     </div>
+  );
+}
+
+function ResetPasswordDialog({ email, onSubmit, busy }: { email: string; onSubmit: (pw: string) => void; busy: boolean }) {
+  const [pw, setPw] = useState("");
+  return (
+    <DialogContent>
+      <DialogHeader><DialogTitle>Redefinir senha</DialogTitle></DialogHeader>
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">Definir nova senha para <b>{email}</b>. O usuário será obrigado a trocá-la no próximo login.</p>
+        <div>
+          <Label>Nova senha (mín. 8 caracteres)</Label>
+          <Input type="text" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="nova senha temporária" />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button onClick={() => onSubmit(pw)} disabled={busy || pw.length < 8}>Redefinir</Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }
 
