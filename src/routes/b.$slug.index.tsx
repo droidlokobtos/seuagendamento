@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, MapPin, Phone, Check, Calendar, Clock, ChevronLeft, ChevronRight, User } from "lucide-react";
+import { Sparkles, MapPin, Phone, Check, Calendar, Clock, ChevronLeft, ChevronRight, User, Instagram, Facebook, Globe, Star, MessageCircle } from "lucide-react";
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
 
