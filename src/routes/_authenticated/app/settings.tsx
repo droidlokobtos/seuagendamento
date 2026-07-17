@@ -123,26 +123,88 @@ function SettingsPage() {
       <Card>
         <CardContent className="p-6 space-y-4">
           <h2 className="font-semibold">Dados</h2>
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <h2 className="font-semibold">Dados da empresa</h2>
           <div className="grid md:grid-cols-2 gap-3">
-            <div><Label>Nome</Label>
+            <div><Label>Nome fantasia</Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
             <div><Label>Slug público</Label>
               <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })} /></div>
             <div><Label>Telefone</Label>
               <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
-            <div><Label>WhatsApp</Label>
-              <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} /></div>
+            <div><Label>WhatsApp (atendimento)</Label>
+              <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} placeholder="55 11 99999-9999" /></div>
             <div className="md:col-span-2"><Label>E-mail</Label>
               <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-            <div className="md:col-span-2"><Label>URL do logo</Label>
-              <Input value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} /></div>
+            <div className="md:col-span-2"><Label>Endereço completo</Label>
+              <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Rua, número, bairro, cidade/UF" /></div>
+            <div className="md:col-span-2"><Label>Descrição da empresa</Label>
+              <textarea className="w-full min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+                placeholder="Fale sobre sua empresa, diferenciais e serviços." /></div>
+          </div>
+          <div className="pt-2">
+            <Button onClick={() => saveCompany.mutate()} disabled={saveCompany.isPending}>Salvar dados</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <h2 className="font-semibold">Identidade visual</h2>
+          <div className="grid md:grid-cols-2 gap-3">
+            <div className="md:col-span-2"><Label>Logotipo (URL)</Label>
+              <Input value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} placeholder="https://…/logo.png" />
+              {form.logo_url && <img src={form.logo_url} alt="logo" className="mt-2 h-16 w-16 rounded object-cover border" />}
+            </div>
+            <div className="md:col-span-2"><Label>Imagem de capa (URL)</Label>
+              <Input value={form.banner_url} onChange={(e) => setForm({ ...form, banner_url: e.target.value })} placeholder="https://…/capa.jpg" />
+              {form.banner_url && <img src={form.banner_url} alt="capa" className="mt-2 h-24 w-full rounded object-cover border" />}
+            </div>
             <div><Label>Cor primária</Label>
               <Input type="color" value={form.primary_color} onChange={(e) => setForm({ ...form, primary_color: e.target.value })} /></div>
             <div><Label>Cor secundária</Label>
               <Input type="color" value={form.secondary_color} onChange={(e) => setForm({ ...form, secondary_color: e.target.value })} /></div>
           </div>
           <div className="pt-2">
-            <Button onClick={() => saveCompany.mutate()} disabled={saveCompany.isPending}>Salvar dados</Button>
+            <Button onClick={() => saveCompany.mutate()} disabled={saveCompany.isPending}>Salvar identidade</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <h2 className="font-semibold">Portal público de agendamento</h2>
+          <p className="text-xs text-muted-foreground">Configurações que aparecem na sua página pública.</p>
+          <div className="grid md:grid-cols-2 gap-3">
+            <div className="md:col-span-2"><Label>Mensagem de boas-vindas</Label>
+              <Input value={form.welcome_message} onChange={(e) => setForm({ ...form, welcome_message: e.target.value })} placeholder="Bem-vindo! Agende seu horário em poucos cliques." /></div>
+            <div><Label>Instagram (URL)</Label>
+              <Input value={form.instagram_url} onChange={(e) => setForm({ ...form, instagram_url: e.target.value })} placeholder="https://instagram.com/sua-empresa" /></div>
+            <div><Label>Facebook (URL)</Label>
+              <Input value={form.facebook_url} onChange={(e) => setForm({ ...form, facebook_url: e.target.value })} /></div>
+            <div><Label>TikTok (URL)</Label>
+              <Input value={form.tiktok_url} onChange={(e) => setForm({ ...form, tiktok_url: e.target.value })} /></div>
+            <div><Label>Site (URL)</Label>
+              <Input value={form.website_url} onChange={(e) => setForm({ ...form, website_url: e.target.value })} /></div>
+            <div className="md:col-span-2 flex items-center justify-between rounded-lg border border-border/60 px-3 py-2">
+              <div>
+                <p className="text-sm font-medium">Mostrar profissionais no portal</p>
+                <p className="text-xs text-muted-foreground">Exibe a lista da sua equipe na página pública.</p>
+              </div>
+              <Switch checked={form.show_staff_on_portal} onCheckedChange={(v) => setForm({ ...form, show_staff_on_portal: v })} />
+            </div>
+            <div className="md:col-span-2 flex items-center justify-between rounded-lg border border-border/60 px-3 py-2">
+              <div>
+                <p className="text-sm font-medium">Mostrar avaliações no portal</p>
+                <p className="text-xs text-muted-foreground">Exibe depoimentos publicados dos clientes.</p>
+              </div>
+              <Switch checked={form.show_reviews_on_portal} onCheckedChange={(v) => setForm({ ...form, show_reviews_on_portal: v })} />
+            </div>
+          </div>
+          <div className="pt-2">
+            <Button onClick={() => saveCompany.mutate()} disabled={saveCompany.isPending}>Salvar portal</Button>
           </div>
         </CardContent>
       </Card>
