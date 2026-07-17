@@ -35,6 +35,7 @@ import { Route as AuthenticatedAppLoyaltyRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppFinancesRouteImport } from './routes/_authenticated/app/finances'
 import { Route as AuthenticatedAppCustomersRouteImport } from './routes/_authenticated/app/customers'
 import { Route as AuthenticatedAppCouponsRouteImport } from './routes/_authenticated/app/coupons'
+import { Route as AuthenticatedAppCampaignsRouteImport } from './routes/_authenticated/app/campaigns'
 import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app/agenda'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
@@ -177,6 +178,12 @@ const AuthenticatedAppCouponsRoute = AuthenticatedAppCouponsRouteImport.update({
   path: '/coupons',
   getParentRoute: () => AuthenticatedAppRouteRoute,
 } as any)
+const AuthenticatedAppCampaignsRoute =
+  AuthenticatedAppCampaignsRouteImport.update({
+    id: '/campaigns',
+    path: '/campaigns',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
 const AuthenticatedAppAgendaRoute = AuthenticatedAppAgendaRouteImport.update({
   id: '/agenda',
   path: '/agenda',
@@ -228,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/campaigns': typeof AuthenticatedAppCampaignsRoute
   '/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/app/customers': typeof AuthenticatedAppCustomersRoute
   '/app/finances': typeof AuthenticatedAppFinancesRoute
@@ -259,6 +267,7 @@ export interface FileRoutesByTo {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/campaigns': typeof AuthenticatedAppCampaignsRoute
   '/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/app/customers': typeof AuthenticatedAppCustomersRoute
   '/app/finances': typeof AuthenticatedAppFinancesRoute
@@ -294,6 +303,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/_authenticated/app/campaigns': typeof AuthenticatedAppCampaignsRoute
   '/_authenticated/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/_authenticated/app/customers': typeof AuthenticatedAppCustomersRoute
   '/_authenticated/app/finances': typeof AuthenticatedAppFinancesRoute
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/settings'
     | '/app/agenda'
+    | '/app/campaigns'
     | '/app/coupons'
     | '/app/customers'
     | '/app/finances'
@@ -360,6 +371,7 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/settings'
     | '/app/agenda'
+    | '/app/campaigns'
     | '/app/coupons'
     | '/app/customers'
     | '/app/finances'
@@ -394,6 +406,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/settings'
     | '/_authenticated/app/agenda'
+    | '/_authenticated/app/campaigns'
     | '/_authenticated/app/coupons'
     | '/_authenticated/app/customers'
     | '/_authenticated/app/finances'
@@ -607,6 +620,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCouponsRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/campaigns': {
+      id: '/_authenticated/app/campaigns'
+      path: '/campaigns'
+      fullPath: '/app/campaigns'
+      preLoaderRoute: typeof AuthenticatedAppCampaignsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/agenda': {
       id: '/_authenticated/app/agenda'
       path: '/agenda'
@@ -676,6 +696,7 @@ const AuthenticatedAdminRouteRouteWithChildren =
 
 interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppAgendaRoute: typeof AuthenticatedAppAgendaRoute
+  AuthenticatedAppCampaignsRoute: typeof AuthenticatedAppCampaignsRoute
   AuthenticatedAppCouponsRoute: typeof AuthenticatedAppCouponsRoute
   AuthenticatedAppCustomersRoute: typeof AuthenticatedAppCustomersRoute
   AuthenticatedAppFinancesRoute: typeof AuthenticatedAppFinancesRoute
@@ -691,6 +712,7 @@ interface AuthenticatedAppRouteRouteChildren {
 
 const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppAgendaRoute: AuthenticatedAppAgendaRoute,
+  AuthenticatedAppCampaignsRoute: AuthenticatedAppCampaignsRoute,
   AuthenticatedAppCouponsRoute: AuthenticatedAppCouponsRoute,
   AuthenticatedAppCustomersRoute: AuthenticatedAppCustomersRoute,
   AuthenticatedAppFinancesRoute: AuthenticatedAppFinancesRoute,
