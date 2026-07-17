@@ -555,3 +555,114 @@ function Summary({ selected, staff, dateStr, timeStr, totalMin, totalPrice, disc
     </div>
   );
 }
+
+function PortalInfo({ company, hours, primary, accent }: { company: any; hours: Hours[]; primary: string; accent: string }) {
+  const wa = (company.whatsapp || "").replace(/\D/g, "");
+  const socials = [
+    company.instagram_url && { icon: Instagram, url: company.instagram_url, label: "Instagram" },
+    company.facebook_url && { icon: Facebook, url: company.facebook_url, label: "Facebook" },
+    company.tiktok_url && { icon: MessageCircle, url: company.tiktok_url, label: "TikTok" },
+    company.website_url && { icon: Globe, url: company.website_url, label: "Site" },
+  ].filter(Boolean) as { icon: any; url: string; label: string }[];
+  const orderedHours = [...(hours ?? [])].sort((a, b) => a.weekday - b.weekday);
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-4">
+        {company.welcome_message && (
+          <p className="text-sm rounded-lg p-3" style={{ background: `${accent}15`, borderLeft: `3px solid ${accent}` }}>
+            {company.welcome_message}
+          </p>
+        )}
+        {company.description && (
+          <p className="text-sm text-muted-foreground whitespace-pre-line">{company.description}</p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          {wa && (
+            <a href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[140px]">
+              <Button className="w-full" style={{ background: "#25D366", color: "white" }}>
+                <Phone className="h-4 w-4 mr-2" /> Falar no WhatsApp
+              </Button>
+            </a>
+          )}
+          {company.phone && (
+            <a href={`tel:${company.phone.replace(/\D/g, "")}`} className="flex-1 min-w-[140px]">
+              <Button variant="outline" className="w-full"><Phone className="h-4 w-4 mr-2" /> Ligar</Button>
+            </a>
+          )}
+        </div>
+        {orderedHours.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Horário</p>
+            <div className="grid grid-cols-2 gap-1 text-xs">
+              {orderedHours.map((h) => (
+                <div key={h.weekday} className="flex justify-between px-2 py-1 rounded bg-muted/40">
+                  <span>{WEEKDAYS[h.weekday]}</span>
+                  <span className="text-muted-foreground">
+                    {h.closed ? "Fechado" : `${h.start_time?.slice(0, 5)} – ${h.end_time?.slice(0, 5)}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {socials.length > 0 && (
+          <div className="flex gap-2 pt-1">
+            {socials.map((s) => (
+              <a key={s.url} href={s.url} target="_blank" rel="noreferrer"
+                 className="h-9 w-9 rounded-full grid place-items-center border hover:bg-muted"
+                 title={s.label} style={{ borderColor: `${primary}33` }}>
+                <s.icon className="h-4 w-4" />
+              </a>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ReviewsSection({ companyId, accent }: { companyId: string; accent: string }) {
+  const { data } = useQuery({
+    queryKey: ["pub_reviews", companyId],
+    queryFn: async () => {
+      const { data } = await supabase.from("reviews")
+        .select("id,rating,comment,created_at,customers(name)")
+        .eq("company_id", companyId).eq("published", true)
+        .order("created_at", { ascending: false }).limit(10);
+      return data ?? [];
+    },
+  });
+  const reviews = (data ?? []) as any[];
+  if (!reviews.length) return null;
+  const avg = reviews.reduce((a, r) => a + r.rating, 0) / reviews.length;
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">Avaliações</h2>
+          <div className="flex items-center gap-1 text-sm">
+            <Star className="h-4 w-4 fill-current" style={{ color: accent }} />
+            <span className="font-semibold">{avg.toFixed(1)}</span>
+            <span className="text-xs text-muted-foreground">({reviews.length})</span>
+          </div>
+        </div>
+        <div className="space-y-2">
+          {reviews.slice(0, 3).map((r) => (
+            <div key={r.id} className="rounded-lg border p-3 text-sm">
+              <div className="flex items-center gap-1 mb-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className={`h-3.5 w-3.5 ${i < r.rating ? "fill-current" : ""}`}
+                    style={{ color: i < r.rating ? accent : "#ccc" }} />
+                ))}
+                <span className="text-xs text-muted-foreground ml-1">
+                  {r.customers?.name ?? "Cliente"}
+                </span>
+              </div>
+              {r.comment && <p className="text-xs text-muted-foreground">{r.comment}</p>}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
