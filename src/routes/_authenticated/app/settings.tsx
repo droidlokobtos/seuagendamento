@@ -218,8 +218,8 @@ function SettingsPage() {
               <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
             <div><Label>Estado (UF)</Label>
               <Input maxLength={2} value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value.toUpperCase() })} /></div>
-            <div className="md:col-span-2"><Label>URL do ícone do app (PWA)</Label>
-              <Input value={form.app_icon_url} onChange={(e) => setForm({ ...form, app_icon_url: e.target.value })} placeholder="https://…/icon-512.png" /></div>
+            <div className="md:col-span-2"><Label>Ícone do app (PWA)</Label>
+              <ImageUpload value={form.app_icon_url} folder="branding" onChange={(url) => setForm({ ...form, app_icon_url: url ?? "" })} /></div>
             <div className="md:col-span-2"><Label>Domínio próprio</Label>
               <Input value={form.custom_domain} onChange={(e) => setForm({ ...form, custom_domain: e.target.value.toLowerCase() })} placeholder="agenda.minhamarca.com.br" />
               <p className="text-xs text-muted-foreground mt-1">Aponte um CNAME do seu domínio para o endereço da plataforma. Configuração de DNS/SSL feita pelo suporte.</p></div>
