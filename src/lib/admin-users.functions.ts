@@ -30,11 +30,10 @@ export const resetUserPassword = createServerFn({ method: "POST" })
 
     // Audit
     await context.supabase.from("admin_access_logs").insert({
-      admin_user_id: context.userId,
-      action: "reset_password",
-      target_type: "user",
-      target_id: user.id,
-      metadata: { email: data.email },
+      user_id: context.userId,
+      email: data.email,
+      event: "reset_password",
+      metadata: { target_user_id: user.id },
     });
 
     return { ok: true };
