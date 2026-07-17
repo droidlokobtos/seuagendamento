@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Search, Building2 } from "lucide-react";
+import { Plus, Search, Building2, LogIn } from "lucide-react";
 import { dateBR, slugify, statusLabel } from "@/lib/format";
 import { toast } from "sonner";
+import { startImpersonation } from "@/lib/impersonation";
 
 export const Route = createFileRoute("/_authenticated/admin/companies")({
   component: Companies,
