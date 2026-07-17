@@ -71,6 +71,9 @@ function BookingPage() {
   const [dateStr, setDateStr] = useState<string>(new Date().toISOString().slice(0, 10));
   const [timeStr, setTimeStr] = useState<string>("");
   const [form, setForm] = useState({ name: "", phone: "", email: "", notes: "" });
+  const [couponCode, setCouponCode] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; discount_cents: number; message: string } | null>(null);
+  const [validating, setValidating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ starts_at: string } | null>(null);
 
@@ -183,6 +186,28 @@ function BookingPage() {
     setStaff(null); setTimeStr("");
   };
 
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setValidating(true);
+    try {
+      const subtotal = selected.reduce((s, x) => s + x.price_cents, 0);
+      const { data, error } = await supabase.rpc("validate_coupon", {
+        _company: companyId, _code: couponCode.trim(), _subtotal_cents: subtotal,
+      });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row || row.message !== "ok") {
+        setCoupon(null);
+        toast.error(row?.message || "Cupom inválido");
+      } else {
+        setCoupon({ code: row.code, discount_cents: row.discount_cents, message: row.message });
+        toast.success(`Cupom aplicado: -${brl(row.discount_cents / 100)}`);
+      }
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally { setValidating(false); }
+  };
+
   const submit = async () => {
     setSubmitting(true);
     try {
@@ -195,6 +220,7 @@ function BookingPage() {
           service_ids: selected.map((s) => s.id),
           staff_id: staff?.id ?? null,
           starts_at: new Date(iso).toISOString(),
+          coupon_code: coupon?.code ?? "",
           customer: form,
         }),
       });
