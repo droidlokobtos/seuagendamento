@@ -1,5 +1,5 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, notFound, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, MapPin, Phone, Check, Calendar, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Sparkles, MapPin, Phone, Check, Calendar, Clock, ChevronLeft, ChevronRight, User } from "lucide-react";
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
 

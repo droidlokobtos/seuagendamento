@@ -22,6 +22,7 @@ import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as BSlugMinhaContaRouteImport } from './routes/b.$slug.minha-conta'
 import { Route as BSlugEntrarRouteImport } from './routes/b.$slug.entrar'
 import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
 import { Route as AuthenticatedAppStaffRouteImport } from './routes/_authenticated/app/staff'
@@ -104,6 +105,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const BSlugMinhaContaRoute = BSlugMinhaContaRouteImport.update({
+  id: '/minha-conta',
+  path: '/minha-conta',
+  getParentRoute: () => BSlugRoute,
 } as any)
 const BSlugEntrarRoute = BSlugEntrarRouteImport.update({
   id: '/entrar',
@@ -227,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/app/staff': typeof AuthenticatedAppStaffRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
+  '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
@@ -256,6 +263,7 @@ export interface FileRoutesByTo {
   '/app/staff': typeof AuthenticatedAppStaffRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
+  '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
@@ -289,6 +297,7 @@ export interface FileRoutesById {
   '/_authenticated/app/staff': typeof AuthenticatedAppStaffRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
+  '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
@@ -322,6 +331,7 @@ export interface FileRouteTypes {
     | '/app/staff'
     | '/api/public/book'
     | '/b/$slug/entrar'
+    | '/b/$slug/minha-conta'
     | '/admin/'
     | '/app/'
     | '/api/public/hooks/reminders'
@@ -351,6 +361,7 @@ export interface FileRouteTypes {
     | '/app/staff'
     | '/api/public/book'
     | '/b/$slug/entrar'
+    | '/b/$slug/minha-conta'
     | '/admin'
     | '/app'
     | '/api/public/hooks/reminders'
@@ -383,6 +394,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/staff'
     | '/api/public/book'
     | '/b/$slug/entrar'
+    | '/b/$slug/minha-conta'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
     | '/api/public/hooks/reminders'
@@ -491,6 +503,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/b/$slug/minha-conta': {
+      id: '/b/$slug/minha-conta'
+      path: '/minha-conta'
+      fullPath: '/b/$slug/minha-conta'
+      preLoaderRoute: typeof BSlugMinhaContaRouteImport
+      parentRoute: typeof BSlugRoute
     }
     '/b/$slug/entrar': {
       id: '/b/$slug/entrar'
@@ -690,10 +709,12 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface BSlugRouteChildren {
   BSlugEntrarRoute: typeof BSlugEntrarRoute
+  BSlugMinhaContaRoute: typeof BSlugMinhaContaRoute
 }
 
 const BSlugRouteChildren: BSlugRouteChildren = {
   BSlugEntrarRoute: BSlugEntrarRoute,
+  BSlugMinhaContaRoute: BSlugMinhaContaRoute,
 }
 
 const BSlugRouteWithChildren = BSlugRoute._addFileChildren(BSlugRouteChildren)
