@@ -273,6 +273,62 @@ export type Database = {
           },
         ]
       }
+      coupons: {
+        Row: {
+          active: boolean
+          code: string
+          company_id: string
+          created_at: string
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          max_uses: number | null
+          updated_at: string
+          uses_count: number
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          company_id: string
+          created_at?: string
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          id?: string
+          max_uses?: number | null
+          updated_at?: string
+          uses_count?: number
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          max_uses?: number | null
+          updated_at?: string
+          uses_count?: number
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupons_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           birthdate: string | null
@@ -454,6 +510,101 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_programs: {
+        Row: {
+          active: boolean
+          cashback_percent: number
+          company_id: string
+          created_at: string
+          id: string
+          min_points_redeem: number
+          point_value_brl: number
+          points_per_brl: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          cashback_percent?: number
+          company_id: string
+          created_at?: string
+          id?: string
+          min_points_redeem?: number
+          point_value_brl?: number
+          points_per_brl?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          cashback_percent?: number
+          company_id?: string
+          created_at?: string
+          id?: string
+          min_points_redeem?: number
+          point_value_brl?: number
+          points_per_brl?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_programs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_transactions: {
+        Row: {
+          cashback_amount: number
+          company_id: string
+          created_at: string
+          customer_id: string
+          id: string
+          kind: string
+          notes: string | null
+          points: number
+          reference: string | null
+        }
+        Insert: {
+          cashback_amount?: number
+          company_id: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          kind: string
+          notes?: string | null
+          points?: number
+          reference?: string | null
+        }
+        Update: {
+          cashback_amount?: number
+          company_id?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          kind?: string
+          notes?: string | null
+          points?: number
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_transactions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
         ]
