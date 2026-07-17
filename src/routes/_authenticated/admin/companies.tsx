@@ -118,7 +118,8 @@ function Companies() {
                     <th className="text-left p-3">Nicho</th>
                     <th className="text-left p-3">Status</th>
                     <th className="text-left p-3">Próx. venc.</th>
-                    <th className="text-left p-3 pr-6">Criada</th>
+                    <th className="text-left p-3">Criada</th>
+                    <th className="text-right p-3 pr-6">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
