@@ -144,7 +144,7 @@ function Companies() {
                         </td>
                         <td className="p-3 text-muted-foreground">{dateBR(c.next_due_at)}</td>
                         <td className="p-3 text-muted-foreground">{dateBR(c.created_at)}</td>
-                        <td className="p-3 pr-6 text-right">
+                        <td className="p-3 pr-6 text-right space-x-2 whitespace-nowrap">
                           <Button
                             size="sm"
                             variant="outline"
@@ -156,6 +156,11 @@ function Companies() {
                           >
                             <LogIn className="h-3.5 w-3.5 mr-1.5" /> Entrar como admin
                           </Button>
+                          {c.email && (
+                            <Button size="sm" variant="ghost" onClick={() => setPwOpen({ email: c.email })}>
+                              <KeyRound className="h-3.5 w-3.5 mr-1.5" /> Resetar senha
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     );
