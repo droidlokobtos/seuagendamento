@@ -1,67 +1,80 @@
+# Fase 2 — Painel da Empresa
 
-# Plataforma SaaS White Label — Agendamento Beleza
+Objetivo: dar ao `company_admin` (e `staff`) o painel operacional do dia a dia, isolado por `company_id` via RLS, sobre a base já pronta da Fase 1.
 
-Stack: React + TanStack Start + Tailwind + shadcn/ui + Lovable Cloud (Postgres, Auth, Storage). PWA responsivo (desktop, tablet, mobile) — funciona instalado no Android/iOS como app.
+## O que entra nesta fase
+
+1. **Layout da Empresa** (`/app/*`)
+   - Sidebar recolhível + topbar com nome/logo/cores da empresa ativa (white label real).
+   - Se o usuário pertence a mais de uma empresa, seletor no topo.
+   - Menu: Dashboard, Agenda, Clientes, Funcionários, Serviços, Configurações.
+
+2. **Dashboard da empresa** (`/app`)
+   - Cards: agendamentos de hoje, próximos 7 dias, clientes ativos, faturamento estimado do mês (soma de serviços concluídos).
+   - Lista de próximos agendamentos do dia.
+
+3. **Serviços** (`/app/services`)
+   - CRUD: nome, duração (min), preço, categoria, cor, ativo.
+   - Sugestão inicial: importar do nicho da empresa (`niches.suggested_services`).
+
+4. **Funcionários** (`/app/staff`)
+   - CRUD: nome, telefone, cargo, cor, comissão %, foto, ativo.
+   - Vínculo opcional a um `auth.user` (para dar acesso ao painel como `staff`).
+   - Seleção de serviços que o funcionário executa.
+   - Horário de trabalho por dia da semana.
+
+5. **Clientes** (`/app/customers`)
+   - CRUD: nome, telefone, email, aniversário, observações, tags.
+   - Busca e paginação.
+   - Ficha com histórico de agendamentos.
+
+6. **Agenda** (`/app/agenda`) — coração da fase
+   - Visões: Dia (grade por funcionário), Semana, Mês.
+   - Criar/editar/mover agendamento (cliente + serviço(s) + funcionário + horário).
+   - Status coloridos: agendado, confirmado, em atendimento, concluído, cancelado, faltou.
+   - Botão "Enviar confirmação" gera texto WhatsApp (`wa.me`) com dados do agendamento.
+   - Respeita horário de funcionamento e do funcionário; bloqueia conflito.
+
+7. **Configurações da empresa** (`/app/settings`)
+   - Dados cadastrais e visuais (logo, cores) editáveis pelo próprio dono.
+   - Horários de funcionamento por dia da semana + intervalos/folgas.
+   - Slug público (base para a página de agendamento da Fase 4).
+   - Formas de pagamento aceitas (dinheiro, pix, cartão, etc.).
+
+## Detalhes técnicos
+
+**Novas tabelas (todas com RLS por `company_id` + GRANTs):**
+
+- `services` — company_id, name, duration_min, price_cents, category, color, active
+- `staff` — company_id, user_id (null), name, phone, role_title, color, commission_pct, photo_url, active
+- `staff_services` — staff_id, service_id
+- `staff_schedules` — staff_id, weekday (0-6), start_time, end_time
+- `customers` — company_id, name, phone, email, birthdate, notes, tags text[]
+- `appointments` — company_id, customer_id, staff_id, starts_at, ends_at, status, total_cents, notes
+- `appointment_services` — appointment_id, service_id, price_cents, duration_min
+- `company_hours` — company_id, weekday, start_time, end_time, closed
+- `payment_methods` — company_id, method, enabled
+
+**Segurança:**
+- Helper `is_company_member(_company uuid)` (`security definer`) para RLS sem recursão.
+- Políticas: membros da empresa leem/escrevem dados da própria empresa; `super_admin` vê tudo.
+- Todos os `INSERT`/`UPDATE` validam `company_id` via `WITH CHECK`.
+
+**Frontend:**
+- React Query em todos os módulos (list/detail/mutation, invalidations por chave).
+- Componente `AppLayout` novo em `src/components/app/AppLayout.tsx` (espelho do `AdminLayout`, com cores da empresa).
+- Contexto `CompanyContext` para empresa ativa (persistida em `localStorage`).
+- Agenda usa layout custom (sem dependência pesada nova) — grade CSS por hora × funcionário.
+
+## Fora desta fase
+- Financeiro/estoque/relatórios → Fase 3.
+- Página pública `/agendar/:slug` → Fase 4.
+- Marketing/fidelidade → Fase 5.
 
 ---
 
-## Fase 1 — Fundação + Admin Master (esta entrega)
+Confirma que sigo com **tudo isso** de uma vez? É uma fase densa (7 módulos + agenda). Se preferir, posso quebrar em duas entregas:
+- **2A**: Layout + Serviços + Funcionários + Clientes + Configurações.
+- **2B**: Agenda completa + Dashboard da empresa.
 
-**Objetivo:** ter a operação central do dono da plataforma funcionando, com dados reais isolados por empresa, antes de construir os módulos operacionais.
-
-### O que entra
-1. **Lovable Cloud + Auth** (email/senha) e sistema de papéis seguro (`super_admin`, `company_admin`, `staff`, `customer`) em tabela `user_roles` separada.
-2. **Multi-tenant por `company_id`** com RLS em todas as tabelas: cada empresa só enxerga seus dados; super_admin enxerga tudo.
-3. **Nichos**: CRUD (nome, cor, logo padrão, banner, serviços sugeridos).
-4. **Empresas**: CRUD completo (dados, responsável, CPF/CNPJ, contatos, endereço, nicho, logo, cores, tema), ativar / suspender / reativar, criação do usuário admin da empresa junto.
-5. **Assinatura manual PIX**:
-   - Configuração global da chave PIX / banco / recebedor.
-   - Por empresa: valor (R$ 49,90 default), vencimento, último pagamento, próximo vencimento.
-   - Status automático: 🟢 Ativa · 🟡 Próximo vencimento (7 dias) · 🟠 Em atraso · 🔴 Suspensa.
-   - Gerador de mensagem de cobrança (copiar + botão "Compartilhar via WhatsApp" usando `wa.me`).
-   - Registro manual de pagamento recebido.
-6. **Dashboard Admin Master**: nº de empresas por status, MRR estimado, próximos vencimentos, atrasadas, novas do mês.
-7. **Login white label**: a tela da empresa já usa logo e cores dela.
-
-### Fora desta fase (vem depois)
-Agenda, clientes, funcionários, serviços, financeiro operacional, estoque, relatórios, marketing, app do cliente final, página pública de agendamento.
-
----
-
-## Fase 2 — Painel da Empresa (operação diária)
-Dashboard da empresa, **Agenda** (dia/semana/mês, status coloridos), **Clientes**, **Funcionários** (com agenda individual e comissão), **Serviços**, **Configurações** (horários, dias, intervalos, formas de pagamento). Gerador de mensagem WhatsApp de novo agendamento.
-
-## Fase 3 — Financeiro, Estoque e Relatórios
-Entradas/saídas/despesas/lucro, fluxo de caixa, fechamento diário. Estoque com fornecedores e mínimo. Relatórios exportáveis (PDF/Excel).
-
-## Fase 4 — Página pública de agendamento (cliente final)
-Rota pública `/agendar/:slug-da-empresa` totalmente white label: cliente escolhe serviço → profissional → horário → confirma. Cadastro/login do cliente, histórico, cancelamento, avaliação. Instalável como PWA.
-
-## Fase 5 — Marketing
-Promoções, cupons, aniversariantes, fidelidade, cashback.
-
----
-
-## Detalhes técnicos (Fase 1)
-
-**Tabelas principais (schema `public`, todas com RLS + GRANTs):**
-- `niches` (id, name, primary_color, logo_url, banner_url, suggested_services jsonb)
-- `companies` (id, niche_id, name, legal_name, doc, phone, whatsapp, email, address, logo_url, primary_color, secondary_color, theme, slug, status, monthly_fee, due_day, last_payment_at, next_due_at, created_at)
-- `company_users` (user_id, company_id, role) — vínculo do usuário à empresa
-- `user_roles` (user_id, role app_role) — papéis globais
-- `payments` (id, company_id, amount, paid_at, note) — histórico manual
-- `platform_settings` (singleton: pix_key, pix_bank, pix_holder)
-
-**Funções de segurança:** `has_role(user_id, role)` e `current_company_id()` como `security definer` para evitar recursão em RLS.
-
-**Rotas:**
-- `/` — landing simples com CTA de login
-- `/auth` — login (email/senha)
-- `/_authenticated/admin/*` — Admin Master (dashboard, empresas, nichos, assinaturas, configurações PIX)
-- `/_authenticated/app/*` — placeholder do painel da empresa (será preenchido na Fase 2)
-
-**Design:** tema elegante e moderno, dark/light, tipografia sofisticada, sidebar recolhível, animações sutis. Definirei uma paleta neutra premium (não roxo/índigo padrão) — se quiser cor específica, me diga; senão eu escolho.
-
----
-
-Confirma que começo pela **Fase 1** com esse recorte? Se sim, sigo direto para implementação.
+Me diz: **tudo junto** ou **2A primeiro**?
