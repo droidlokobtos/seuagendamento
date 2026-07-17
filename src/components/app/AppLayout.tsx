@@ -10,8 +10,10 @@ import {
   Settings,
   LogOut,
   Menu,
-  ChevronDown,
   Sparkles,
+  Wallet,
+  Package,
+  BarChart3,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,9 @@ const NAV = [
   { to: "/app/customers", label: "Clientes", icon: Users },
   { to: "/app/staff", label: "Funcionários", icon: UserCog },
   { to: "/app/services", label: "Serviços", icon: Scissors },
+  { to: "/app/finances", label: "Financeiro", icon: Wallet },
+  { to: "/app/products", label: "Estoque", icon: Package },
+  { to: "/app/reports", label: "Relatórios", icon: BarChart3 },
   { to: "/app/settings", label: "Configurações", icon: Settings },
 ];
 
