@@ -22,6 +22,7 @@ import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as BSlugEntrarRouteImport } from './routes/b.$slug.entrar'
 import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
 import { Route as AuthenticatedAppStaffRouteImport } from './routes/_authenticated/app/staff'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app/settings'
@@ -103,6 +104,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const BSlugEntrarRoute = BSlugEntrarRouteImport.update({
+  id: '/entrar',
+  path: '/entrar',
+  getParentRoute: () => BSlugRoute,
 } as any)
 const ApiPublicBookRoute = ApiPublicBookRouteImport.update({
   id: '/api/public/book',
@@ -204,7 +210,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
   '/admin/logs': typeof AdminLogsRoute
-  '/b/$slug': typeof BSlugRoute
+  '/b/$slug': typeof BSlugRouteWithChildren
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
@@ -220,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/staff': typeof AuthenticatedAppStaffRoute
   '/api/public/book': typeof ApiPublicBookRoute
+  '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
@@ -232,7 +239,7 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
   '/admin/logs': typeof AdminLogsRoute
-  '/b/$slug': typeof BSlugRoute
+  '/b/$slug': typeof BSlugRouteWithChildren
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
@@ -248,6 +255,7 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/staff': typeof AuthenticatedAppStaffRoute
   '/api/public/book': typeof ApiPublicBookRoute
+  '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
@@ -264,7 +272,7 @@ export interface FileRoutesById {
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/no-access': typeof AuthenticatedNoAccessRoute
   '/admin/logs': typeof AdminLogsRoute
-  '/b/$slug': typeof BSlugRoute
+  '/b/$slug': typeof BSlugRouteWithChildren
   '/_authenticated/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/_authenticated/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
@@ -280,6 +288,7 @@ export interface FileRoutesById {
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/app/staff': typeof AuthenticatedAppStaffRoute
   '/api/public/book': typeof ApiPublicBookRoute
+  '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
@@ -312,6 +321,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/staff'
     | '/api/public/book'
+    | '/b/$slug/entrar'
     | '/admin/'
     | '/app/'
     | '/api/public/hooks/reminders'
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/staff'
     | '/api/public/book'
+    | '/b/$slug/entrar'
     | '/admin'
     | '/app'
     | '/api/public/hooks/reminders'
@@ -371,6 +382,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/settings'
     | '/_authenticated/app/staff'
     | '/api/public/book'
+    | '/b/$slug/entrar'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
     | '/api/public/hooks/reminders'
@@ -382,7 +394,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   AdminLogsRoute: typeof AdminLogsRoute
-  BSlugRoute: typeof BSlugRoute
+  BSlugRoute: typeof BSlugRouteWithChildren
   ApiPublicBookRoute: typeof ApiPublicBookRoute
   ApiPublicHooksRemindersRoute: typeof ApiPublicHooksRemindersRoute
 }
@@ -479,6 +491,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/b/$slug/entrar': {
+      id: '/b/$slug/entrar'
+      path: '/entrar'
+      fullPath: '/b/$slug/entrar'
+      preLoaderRoute: typeof BSlugEntrarRouteImport
+      parentRoute: typeof BSlugRoute
     }
     '/api/public/book': {
       id: '/api/public/book'
@@ -669,13 +688,23 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface BSlugRouteChildren {
+  BSlugEntrarRoute: typeof BSlugEntrarRoute
+}
+
+const BSlugRouteChildren: BSlugRouteChildren = {
+  BSlugEntrarRoute: BSlugEntrarRoute,
+}
+
+const BSlugRouteWithChildren = BSlugRoute._addFileChildren(BSlugRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   AdminLogsRoute: AdminLogsRoute,
-  BSlugRoute: BSlugRoute,
+  BSlugRoute: BSlugRouteWithChildren,
   ApiPublicBookRoute: ApiPublicBookRoute,
   ApiPublicHooksRemindersRoute: ApiPublicHooksRemindersRoute,
 }
