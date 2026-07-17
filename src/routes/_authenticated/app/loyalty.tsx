@@ -86,7 +86,7 @@ function Loyalty() {
     mutationFn: async (p: Partial<Program>) => {
       const row = { ...p, company_id: activeCompany!.id };
       const { error } = await supabase.from("loyalty_programs")
-        .upsert(row, { onConflict: "company_id" });
+        .upsert(row as never, { onConflict: "company_id" });
       if (error) throw error;
     },
     onSuccess: () => {
