@@ -203,6 +203,24 @@ function Companies() {
           />
         )}
       </Dialog>
+
+      <Dialog open={!!delOpen} onOpenChange={(o) => !o && setDelOpen(null)}>
+        {delOpen && (
+          <DeleteCompanyDialog
+            name={delOpen.name}
+            onConfirm={async () => {
+              try {
+                await delCompany({ data: { company_id: delOpen.id } });
+                toast.success(`Empresa "${delOpen.name}" excluída com sucesso.`);
+                setDelOpen(null);
+                qc.invalidateQueries({ queryKey: ["admin-companies"] });
+              } catch (e: any) {
+                toast.error(e.message ?? "Erro ao excluir empresa.");
+              }
+            }}
+          />
+        )}
+      </Dialog>
     </div>
   );
 }
