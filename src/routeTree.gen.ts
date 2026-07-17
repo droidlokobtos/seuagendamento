@@ -43,6 +43,7 @@ import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
 import { Route as AuthenticatedAdminNichesRouteImport } from './routes/_authenticated/admin/niches'
 import { Route as AuthenticatedAdminCompaniesRouteImport } from './routes/_authenticated/admin/companies'
+import { Route as BSlugAvaliarAppointmentIdRouteImport } from './routes/b.$slug.avaliar.$appointmentId'
 import { Route as ApiPublicHooksRemindersRouteImport } from './routes/api/public/hooks/reminders'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -226,6 +227,12 @@ const AuthenticatedAdminCompaniesRoute =
     path: '/companies',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const BSlugAvaliarAppointmentIdRoute =
+  BSlugAvaliarAppointmentIdRouteImport.update({
+    id: '/avaliar/$appointmentId',
+    path: '/avaliar/$appointmentId',
+    getParentRoute: () => BSlugRoute,
+  } as any)
 const ApiPublicHooksRemindersRoute = ApiPublicHooksRemindersRouteImport.update({
   id: '/api/public/hooks/reminders',
   path: '/api/public/hooks/reminders',
@@ -267,6 +274,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -301,6 +309,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -339,6 +348,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -377,6 +387,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/app/'
     | '/api/public/hooks/reminders'
+    | '/b/$slug/avaliar/$appointmentId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -411,6 +422,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/api/public/hooks/reminders'
+    | '/b/$slug/avaliar/$appointmentId'
   id:
     | '__root__'
     | '/'
@@ -448,6 +460,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
     | '/api/public/hooks/reminders'
+    | '/b/$slug/avaliar/$appointmentId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -701,6 +714,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCompaniesRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/b/$slug/avaliar/$appointmentId': {
+      id: '/b/$slug/avaliar/$appointmentId'
+      path: '/avaliar/$appointmentId'
+      fullPath: '/b/$slug/avaliar/$appointmentId'
+      preLoaderRoute: typeof BSlugAvaliarAppointmentIdRouteImport
+      parentRoute: typeof BSlugRoute
+    }
     '/api/public/hooks/reminders': {
       id: '/api/public/hooks/reminders'
       path: '/api/public/hooks/reminders'
@@ -796,11 +816,13 @@ const AuthenticatedRouteRouteWithChildren =
 interface BSlugRouteChildren {
   BSlugEntrarRoute: typeof BSlugEntrarRoute
   BSlugMinhaContaRoute: typeof BSlugMinhaContaRoute
+  BSlugAvaliarAppointmentIdRoute: typeof BSlugAvaliarAppointmentIdRoute
 }
 
 const BSlugRouteChildren: BSlugRouteChildren = {
   BSlugEntrarRoute: BSlugEntrarRoute,
   BSlugMinhaContaRoute: BSlugMinhaContaRoute,
+  BSlugAvaliarAppointmentIdRoute: BSlugAvaliarAppointmentIdRoute,
 }
 
 const BSlugRouteWithChildren = BSlugRoute._addFileChildren(BSlugRouteChildren)
