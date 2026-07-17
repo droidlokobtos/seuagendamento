@@ -244,6 +244,44 @@ function ResetPasswordDialog({ email, onSubmit, busy }: { email: string; onSubmi
   );
 }
 
+function DeleteCompanyDialog({ name, onConfirm }: { name: string; onConfirm: () => Promise<void> }) {
+  const [confirmText, setConfirmText] = useState("");
+  const [busy, setBusy] = useState(false);
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle className="text-destructive flex items-center gap-2">
+          <Trash2 className="h-5 w-5" /> Excluir empresa
+        </DialogTitle>
+      </DialogHeader>
+      <div className="space-y-3">
+        <p className="text-sm">
+          Tem certeza de que deseja excluir <b>{name}</b>? Esta ação é <b>permanente</b> e não poderá ser desfeita.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Todos os dados relacionados (agendamentos, clientes, serviços, financeiro, estoque, fidelidade, etc.) serão removidos.
+        </p>
+        <div>
+          <Label>Para confirmar, digite <b>EXCLUIR</b></Label>
+          <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="EXCLUIR" />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button
+          variant="destructive"
+          disabled={busy || confirmText.trim().toUpperCase() !== "EXCLUIR"}
+          onClick={async () => {
+            setBusy(true);
+            try { await onConfirm(); } finally { setBusy(false); }
+          }}
+        >
+          {busy ? "Excluindo…" : "Excluir permanentemente"}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
 function NewCompanyDialog({
   niches,
   onSubmit,
