@@ -579,6 +579,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           photo_url: string | null
+          source: string | null
           tags: string[] | null
           updated_at: string
           user_id: string | null
@@ -594,6 +595,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           photo_url?: string | null
+          source?: string | null
           tags?: string[] | null
           updated_at?: string
           user_id?: string | null
@@ -609,6 +611,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           photo_url?: string | null
+          source?: string | null
           tags?: string[] | null
           updated_at?: string
           user_id?: string | null
