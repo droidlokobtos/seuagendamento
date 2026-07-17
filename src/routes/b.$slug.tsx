@@ -260,7 +260,7 @@ function BookingPage() {
     const d = new Date(done.starts_at);
     return (
       <div className="min-h-screen bg-background">
-        <Hero company={company} primary={primary} accent={accent} />
+        <Hero company={company} primary={primary} accent={accent} slug={company.slug} loggedIn={!!session} />
         <div className="max-w-lg mx-auto p-6">
           <Card>
             <CardContent className="p-8 text-center space-y-4">
@@ -286,7 +286,7 @@ function BookingPage() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <Hero company={company} primary={primary} accent={accent} />
+      <Hero company={company} primary={primary} accent={accent} slug={company.slug} loggedIn={!!session} />
       <div className="max-w-lg mx-auto p-4 md:p-6 space-y-4">
         <Steps step={step} accent={accent} />
 
