@@ -145,18 +145,9 @@ function StaffDialog({
     <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
       <DialogHeader><DialogTitle>{edit ? "Editar funcionário" : "Novo funcionário"}</DialogTitle></DialogHeader>
       <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-14 w-14">
-            {f.photo_url && <AvatarImage src={f.photo_url} alt="" />}
-            <AvatarFallback className="text-white" style={{ background: f.color ?? "#8b7355" }}>
-              {(f.name ?? "?").slice(0, 1).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <Label>URL da foto</Label>
-            <Input placeholder="https://…" value={f.photo_url ?? ""}
-              onChange={(e) => setF({ ...f, photo_url: e.target.value })} />
-          </div>
+        <div>
+          <Label>Foto</Label>
+          <ImageUpload value={f.photo_url} folder="staff" onChange={(url) => setF({ ...f, photo_url: url })} />
         </div>
         <div><Label>Nome</Label>
           <Input value={f.name ?? ""} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
