@@ -76,6 +76,22 @@ function BookingPage() {
   const [validating, setValidating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ starts_at: string } | null>(null);
+  const [session, setSession] = useState<{ userId: string; email?: string | null } | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setSession({ userId: data.user.id, email: data.user.email });
+        const meta = (data.user.user_metadata ?? {}) as { full_name?: string; phone?: string };
+        setForm((f) => ({
+          ...f,
+          name: f.name || meta.full_name || "",
+          phone: f.phone || meta.phone || "",
+          email: f.email || data.user.email || "",
+        }));
+      }
+    });
+  }, []);
 
   const { data: services = [] } = useQuery({
     queryKey: ["pub_services", companyId],
