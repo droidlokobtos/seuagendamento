@@ -43,8 +43,14 @@ function AuthPage() {
         if (error) throw error;
         toast.success("Conta criada!", { description: "Você já pode entrar." });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data: signIn, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (signIn.user) {
+          void supabase.from("admin_access_logs").insert({
+            user_id: signIn.user.id, email: signIn.user.email, event: "login",
+            user_agent: navigator.userAgent,
+          } as any);
+        }
         toast.success("Bem-vindo!");
       }
     } catch (err) {
@@ -153,9 +159,24 @@ function AuthPage() {
             </TabsContent>
           </Tabs>
 
-          <p className="mt-6 text-xs text-center text-muted-foreground">
+          <div className="mt-6 flex items-center justify-between text-xs text-muted-foreground">
             <Link to="/" className="hover:underline">← Voltar ao site</Link>
-          </p>
+            <button
+              type="button"
+              className="hover:underline text-primary"
+              onClick={async () => {
+                if (!email) return toast.error("Informe seu e-mail primeiro");
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                  redirectTo: `${window.location.origin}/reset-password`,
+                });
+                if (error) return toast.error(error.message);
+                void supabase.from("admin_access_logs").insert({
+                  email, event: "password_reset_requested", user_agent: navigator.userAgent,
+                } as any);
+                toast.success("Enviamos um link para redefinir sua senha.");
+              }}
+            >Esqueci minha senha</button>
+          </div>
         </div>
       </div>
     </div>
