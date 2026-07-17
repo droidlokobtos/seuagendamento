@@ -31,6 +31,8 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NotificationsBell } from "@/components/app/NotificationsBell";
+import { getImpersonation, stopImpersonation } from "@/lib/impersonation";
+import { ShieldAlert } from "lucide-react";
 
 const NAV = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true },
