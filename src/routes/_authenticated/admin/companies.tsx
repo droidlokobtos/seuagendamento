@@ -19,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/admin/companies")({
 
 function Companies() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [open, setOpen] = useState(false);
