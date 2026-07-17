@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, UserCog } from "lucide-react";
+import { Plus, Pencil, Trash2, UserCog, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/staff")({
@@ -98,16 +99,18 @@ function Staff() {
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="grid h-10 w-10 rounded-full place-items-center text-white text-sm font-medium shrink-0"
-                      style={{ background: s.color ?? "#8b7355" }}>
-                      {s.name.slice(0, 1).toUpperCase()}
-                    </div>
+                    <Avatar className="h-11 w-11" style={{ background: s.color ?? "#8b7355" }}>
+                      {s.photo_url && <AvatarImage src={s.photo_url} alt={s.name} />}
+                      <AvatarFallback className="text-white" style={{ background: s.color ?? "#8b7355" }}>
+                        {s.name.slice(0, 1).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="min-w-0">
                       <p className="font-medium truncate">{s.name}</p>
                       <p className="text-xs text-muted-foreground truncate">{s.role_title ?? "—"}</p>
                     </div>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 shrink-0">
                     <Button size="icon" variant="ghost" onClick={() => { setEdit(s); setOpen(true); }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -120,6 +123,11 @@ function Staff() {
                   {s.phone && <p>📞 {s.phone}</p>}
                   {s.commission_pct != null && <p>Comissão: {s.commission_pct}%</p>}
                 </div>
+                <Button asChild variant="outline" size="sm" className="w-full mt-3">
+                  <Link to="/app/agenda" search={{ staff: s.id } as any}>
+                    <Calendar className="h-4 w-4 mr-2" /> Agenda própria
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           ))}
@@ -134,9 +142,22 @@ function StaffDialog({
 }: { edit: S | null; onSave: (v: Partial<S>) => void; loading: boolean }) {
   const [f, setF] = useState<Partial<S>>(edit ?? { name: "", color: "#8b7355", active: true, commission_pct: 0 });
   return (
-    <DialogContent className="sm:max-w-md">
+    <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
       <DialogHeader><DialogTitle>{edit ? "Editar funcionário" : "Novo funcionário"}</DialogTitle></DialogHeader>
       <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-14 w-14">
+            {f.photo_url && <AvatarImage src={f.photo_url} alt="" />}
+            <AvatarFallback className="text-white" style={{ background: f.color ?? "#8b7355" }}>
+              {(f.name ?? "?").slice(0, 1).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <Label>URL da foto</Label>
+            <Input placeholder="https://…" value={f.photo_url ?? ""}
+              onChange={(e) => setF({ ...f, photo_url: e.target.value })} />
+          </div>
+        </div>
         <div><Label>Nome</Label>
           <Input value={f.name ?? ""} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
         <div className="grid grid-cols-2 gap-3">
