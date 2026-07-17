@@ -8,12 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Search, Building2, LogIn, KeyRound } from "lucide-react";
+import { Plus, Search, Building2, LogIn, KeyRound, Trash2 } from "lucide-react";
 import { dateBR, slugify, statusLabel } from "@/lib/format";
 import { toast } from "sonner";
 import { startImpersonation } from "@/lib/impersonation";
 import { useServerFn } from "@tanstack/react-start";
-import { resetUserPassword } from "@/lib/admin-users.functions";
+import { resetUserPassword, deleteCompany } from "@/lib/admin-users.functions";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/admin/companies")({
   component: Companies,
