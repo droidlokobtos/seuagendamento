@@ -33,12 +33,13 @@ export function ImageUpload({
     }
     setBusy(true);
     try {
-      const ext = file.name.split(".").pop() || "png";
-      const path = `${folder}/${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("company-assets").upload(path, file, {
+      const maxW = aspect === "wide" ? 1920 : 1200;
+      const optimized = await optimizeImage(file, maxW, 0.85);
+      const path = `${folder}/${crypto.randomUUID()}.jpg`;
+      const { error: upErr } = await supabase.storage.from("company-assets").upload(path, optimized, {
         cacheControl: "31536000",
         upsert: false,
-        contentType: file.type,
+        contentType: "image/jpeg",
       });
       if (upErr) throw upErr;
       const { data, error } = await supabase.storage
@@ -46,7 +47,7 @@ export function ImageUpload({
         .createSignedUrl(path, TEN_YEARS);
       if (error) throw error;
       onChange(data.signedUrl);
-      toast.success("Imagem enviada");
+      toast.success("Imagem enviada e otimizada");
     } catch (e: any) {
       toast.error(e.message || "Falha ao enviar");
     } finally {
