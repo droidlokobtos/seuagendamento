@@ -292,10 +292,13 @@ export type Database = {
           city: string | null
           created_at: string
           custom_domain: string | null
+          description: string | null
           document: string | null
           due_day: number
           email: string | null
+          facebook_url: string | null
           id: string
+          instagram_url: string | null
           last_payment_at: string | null
           latitude: number | null
           legal_name: string | null
@@ -315,12 +318,17 @@ export type Database = {
           responsible_name: string | null
           secondary_color: string
           short_description: string | null
+          show_reviews_on_portal: boolean
+          show_staff_on_portal: boolean
           slug: string
           state: string | null
           status: Database["public"]["Enums"]["company_status"]
           suspended_at: string | null
           theme: string
+          tiktok_url: string | null
           updated_at: string
+          website_url: string | null
+          welcome_message: string | null
           whatsapp: string | null
         }
         Insert: {
@@ -331,10 +339,13 @@ export type Database = {
           city?: string | null
           created_at?: string
           custom_domain?: string | null
+          description?: string | null
           document?: string | null
           due_day?: number
           email?: string | null
+          facebook_url?: string | null
           id?: string
+          instagram_url?: string | null
           last_payment_at?: string | null
           latitude?: number | null
           legal_name?: string | null
@@ -354,12 +365,17 @@ export type Database = {
           responsible_name?: string | null
           secondary_color?: string
           short_description?: string | null
+          show_reviews_on_portal?: boolean
+          show_staff_on_portal?: boolean
           slug: string
           state?: string | null
           status?: Database["public"]["Enums"]["company_status"]
           suspended_at?: string | null
           theme?: string
+          tiktok_url?: string | null
           updated_at?: string
+          website_url?: string | null
+          welcome_message?: string | null
           whatsapp?: string | null
         }
         Update: {
@@ -370,10 +386,13 @@ export type Database = {
           city?: string | null
           created_at?: string
           custom_domain?: string | null
+          description?: string | null
           document?: string | null
           due_day?: number
           email?: string | null
+          facebook_url?: string | null
           id?: string
+          instagram_url?: string | null
           last_payment_at?: string | null
           latitude?: number | null
           legal_name?: string | null
@@ -393,12 +412,17 @@ export type Database = {
           responsible_name?: string | null
           secondary_color?: string
           short_description?: string | null
+          show_reviews_on_portal?: boolean
+          show_staff_on_portal?: boolean
           slug?: string
           state?: string | null
           status?: Database["public"]["Enums"]["company_status"]
           suspended_at?: string | null
           theme?: string
+          tiktok_url?: string | null
           updated_at?: string
+          website_url?: string | null
+          welcome_message?: string | null
           whatsapp?: string | null
         }
         Relationships: [
