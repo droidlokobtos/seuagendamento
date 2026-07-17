@@ -140,6 +140,7 @@ function MinhaContaPage() {
 }
 
 function BookingCard({ booking, accent, canCancel, onCancel }: { booking: any; accent: string; canCancel?: boolean; onCancel?: () => void }) {
+  const { slug } = Route.useParams();
   const d = new Date(booking.starts_at);
   const status = STATUS_LABEL[booking.status] ?? { label: booking.status, variant: "outline" as const };
   const total = Math.max(0, (booking.total_cents ?? 0) - (booking.discount_cents ?? 0)) / 100;
@@ -165,15 +166,23 @@ function BookingCard({ booking, accent, canCancel, onCancel }: { booking: any; a
           </div>
           <Badge variant={status.variant}>{status.label}</Badge>
         </div>
-        <div className="flex items-center justify-between pt-1 border-t">
+        <div className="flex items-center justify-between gap-2 pt-1 border-t">
           <span className="text-sm font-semibold">{brl(total)}</span>
-          {canCancel && onCancel && (
-            <Button variant="ghost" size="sm" className="text-destructive" onClick={onCancel}>
-              <XCircle className="h-4 w-4 mr-1" /> Cancelar
-            </Button>
-          )}
+          <div className="flex gap-1">
+            {booking.status === "completed" && (
+              <Link to="/b/$slug/avaliar/$appointmentId" params={{ slug, appointmentId: booking.id }}>
+                <Button variant="ghost" size="sm">Avaliar</Button>
+              </Link>
+            )}
+            {canCancel && onCancel && (
+              <Button variant="ghost" size="sm" className="text-destructive" onClick={onCancel}>
+                <XCircle className="h-4 w-4 mr-1" /> Cancelar
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
   );
 }
+

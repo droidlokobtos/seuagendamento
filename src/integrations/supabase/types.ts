@@ -211,6 +211,13 @@ export type Database = {
             foreignKeyName: "appointments_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
@@ -219,6 +226,59 @@ export type Database = {
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          audience: string
+          channel: string
+          company_id: string
+          created_at: string
+          id: string
+          message: string
+          recipients_count: number
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string
+          channel?: string
+          company_id: string
+          created_at?: string
+          id?: string
+          message: string
+          recipients_count?: number
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          channel?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          recipients_count?: number
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -670,6 +730,50 @@ export type Database = {
           },
         ]
       }
+      loyalty_rewards: {
+        Row: {
+          active: boolean
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          points_cost: number
+          stock: number | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          points_cost: number
+          stock?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          points_cost?: number
+          stock?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_rewards_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loyalty_transactions: {
         Row: {
           cashback_amount: number
@@ -710,6 +814,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_birthdays_this_month"
             referencedColumns: ["id"]
           },
           {
@@ -984,6 +1095,81 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          appointment_id: string | null
+          comment: string | null
+          company_id: string
+          created_at: string
+          customer_id: string | null
+          id: string
+          published: boolean
+          rating: number
+          staff_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          comment?: string | null
+          company_id: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          published?: boolean
+          rating: number
+          staff_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          comment?: string | null
+          company_id?: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          published?: boolean
+          rating?: number
+          staff_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           active: boolean
@@ -1175,7 +1361,44 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      customer_birthdays_this_month: {
+        Row: {
+          birthdate: string | null
+          company_id: string | null
+          day: number | null
+          email: string | null
+          id: string | null
+          name: string | null
+          phone: string | null
+        }
+        Insert: {
+          birthdate?: string | null
+          company_id?: string | null
+          day?: never
+          email?: string | null
+          id?: string | null
+          name?: string | null
+          phone?: string | null
+        }
+        Update: {
+          birthdate?: string | null
+          company_id?: string | null
+          day?: never
+          email?: string | null
+          id?: string | null
+          name?: string | null
+          phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {

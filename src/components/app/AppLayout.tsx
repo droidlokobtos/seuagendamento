@@ -16,7 +16,13 @@ import {
   BarChart3,
   Ticket,
   Award,
+  Star,
+  Megaphone,
+  Cake,
+  Gift,
 } from "lucide-react";
+
+
 
 
 import { useState, type ReactNode } from "react";
@@ -36,8 +42,13 @@ const NAV = [
   { to: "/app/reports", label: "Relatórios", icon: BarChart3 },
   { to: "/app/coupons", label: "Cupons", icon: Ticket },
   { to: "/app/loyalty", label: "Fidelidade", icon: Award },
+  { to: "/app/rewards", label: "Recompensas", icon: Gift },
+  { to: "/app/campaigns", label: "Campanhas", icon: Megaphone },
+  { to: "/app/birthdays", label: "Aniversariantes", icon: Cake },
+  { to: "/app/reviews", label: "Avaliações", icon: Star },
   { to: "/app/settings", label: "Configurações", icon: Settings },
 ];
+
 
 export function AppLayout({ children }: { children?: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });

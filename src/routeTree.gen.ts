@@ -28,17 +28,22 @@ import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
 import { Route as AuthenticatedAppStaffRouteImport } from './routes/_authenticated/app/staff'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app/settings'
 import { Route as AuthenticatedAppServicesRouteImport } from './routes/_authenticated/app/services'
+import { Route as AuthenticatedAppRewardsRouteImport } from './routes/_authenticated/app/rewards'
+import { Route as AuthenticatedAppReviewsRouteImport } from './routes/_authenticated/app/reviews'
 import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app/reports'
 import { Route as AuthenticatedAppProductsRouteImport } from './routes/_authenticated/app/products'
 import { Route as AuthenticatedAppLoyaltyRouteImport } from './routes/_authenticated/app/loyalty'
 import { Route as AuthenticatedAppFinancesRouteImport } from './routes/_authenticated/app/finances'
 import { Route as AuthenticatedAppCustomersRouteImport } from './routes/_authenticated/app/customers'
 import { Route as AuthenticatedAppCouponsRouteImport } from './routes/_authenticated/app/coupons'
+import { Route as AuthenticatedAppCampaignsRouteImport } from './routes/_authenticated/app/campaigns'
+import { Route as AuthenticatedAppBirthdaysRouteImport } from './routes/_authenticated/app/birthdays'
 import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app/agenda'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
 import { Route as AuthenticatedAdminNichesRouteImport } from './routes/_authenticated/admin/niches'
 import { Route as AuthenticatedAdminCompaniesRouteImport } from './routes/_authenticated/admin/companies'
+import { Route as BSlugAvaliarAppointmentIdRouteImport } from './routes/b.$slug.avaliar.$appointmentId'
 import { Route as ApiPublicHooksRemindersRouteImport } from './routes/api/public/hooks/reminders'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -138,6 +143,16 @@ const AuthenticatedAppServicesRoute =
     path: '/services',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
+const AuthenticatedAppRewardsRoute = AuthenticatedAppRewardsRouteImport.update({
+  id: '/rewards',
+  path: '/rewards',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any)
+const AuthenticatedAppReviewsRoute = AuthenticatedAppReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any)
 const AuthenticatedAppReportsRoute = AuthenticatedAppReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -171,6 +186,18 @@ const AuthenticatedAppCouponsRoute = AuthenticatedAppCouponsRouteImport.update({
   path: '/coupons',
   getParentRoute: () => AuthenticatedAppRouteRoute,
 } as any)
+const AuthenticatedAppCampaignsRoute =
+  AuthenticatedAppCampaignsRouteImport.update({
+    id: '/campaigns',
+    path: '/campaigns',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedAppBirthdaysRoute =
+  AuthenticatedAppBirthdaysRouteImport.update({
+    id: '/birthdays',
+    path: '/birthdays',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
 const AuthenticatedAppAgendaRoute = AuthenticatedAppAgendaRouteImport.update({
   id: '/agenda',
   path: '/agenda',
@@ -200,6 +227,12 @@ const AuthenticatedAdminCompaniesRoute =
     path: '/companies',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const BSlugAvaliarAppointmentIdRoute =
+  BSlugAvaliarAppointmentIdRouteImport.update({
+    id: '/avaliar/$appointmentId',
+    path: '/avaliar/$appointmentId',
+    getParentRoute: () => BSlugRoute,
+  } as any)
 const ApiPublicHooksRemindersRoute = ApiPublicHooksRemindersRouteImport.update({
   id: '/api/public/hooks/reminders',
   path: '/api/public/hooks/reminders',
@@ -222,12 +255,16 @@ export interface FileRoutesByFullPath {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
+  '/app/campaigns': typeof AuthenticatedAppCampaignsRoute
   '/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/app/customers': typeof AuthenticatedAppCustomersRoute
   '/app/finances': typeof AuthenticatedAppFinancesRoute
   '/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
   '/app/products': typeof AuthenticatedAppProductsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
+  '/app/reviews': typeof AuthenticatedAppReviewsRoute
+  '/app/rewards': typeof AuthenticatedAppRewardsRoute
   '/app/services': typeof AuthenticatedAppServicesRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/staff': typeof AuthenticatedAppStaffRoute
@@ -237,6 +274,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -252,12 +290,16 @@ export interface FileRoutesByTo {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
+  '/app/campaigns': typeof AuthenticatedAppCampaignsRoute
   '/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/app/customers': typeof AuthenticatedAppCustomersRoute
   '/app/finances': typeof AuthenticatedAppFinancesRoute
   '/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
   '/app/products': typeof AuthenticatedAppProductsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
+  '/app/reviews': typeof AuthenticatedAppReviewsRoute
+  '/app/rewards': typeof AuthenticatedAppRewardsRoute
   '/app/services': typeof AuthenticatedAppServicesRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/staff': typeof AuthenticatedAppStaffRoute
@@ -267,6 +309,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -286,12 +329,16 @@ export interface FileRoutesById {
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/_authenticated/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
+  '/_authenticated/app/campaigns': typeof AuthenticatedAppCampaignsRoute
   '/_authenticated/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/_authenticated/app/customers': typeof AuthenticatedAppCustomersRoute
   '/_authenticated/app/finances': typeof AuthenticatedAppFinancesRoute
   '/_authenticated/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
   '/_authenticated/app/products': typeof AuthenticatedAppProductsRoute
   '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
+  '/_authenticated/app/reviews': typeof AuthenticatedAppReviewsRoute
+  '/_authenticated/app/rewards': typeof AuthenticatedAppRewardsRoute
   '/_authenticated/app/services': typeof AuthenticatedAppServicesRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/app/staff': typeof AuthenticatedAppStaffRoute
@@ -301,6 +348,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -320,12 +368,16 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/settings'
     | '/app/agenda'
+    | '/app/birthdays'
+    | '/app/campaigns'
     | '/app/coupons'
     | '/app/customers'
     | '/app/finances'
     | '/app/loyalty'
     | '/app/products'
     | '/app/reports'
+    | '/app/reviews'
+    | '/app/rewards'
     | '/app/services'
     | '/app/settings'
     | '/app/staff'
@@ -335,6 +387,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/app/'
     | '/api/public/hooks/reminders'
+    | '/b/$slug/avaliar/$appointmentId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -350,12 +403,16 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/settings'
     | '/app/agenda'
+    | '/app/birthdays'
+    | '/app/campaigns'
     | '/app/coupons'
     | '/app/customers'
     | '/app/finances'
     | '/app/loyalty'
     | '/app/products'
     | '/app/reports'
+    | '/app/reviews'
+    | '/app/rewards'
     | '/app/services'
     | '/app/settings'
     | '/app/staff'
@@ -365,6 +422,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/api/public/hooks/reminders'
+    | '/b/$slug/avaliar/$appointmentId'
   id:
     | '__root__'
     | '/'
@@ -383,12 +441,16 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/settings'
     | '/_authenticated/app/agenda'
+    | '/_authenticated/app/birthdays'
+    | '/_authenticated/app/campaigns'
     | '/_authenticated/app/coupons'
     | '/_authenticated/app/customers'
     | '/_authenticated/app/finances'
     | '/_authenticated/app/loyalty'
     | '/_authenticated/app/products'
     | '/_authenticated/app/reports'
+    | '/_authenticated/app/reviews'
+    | '/_authenticated/app/rewards'
     | '/_authenticated/app/services'
     | '/_authenticated/app/settings'
     | '/_authenticated/app/staff'
@@ -398,6 +460,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
     | '/api/public/hooks/reminders'
+    | '/b/$slug/avaliar/$appointmentId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -546,6 +609,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppServicesRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/rewards': {
+      id: '/_authenticated/app/rewards'
+      path: '/rewards'
+      fullPath: '/app/rewards'
+      preLoaderRoute: typeof AuthenticatedAppRewardsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/reviews': {
+      id: '/_authenticated/app/reviews'
+      path: '/reviews'
+      fullPath: '/app/reviews'
+      preLoaderRoute: typeof AuthenticatedAppReviewsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/reports': {
       id: '/_authenticated/app/reports'
       path: '/reports'
@@ -588,6 +665,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCouponsRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/campaigns': {
+      id: '/_authenticated/app/campaigns'
+      path: '/campaigns'
+      fullPath: '/app/campaigns'
+      preLoaderRoute: typeof AuthenticatedAppCampaignsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/birthdays': {
+      id: '/_authenticated/app/birthdays'
+      path: '/birthdays'
+      fullPath: '/app/birthdays'
+      preLoaderRoute: typeof AuthenticatedAppBirthdaysRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/agenda': {
       id: '/_authenticated/app/agenda'
       path: '/agenda'
@@ -623,6 +714,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCompaniesRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/b/$slug/avaliar/$appointmentId': {
+      id: '/b/$slug/avaliar/$appointmentId'
+      path: '/avaliar/$appointmentId'
+      fullPath: '/b/$slug/avaliar/$appointmentId'
+      preLoaderRoute: typeof BSlugAvaliarAppointmentIdRouteImport
+      parentRoute: typeof BSlugRoute
+    }
     '/api/public/hooks/reminders': {
       id: '/api/public/hooks/reminders'
       path: '/api/public/hooks/reminders'
@@ -657,12 +755,16 @@ const AuthenticatedAdminRouteRouteWithChildren =
 
 interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppAgendaRoute: typeof AuthenticatedAppAgendaRoute
+  AuthenticatedAppBirthdaysRoute: typeof AuthenticatedAppBirthdaysRoute
+  AuthenticatedAppCampaignsRoute: typeof AuthenticatedAppCampaignsRoute
   AuthenticatedAppCouponsRoute: typeof AuthenticatedAppCouponsRoute
   AuthenticatedAppCustomersRoute: typeof AuthenticatedAppCustomersRoute
   AuthenticatedAppFinancesRoute: typeof AuthenticatedAppFinancesRoute
   AuthenticatedAppLoyaltyRoute: typeof AuthenticatedAppLoyaltyRoute
   AuthenticatedAppProductsRoute: typeof AuthenticatedAppProductsRoute
   AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
+  AuthenticatedAppReviewsRoute: typeof AuthenticatedAppReviewsRoute
+  AuthenticatedAppRewardsRoute: typeof AuthenticatedAppRewardsRoute
   AuthenticatedAppServicesRoute: typeof AuthenticatedAppServicesRoute
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
   AuthenticatedAppStaffRoute: typeof AuthenticatedAppStaffRoute
@@ -671,12 +773,16 @@ interface AuthenticatedAppRouteRouteChildren {
 
 const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppAgendaRoute: AuthenticatedAppAgendaRoute,
+  AuthenticatedAppBirthdaysRoute: AuthenticatedAppBirthdaysRoute,
+  AuthenticatedAppCampaignsRoute: AuthenticatedAppCampaignsRoute,
   AuthenticatedAppCouponsRoute: AuthenticatedAppCouponsRoute,
   AuthenticatedAppCustomersRoute: AuthenticatedAppCustomersRoute,
   AuthenticatedAppFinancesRoute: AuthenticatedAppFinancesRoute,
   AuthenticatedAppLoyaltyRoute: AuthenticatedAppLoyaltyRoute,
   AuthenticatedAppProductsRoute: AuthenticatedAppProductsRoute,
   AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
+  AuthenticatedAppReviewsRoute: AuthenticatedAppReviewsRoute,
+  AuthenticatedAppRewardsRoute: AuthenticatedAppRewardsRoute,
   AuthenticatedAppServicesRoute: AuthenticatedAppServicesRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
   AuthenticatedAppStaffRoute: AuthenticatedAppStaffRoute,
@@ -710,11 +816,13 @@ const AuthenticatedRouteRouteWithChildren =
 interface BSlugRouteChildren {
   BSlugEntrarRoute: typeof BSlugEntrarRoute
   BSlugMinhaContaRoute: typeof BSlugMinhaContaRoute
+  BSlugAvaliarAppointmentIdRoute: typeof BSlugAvaliarAppointmentIdRoute
 }
 
 const BSlugRouteChildren: BSlugRouteChildren = {
   BSlugEntrarRoute: BSlugEntrarRoute,
   BSlugMinhaContaRoute: BSlugMinhaContaRoute,
+  BSlugAvaliarAppointmentIdRoute: BSlugAvaliarAppointmentIdRoute,
 }
 
 const BSlugRouteWithChildren = BSlugRoute._addFileChildren(BSlugRouteChildren)
