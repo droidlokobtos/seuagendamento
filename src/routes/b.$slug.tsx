@@ -272,11 +272,22 @@ function BookingPage() {
                 {d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })} às{" "}
                 {d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
               </p>
-              {company.whatsapp && (
-                <a href={`https://wa.me/${company.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
-                  <Button variant="outline" className="mt-2"><Phone className="h-4 w-4 mr-2" /> Falar no WhatsApp</Button>
-                </a>
-              )}
+              <div className="flex flex-col gap-2 items-center pt-2">
+                {session ? (
+                  <Link to="/b/$slug/minha-conta" params={{ slug: company.slug }}>
+                    <Button style={{ background: primary }}>Ver meus agendamentos</Button>
+                  </Link>
+                ) : (
+                  <Link to="/b/$slug/entrar" params={{ slug: company.slug }}>
+                    <Button style={{ background: primary }}>Criar conta e acompanhar</Button>
+                  </Link>
+                )}
+                {company.whatsapp && (
+                  <a href={`https://wa.me/${company.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
+                    <Button variant="outline"><Phone className="h-4 w-4 mr-2" /> Falar no WhatsApp</Button>
+                  </a>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
