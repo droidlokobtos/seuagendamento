@@ -15,7 +15,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2, TrendingUp, TrendingDown, Wallet } from "lucide-react";
-import { brl, brDate } from "@/lib/format";
+import { brl, dateBR } from "@/lib/format";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/finances")({
@@ -32,7 +32,7 @@ type Tx = {
   payment_method_id: string | null;
 };
 
-type PM = { id: string; name: string };
+type PM = { id: string; method: string };
 
 function Finances() {
   const qc = useQueryClient();
@@ -61,7 +61,7 @@ function Finances() {
     queryKey: ["payment_methods", companyId],
     queryFn: async () => {
       const { data, error } = await supabase.from("payment_methods")
-        .select("id,name").eq("company_id", companyId);
+        .select("id,method").eq("company_id", companyId);
       if (error) throw error;
       return (data ?? []) as PM[];
     },
