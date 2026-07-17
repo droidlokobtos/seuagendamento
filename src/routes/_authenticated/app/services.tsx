@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/lib/company";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/app/services")({
 type S = {
   id: string; name: string; description: string | null;
   duration_min: number; price_cents: number; category: string | null;
-  color: string | null; active: boolean;
+  color: string | null; active: boolean; photo_url: string | null;
 };
 
 function Services() {
@@ -41,6 +41,11 @@ function Services() {
       return (data ?? []) as S[];
     },
   });
+
+  const categories = useMemo(
+    () => Array.from(new Set(data.map((s) => s.category).filter(Boolean))) as string[],
+    [data],
+  );
 
   const save = useMutation({
     mutationFn: async (v: Partial<S>) => {
@@ -81,7 +86,7 @@ function Services() {
           <DialogTrigger asChild>
             <Button onClick={() => setEdit(null)}><Plus className="h-4 w-4 mr-2" /> Novo serviço</Button>
           </DialogTrigger>
-          <ServiceDialog edit={edit} onSave={(v) => save.mutate(v)} loading={save.isPending} />
+          <ServiceDialog edit={edit} onSave={(v) => save.mutate(v)} loading={save.isPending} categories={categories} />
         </Dialog>
       </div>
 
@@ -97,7 +102,12 @@ function Services() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {data.map((s) => (
-            <Card key={s.id} className={!s.active ? "opacity-60" : ""}>
+            <Card key={s.id} className={!s.active ? "opacity-60 overflow-hidden" : "overflow-hidden"}>
+              {s.photo_url && (
+                <div className="h-32 w-full bg-muted">
+                  <img src={s.photo_url} alt={s.name} className="h-full w-full object-cover" />
+                </div>
+              )}
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -130,18 +140,28 @@ function Services() {
 }
 
 function ServiceDialog({
-  edit, onSave, loading,
-}: { edit: S | null; onSave: (v: Partial<S>) => void; loading: boolean }) {
+  edit, onSave, loading, categories,
+}: { edit: S | null; onSave: (v: Partial<S>) => void; loading: boolean; categories: string[] }) {
   const [f, setF] = useState<Partial<S>>(
     edit ?? { name: "", duration_min: 30, price_cents: 0, color: "#8b7355", active: true },
   );
 
   return (
-    <DialogContent className="sm:max-w-md">
+    <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>{edit ? "Editar serviço" : "Novo serviço"}</DialogTitle>
       </DialogHeader>
       <div className="space-y-3">
+        {f.photo_url && (
+          <div className="h-32 w-full rounded-md overflow-hidden bg-muted">
+            <img src={f.photo_url} alt="" className="h-full w-full object-cover" />
+          </div>
+        )}
+        <div>
+          <Label>URL da foto</Label>
+          <Input placeholder="https://…" value={f.photo_url ?? ""}
+            onChange={(e) => setF({ ...f, photo_url: e.target.value })} />
+        </div>
         <div>
           <Label>Nome</Label>
           <Input value={f.name ?? ""} onChange={(e) => setF({ ...f, name: e.target.value })} />
@@ -165,7 +185,11 @@ function ServiceDialog({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Categoria</Label>
-            <Input value={f.category ?? ""} onChange={(e) => setF({ ...f, category: e.target.value })} />
+            <Input list="svc-categories" value={f.category ?? ""}
+              onChange={(e) => setF({ ...f, category: e.target.value })} />
+            <datalist id="svc-categories">
+              {categories.map((c) => <option key={c} value={c} />)}
+            </datalist>
           </div>
           <div>
             <Label>Cor</Label>
