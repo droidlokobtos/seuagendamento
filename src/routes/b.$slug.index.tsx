@@ -16,7 +16,7 @@ export const Route = createFileRoute("/b/$slug/")({
   loader: async ({ params }) => {
     const { data: company, error } = await supabase
       .from("companies")
-      .select("id,name,slug,logo_url,banner_url,primary_color,secondary_color,address,whatsapp,phone,email,status,online_booking_enabled,description,welcome_message,instagram_url,facebook_url,tiktok_url,website_url,show_staff_on_portal,show_reviews_on_portal")
+      .select("id,name,slug,logo_url,banner_url,primary_color,secondary_color,address,whatsapp,phone,email,status,online_booking_enabled,description,welcome_message,instagram_url,facebook_url,tiktok_url,website_url,show_staff_on_portal,show_reviews_on_portal,min_advance_min,max_advance_days")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw error;
@@ -58,14 +58,29 @@ export const Route = createFileRoute("/b/$slug/")({
 type Service = { id: string; name: string; description: string | null; duration_min: number; price_cents: number; category: string | null; color: string | null };
 type Staff = { id: string; name: string; role_title: string | null; photo_url: string | null; color: string | null };
 type Hours = { weekday: number; start_time: string; end_time: string; closed: boolean };
+type TimeBlock = { starts_at: string; ends_at: string; staff_id: string | null };
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const DEFAULT_HOURS = { start_time: "09:00", end_time: "18:00", closed: false };
+
+// Fallback: se a empresa não configurou nenhum horário, o portal opera 09:00-18:00 todos os dias.
+// Se configurou pelo menos 1 dia, dias sem row são tratados como fechados (comportamento original).
+function resolveHours(weekday: number, hours: Hours[]): { start_time: string; end_time: string; closed: boolean } | null {
+  if (!hours.length) return DEFAULT_HOURS;
+  const h = hours.find((x) => x.weekday === weekday);
+  if (!h) return null;
+  if (h.closed) return null;
+  return { start_time: h.start_time, end_time: h.end_time, closed: false };
+}
+
+type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
 function BookingPage() {
   const { company } = Route.useLoaderData();
   const companyId = company.id;
+  const showStaffStep = company.show_staff_on_portal !== false;
 
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<Step>(1);
   const [selected, setSelected] = useState<Service[]>([]);
   const [staff, setStaff] = useState<Staff | null>(null);
   const [dateStr, setDateStr] = useState<string>(new Date().toISOString().slice(0, 10));
@@ -116,7 +131,6 @@ function BookingPage() {
         if (!counts.has(l.staff_id)) counts.set(l.staff_id, new Set());
         counts.get(l.staff_id)!.add(l.service_id);
       });
-      // Only professionals that provide ALL selected services
       return ((st ?? []) as any[]).filter((s) => counts.get(s.id)?.size === ids.length) as Staff[];
     },
     enabled: selected.length > 0,
@@ -146,56 +160,83 @@ function BookingPage() {
     enabled: !!dateStr,
   });
 
+  const { data: blocks = [] } = useQuery({
+    queryKey: ["pub_blocks", companyId, dateStr, staff?.id ?? "any"],
+    queryFn: async () => {
+      const from = `${dateStr}T00:00:00`;
+      const to = `${dateStr}T23:59:59`;
+      const { data } = await supabase.from("time_blocks").select("starts_at,ends_at,staff_id")
+        .eq("company_id", companyId)
+        .lt("starts_at", to).gt("ends_at", from);
+      const list = (data ?? []) as TimeBlock[];
+      // Bloqueios sem staff_id são da empresa toda; com staff_id valem só se combinar com o selecionado (ou qualquer, se "any")
+      return list.filter((b) => !b.staff_id || !staff || b.staff_id === staff.id);
+    },
+    enabled: !!dateStr,
+  });
+
   const totalMin = selected.reduce((s, x) => s + x.duration_min, 0);
   const totalPrice = selected.reduce((s, x) => s + x.price_cents, 0) / 100;
+
+  const minAdvanceMin = (company as any).min_advance_min ?? 0;
+  const maxAdvanceDays = (company as any).max_advance_days ?? 60;
 
   const slots = useMemo(() => {
     if (!dateStr || !totalMin) return [] as string[];
     const d = new Date(dateStr + "T00:00:00");
     const wd = d.getDay();
-    const h = hours.find((x) => x.weekday === wd);
-    if (!h || h.closed) return [];
+    const h = resolveHours(wd, hours);
+    if (!h) return [];
     const [sh, sm] = h.start_time.split(":").map(Number);
     const [eh, em] = h.end_time.split(":").map(Number);
     const start = sh * 60 + sm;
     const end = eh * 60 + em;
-    const step = 15;
-    const now = new Date();
-    const isToday = d.toDateString() === now.toDateString();
-    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const gran = 15;
+    const now = Date.now();
+    const minStart = now + minAdvanceMin * 60_000;
     const out: string[] = [];
-    for (let m = start; m + totalMin <= end; m += step) {
-      if (isToday && m < nowMin + 10) continue;
+    for (let m = start; m + totalMin <= end; m += gran) {
       const hh = Math.floor(m / 60).toString().padStart(2, "0");
       const mm = (m % 60).toString().padStart(2, "0");
       const iso = `${dateStr}T${hh}:${mm}:00`;
       const slotStart = new Date(iso).getTime();
       const slotEnd = slotStart + totalMin * 60_000;
-      const conflict = taken.some((t) => {
+      if (slotStart < minStart) continue;
+      const conflictAppt = taken.some((t) => {
         const ts = new Date(t.starts_at).getTime();
         const te = new Date(t.ends_at).getTime();
         return slotStart < te && slotEnd > ts;
       });
-      if (!conflict) out.push(`${hh}:${mm}`);
+      if (conflictAppt) continue;
+      const conflictBlock = blocks.some((b) => {
+        const bs = new Date(b.starts_at).getTime();
+        const be = new Date(b.ends_at).getTime();
+        return slotStart < be && slotEnd > bs;
+      });
+      if (conflictBlock) continue;
+      out.push(`${hh}:${mm}`);
     }
     return out;
-  }, [dateStr, hours, taken, totalMin]);
+  }, [dateStr, hours, taken, blocks, totalMin, minAdvanceMin]);
 
   const dateOptions = useMemo(() => {
     const list: { iso: string; label: string; wd: number; disabled: boolean }[] = [];
-    for (let i = 0; i < 14; i++) {
-      const d = new Date(); d.setDate(d.getDate() + i);
+    const today = new Date();
+    const maxDays = Math.min(Math.max(maxAdvanceDays, 1), 60);
+    const daysToShow = Math.min(14, maxDays);
+    for (let i = 0; i < daysToShow; i++) {
+      const d = new Date(); d.setDate(today.getDate() + i);
       const iso = d.toISOString().slice(0, 10);
       const wd = d.getDay();
-      const h = hours.find((x) => x.weekday === wd);
+      const h = resolveHours(wd, hours);
       list.push({
         iso, wd,
         label: `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1).toString().padStart(2, "0")}`,
-        disabled: !h || h.closed,
+        disabled: !h,
       });
     }
     return list;
-  }, [hours]);
+  }, [hours, maxAdvanceDays]);
 
   const toggleService = (s: Service) => {
     setSelected((prev) => prev.some((x) => x.id === s.id) ? prev.filter((x) => x.id !== s.id) : [...prev, s]);
@@ -256,6 +297,33 @@ function BookingPage() {
   const primary = company.primary_color || "#0f172a";
   const accent = company.secondary_color || "#c9a86a";
 
+  // Navegação entre passos, pulando "Profissional" se desativado no portal
+  const goNext = () => {
+    setStep((s) => {
+      let next = (s + 1) as Step;
+      if (next === 2 && !showStaffStep) next = 3;
+      if (next > 6) next = 6;
+      return next;
+    });
+  };
+  const goPrev = () => {
+    setStep((s) => {
+      let prev = (s - 1) as Step;
+      if (prev === 2 && !showStaffStep) prev = 1;
+      if (prev < 1) prev = 1;
+      return prev;
+    });
+  };
+
+  const canContinue = (() => {
+    if (step === 1) return selected.length > 0;
+    if (step === 2) return true; // "qualquer profissional" é válido
+    if (step === 3) return !!dateStr && dateOptions.some((d) => d.iso === dateStr && !d.disabled);
+    if (step === 4) return !!timeStr;
+    if (step === 5) return !!form.name.trim() && !!form.phone.trim();
+    return false;
+  })();
+
   if (done) {
     const d = new Date(done.starts_at);
     return (
@@ -299,7 +367,7 @@ function BookingPage() {
     <div className="min-h-screen bg-background pb-20">
       <Hero company={company} primary={primary} accent={accent} slug={company.slug} loggedIn={!!session} />
       <div className="max-w-lg mx-auto p-4 md:p-6 space-y-4">
-        <Steps step={step} accent={accent} />
+        <Steps step={step} accent={accent} showStaffStep={showStaffStep} />
 
         {step === 1 && <PortalInfo company={company} hours={hours} primary={primary} accent={accent} />}
         {step === 1 && company.show_reviews_on_portal && <ReviewsSection companyId={companyId} accent={accent} />}
@@ -333,7 +401,7 @@ function BookingPage() {
           </Card>
         )}
 
-        {step === 2 && (
+        {step === 2 && showStaffStep && (
           <Card>
             <CardContent className="p-4 space-y-3">
               <h2 className="font-semibold text-lg">Escolha o profissional</h2>
@@ -369,7 +437,7 @@ function BookingPage() {
         {step === 3 && (
           <Card>
             <CardContent className="p-4 space-y-4">
-              <h2 className="font-semibold text-lg">Escolha data e horário</h2>
+              <h2 className="font-semibold text-lg">Escolha a data</h2>
               <div>
                 <Label className="text-xs mb-2 flex items-center gap-1"><Calendar className="h-3 w-3" /> Data</Label>
                 <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
@@ -385,7 +453,20 @@ function BookingPage() {
                     </button>
                   ))}
                 </div>
+                {dateOptions.every((d) => d.disabled) && (
+                  <p className="text-xs text-muted-foreground text-center py-2">
+                    Sem datas disponíveis. Entre em contato pelo WhatsApp.
+                  </p>
+                )}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 4 && (
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              <h2 className="font-semibold text-lg">Escolha o horário</h2>
               <div>
                 <Label className="text-xs mb-2 flex items-center gap-1"><Clock className="h-3 w-3" /> Horário</Label>
                 {!slots.length ? (
@@ -405,7 +486,7 @@ function BookingPage() {
           </Card>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <Card>
             <CardContent className="p-4 space-y-3">
               <h2 className="font-semibold text-lg">Seus dados</h2>
@@ -429,7 +510,23 @@ function BookingPage() {
                   <p className="text-xs text-green-700 mt-1">Desconto de {brl(coupon.discount_cents / 100)} aplicado.</p>
                 )}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 6 && (
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <h2 className="font-semibold text-lg">Confirme seu agendamento</h2>
               <Summary selected={selected} staff={staff} dateStr={dateStr} timeStr={timeStr} totalMin={totalMin} totalPrice={totalPrice} discountCents={coupon?.discount_cents ?? 0} />
+              <div className="rounded-xl border p-3 text-sm space-y-1">
+                <p className="font-semibold">Contato</p>
+                <p className="text-xs text-muted-foreground">{form.name} · {form.phone}{form.email ? ` · ${form.email}` : ""}</p>
+                {form.notes && <p className="text-xs text-muted-foreground italic">"{form.notes}"</p>}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Ao confirmar você aceita as condições de agendamento desta empresa.
+              </p>
             </CardContent>
           </Card>
         )}
@@ -438,7 +535,7 @@ function BookingPage() {
       <div className="fixed bottom-0 inset-x-0 border-t bg-card/90 backdrop-blur p-3">
         <div className="max-w-lg mx-auto flex items-center gap-2">
           {step > 1 && (
-            <Button variant="outline" size="lg" onClick={() => setStep((s) => (s - 1) as any)}>
+            <Button variant="outline" size="lg" onClick={goPrev}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
           )}
@@ -450,16 +547,10 @@ function BookingPage() {
               </>
             )}
           </div>
-          {step < 4 ? (
+          {step < 6 ? (
             <Button size="lg" style={{ background: primary }}
-              disabled={step === 1 && !selected.length}
-              onClick={() => {
-                setStep((s) => {
-                  let next = (s + 1) as 1 | 2 | 3 | 4;
-                  if (next === 2 && !company.show_staff_on_portal) next = 3;
-                  return next;
-                });
-              }}>
+              disabled={!canContinue}
+              onClick={goNext}>
               Continuar <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           ) : (
@@ -511,13 +602,17 @@ function Hero({ company, primary, accent, slug, loggedIn }: { company: any; prim
   );
 }
 
-function Steps({ step, accent }: { step: number; accent: string }) {
-  const labels = ["Serviços", "Profissional", "Horário", "Contato"];
+function Steps({ step, accent, showStaffStep }: { step: number; accent: string; showStaffStep: boolean }) {
+  const labels = showStaffStep
+    ? ["Serviços", "Profissional", "Data", "Horário", "Dados", "Confirmar"]
+    : ["Serviços", "Data", "Horário", "Dados", "Confirmar"];
+  // Mapeia o step real (1..6) para o índice visual, pulando "Profissional" quando desativado
+  const visualStep = showStaffStep ? step : (step === 1 ? 1 : step - 1);
   return (
     <div className="flex items-center gap-2">
       {labels.map((l, i) => {
-        const active = step === i + 1;
-        const done = step > i + 1;
+        const active = visualStep === i + 1;
+        const done = visualStep > i + 1;
         return (
           <div key={l} className="flex-1 flex items-center gap-2">
             <div className={`h-7 w-7 rounded-full grid place-items-center text-xs font-semibold ${
