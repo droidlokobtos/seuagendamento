@@ -21,6 +21,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -32,12 +33,15 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
+        if (!acceptedTerms) {
+          throw new Error("Você precisa aceitar os Termos de Uso e Contratação para criar sua conta.");
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: window.location.origin,
-            data: { full_name: fullName },
+            data: { full_name: fullName, terms_accepted_at: new Date().toISOString() },
           },
         });
         if (error) throw error;
