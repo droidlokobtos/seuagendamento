@@ -788,3 +788,139 @@ function ReviewsSection({ companyId, accent }: { companyId: string; accent: stri
     </Card>
   );
 }
+
+type GalleryPhoto = {
+  id: string;
+  category: string | null;
+  title: string | null;
+  description: string | null;
+  image_url: string;
+  featured: boolean;
+  created_at: string;
+};
+
+function GallerySection({ companyId, company, primary, accent }: { companyId: string; company: any; primary: string; accent: string }) {
+  const { data } = useQuery({
+    queryKey: ["pub_gallery", companyId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("gallery_photos" as any)
+        .select("id,category,title,description,image_url,featured,created_at")
+        .eq("company_id", companyId)
+        .order("featured", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(60);
+      return ((data ?? []) as unknown) as GalleryPhoto[];
+    },
+  });
+  const photos = data ?? [];
+  const [cat, setCat] = useState<string>("all");
+  const [lightbox, setLightbox] = useState<GalleryPhoto | null>(null);
+
+  if (!photos.length) return null;
+
+  const categories = Array.from(new Set(photos.map((p) => p.category).filter(Boolean))) as string[];
+  const visible = cat === "all" ? photos : photos.filter((p) => (p.category ?? "") === cat);
+  const wa = (company.whatsapp || "").replace(/\D/g, "");
+
+  const requestQuote = (p: GalleryPhoto) => {
+    if (!wa) return;
+    const parts = [
+      `✨ Olá, *${company.name}*! 👋`,
+      ``,
+      `Vi este trabalho no site e gostaria de solicitar um orçamento:`,
+      p.title ? `📌 *${p.title}*` : null,
+      p.category ? `🗂️ Categoria: ${p.category}` : null,
+      p.description ? `📝 ${p.description}` : null,
+      ``,
+      `Pode me passar mais informações? 🙏`,
+    ].filter(Boolean).join("\n");
+    window.open(`https://wa.me/${wa}?text=${encodeURIComponent(parts)}`, "_blank");
+  };
+
+  return (
+    <>
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold flex items-center gap-2">
+              <ImageIcon className="h-4 w-4" style={{ color: accent }} /> Galeria de trabalhos
+            </h2>
+            <span className="text-xs text-muted-foreground">{photos.length} fotos</span>
+          </div>
+
+          {categories.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+              <button
+                onClick={() => setCat("all")}
+                className={`shrink-0 px-3 py-1 rounded-full text-xs border ${cat === "all" ? "text-white border-transparent" : "border-border"}`}
+                style={cat === "all" ? { background: primary } : undefined}
+              >
+                Todas
+              </button>
+              {categories.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setCat(c)}
+                  className={`shrink-0 px-3 py-1 rounded-full text-xs border ${cat === c ? "text-white border-transparent" : "border-border"}`}
+                  style={cat === c ? { background: primary } : undefined}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="grid grid-cols-3 gap-1.5">
+            {visible.slice(0, 24).map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setLightbox(p)}
+                className="relative aspect-square overflow-hidden rounded-lg bg-muted group"
+              >
+                <img src={p.image_url} alt={p.title ?? ""} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                {p.featured && (
+                  <span className="absolute top-1 left-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold text-white flex items-center gap-0.5" style={{ background: accent }}>
+                    <Star className="h-2.5 w-2.5 fill-current" />
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
+            className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 text-white grid place-items-center hover:bg-white/20"
+          >
+            <XIcon className="h-5 w-5" />
+          </button>
+          <div className="max-w-2xl w-full max-h-full flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <img src={lightbox.image_url} alt={lightbox.title ?? ""} className="w-full max-h-[70vh] object-contain rounded-lg" />
+            <div className="bg-card mt-3 rounded-lg p-4 space-y-2">
+              {lightbox.title && <p className="font-semibold">{lightbox.title}</p>}
+              {lightbox.category && <p className="text-xs text-muted-foreground">{lightbox.category}</p>}
+              {lightbox.description && <p className="text-sm text-muted-foreground">{lightbox.description}</p>}
+              {wa && (
+                <Button
+                  className="w-full mt-2"
+                  style={{ background: "#25D366", color: "white" }}
+                  onClick={() => requestQuote(lightbox)}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" /> Solicitar orçamento
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
