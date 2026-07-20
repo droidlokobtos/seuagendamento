@@ -30,6 +30,8 @@ function Companies() {
   const [delOpen, setDelOpen] = useState<{ id: string; name: string } | null>(null);
   const resetPw = useServerFn(resetUserPassword);
   const delCompany = useServerFn(deleteCompany);
+  const createCompanyFn = useServerFn(createCompanyWithAdmin);
+  const [createdInfo, setCreatedInfo] = useState<{ email: string; password: string | null; name: string } | null>(null);
   const { isSuperAdmin } = useAuth();
 
   const { data: companies = [], isLoading } = useQuery({
