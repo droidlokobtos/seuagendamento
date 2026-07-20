@@ -326,6 +326,22 @@ function BookingPage() {
 
   if (done) {
     const d = new Date(done.starts_at);
+    const dateLabel = d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+    const timeLabel = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    const servicesLine = selected.map((s) => `• ${s.name}`).join("\n");
+    const totalCents = selected.reduce((s, x) => s + x.price_cents, 0) - (coupon?.discount_cents ?? 0);
+    const waMsg = encodeURIComponent(
+      `✨ Olá, *${company.name}*!\n\n` +
+      `✅ Acabei de confirmar meu agendamento pelo site.\n\n` +
+      `👤 *Cliente:* ${form.name}\n` +
+      `📅 *Data:* ${dateLabel}\n` +
+      `🕐 *Horário:* ${timeLabel}\n` +
+      (staff ? `💇 *Profissional:* ${staff.name}\n` : "") +
+      `\n💅 *Serviços:*\n${servicesLine}\n` +
+      `\n💰 *Total:* ${brl(totalCents / 100)}` +
+      (coupon ? ` (cupom ${coupon.code})` : "") +
+      `\n\n🙏 Aguardo a confirmação. Obrigado(a)!`
+    );
     return (
       <div className="min-h-screen bg-background">
         <Hero company={company} primary={primary} accent={accent} slug={company.slug} loggedIn={!!session} />
@@ -337,8 +353,7 @@ function BookingPage() {
               </div>
               <h2 className="text-2xl font-semibold">Agendamento confirmado!</h2>
               <p className="text-muted-foreground">
-                {d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })} às{" "}
-                {d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                {dateLabel} às {timeLabel}
               </p>
               <div className="flex flex-col gap-2 items-center pt-2">
                 {session ? (
@@ -351,8 +366,10 @@ function BookingPage() {
                   </Link>
                 )}
                 {company.whatsapp && (
-                  <a href={`https://wa.me/${company.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
-                    <Button variant="outline"><Phone className="h-4 w-4 mr-2" /> Falar no WhatsApp</Button>
+                  <a href={`https://wa.me/${company.whatsapp.replace(/\D/g, "")}?text=${waMsg}`} target="_blank" rel="noreferrer">
+                    <Button style={{ background: "#25D366", color: "white" }}>
+                      <Phone className="h-4 w-4 mr-2" /> Enviar confirmação no WhatsApp
+                    </Button>
                   </a>
                 )}
               </div>
