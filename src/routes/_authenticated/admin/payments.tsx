@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { brl, dateBR, statusLabel } from "@/lib/format";
-import { CreditCard, Plus, MessageCircle, CalendarClock, PauseCircle, PlayCircle, Copy } from "lucide-react";
+import { CreditCard, Plus, MessageCircle, CalendarClock, PauseCircle, PlayCircle, Copy, FileDown } from "lucide-react";
 import { toast } from "sonner";
+import { generatePaymentReceipt } from "@/lib/receipt";
 
 export const Route = createFileRoute("/_authenticated/admin/payments")({
   component: Payments,
