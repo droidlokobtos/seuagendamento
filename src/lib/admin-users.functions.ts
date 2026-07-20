@@ -164,6 +164,6 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
       company_id: company.id,
       admin_user_id: userId,
       email,
-      temp_password: existing ? null : tempPassword,
+      temp_password: tempPassword,
     };
   });
