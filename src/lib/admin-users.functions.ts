@@ -84,6 +84,7 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
     name: z.string().min(2),
     slug: z.string().min(2),
     niche_id: z.string().uuid(),
+    sub_niche_id: z.string().uuid().nullable().optional(),
     email: z.string().email(),
     monthly_fee: z.number().nonnegative(),
     temp_password: z.string().min(8).optional(),
@@ -134,9 +135,10 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
         name: data.name,
         slug: data.slug,
         niche_id: data.niche_id,
+        sub_niche_id: data.sub_niche_id ?? null,
         email,
         monthly_fee: data.monthly_fee,
-      })
+      } as any)
       .select("id")
       .single();
     if (cErr) throw new Error(`Falha ao criar empresa: ${cErr.message}`);

@@ -58,7 +58,7 @@ function Companies() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (v: { name: string; slug: string; niche_id: string; email: string; monthly_fee: number }) => {
+    mutationFn: async (v: { name: string; slug: string; niche_id: string; sub_niche_id: string | null; email: string; monthly_fee: number }) => {
       return await createCompanyFn({ data: v });
     },
     onSuccess: (res, v) => {
@@ -309,15 +309,23 @@ function NewCompanyDialog({
   busy,
 }: {
   niches: { id: string; name: string }[];
-  onSubmit: (v: { name: string; slug: string; niche_id: string; email: string; monthly_fee: number }) => void;
+  onSubmit: (v: { name: string; slug: string; niche_id: string; sub_niche_id: string | null; email: string; monthly_fee: number }) => void;
   busy: boolean;
 }) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [niche, setNiche] = useState("");
+  const [subNiche, setSubNiche] = useState<string>("");
   const [email, setEmail] = useState("");
   const [fee, setFee] = useState("49.90");
   const [accepted, setAccepted] = useState(false);
+
+  const { data: subNiches = [] } = useQuery({
+    queryKey: ["sub-niches", niche],
+    enabled: !!niche,
+    queryFn: async () =>
+      (await supabase.from("sub_niches" as any).select("id, name").eq("niche_id", niche).order("name")).data ?? [],
+  });
 
   return (
     <DialogContent>
@@ -337,6 +345,16 @@ function NewCompanyDialog({
             <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
             <SelectContent>
               {niches.map((n) => <SelectItem key={n.id} value={n.id}>{n.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Sub-nicho (opcional)</Label>
+          <Select value={subNiche || "none"} onValueChange={(v) => setSubNiche(v === "none" ? "" : v)} disabled={!niche}>
+            <SelectTrigger><SelectValue placeholder={niche ? "Selecione…" : "Escolha um nicho primeiro"} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">— Nenhum —</SelectItem>
+              {(subNiches as any[]).map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -366,7 +384,7 @@ function NewCompanyDialog({
       </div>
       <DialogFooter>
         <Button
-          onClick={() => onSubmit({ name, slug, niche_id: niche, email, monthly_fee: Number(fee) })}
+          onClick={() => onSubmit({ name, slug, niche_id: niche, sub_niche_id: subNiche || null, email, monthly_fee: Number(fee) })}
           disabled={busy || !name || !slug || !niche || !email || !accepted}
         >
           {busy ? "Criando…" : "Criar empresa"}
