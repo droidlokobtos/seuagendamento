@@ -51,7 +51,7 @@ function GalleryPage() {
         .order("featured", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as Photo[];
+      return ((data ?? []) as unknown) as Photo[];
     },
   });
 
