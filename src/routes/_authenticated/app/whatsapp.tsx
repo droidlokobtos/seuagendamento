@@ -1,11 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/lib/company";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Check, Copy, RefreshCw, Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MessageCircle, Check, Copy, RefreshCw, Loader2, Sparkles, Send } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/whatsapp")({
@@ -17,6 +28,67 @@ const KIND_LABEL: Record<string, string> = {
   reminder_1h: "Lembrete 1h",
   reminder_review: "Pedir avaliação",
 };
+
+type Template = { id: string; label: string; emoji: string; body: string };
+
+const TEMPLATES: Template[] = [
+  {
+    id: "confirmacao",
+    label: "Confirmação de horário",
+    emoji: "✅",
+    body:
+      "Olá {{nome}}! ✅\n\nConfirmando seu horário na *{{empresa}}*.\nQualquer alteração, é só me avisar por aqui. Até já! ✨",
+  },
+  {
+    id: "boas_vindas",
+    label: "Boas-vindas novo cliente",
+    emoji: "👋",
+    body:
+      "Oi {{nome}}! 👋 Seja muito bem-vindo(a) à *{{empresa}}*.\n\nEstamos felizes em te receber. Qualquer dúvida, estou por aqui! 💛",
+  },
+  {
+    id: "retorno",
+    label: "Convite para retorno",
+    emoji: "💇",
+    body:
+      "Oi {{nome}}! 💇 Já faz um tempinho desde sua última visita à *{{empresa}}*.\nQue tal agendar um novo horário? Posso te ajudar a escolher o melhor dia. ✨",
+  },
+  {
+    id: "aniversario",
+    label: "Aniversário do cliente",
+    emoji: "🎉",
+    body:
+      "Feliz aniversário, {{nome}}! 🎉🎂\n\nA equipe da *{{empresa}}* deseja um dia incrível.\nTemos um mimo especial esperando por você este mês. 💛",
+  },
+  {
+    id: "promocao",
+    label: "Promoção da semana",
+    emoji: "🔥",
+    body:
+      "Oi {{nome}}! 🔥 Promoção da semana na *{{empresa}}*.\n\nCondição especial válida por poucos dias. Quer que eu já reserve um horário para você?",
+  },
+  {
+    id: "agradecimento",
+    label: "Agradecimento pós-atendimento",
+    emoji: "💛",
+    body:
+      "Oi {{nome}}! 💛 Obrigado por escolher a *{{empresa}}* hoje.\nEsperamos você em breve! ✨",
+  },
+  {
+    id: "no_show",
+    label: "Falta / reagendar",
+    emoji: "🗓️",
+    body:
+      "Oi {{nome}}! 🗓️ Notamos que não conseguimos te atender no horário marcado.\nPosso te encaixar em um novo dia? Me avise por aqui.",
+  },
+  {
+    id: "cashback",
+    label: "Cashback disponível",
+    emoji: "💰",
+    body:
+      "Oi {{nome}}! 💰 Você tem cashback disponível na *{{empresa}}*.\nUse no seu próximo agendamento. Quer que eu reserve um horário?",
+  },
+];
 
 function WhatsAppQueue() {
   const { activeCompany } = useCompany();
@@ -87,52 +159,191 @@ function WhatsAppQueue() {
         </Button>
       </div>
 
-      {isLoading ? (
-        <div className="grid place-items-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : !data.length ? (
-        <Card>
-          <CardContent className="p-10 text-center text-muted-foreground">
-            <MessageCircle className="h-8 w-8 mx-auto mb-3 opacity-40" />
-            Nenhum lembrete pendente no momento.
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {data.map((n: any) => (
-            <Card key={n.id}>
-              <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary">{KIND_LABEL[n.kind] ?? n.kind}</Badge>
-                  <CardTitle className="text-base">{n.metadata?.customer_name ?? "Cliente"}</CardTitle>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(n.created_at).toLocaleString("pt-BR")}
-                </span>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">{n.metadata?.phone ?? "Sem telefone"}</p>
-                <pre className="whitespace-pre-wrap text-sm bg-muted/50 rounded-md p-3 font-sans">
-                  {n.metadata?.message}
-                </pre>
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" onClick={() => openWa(n)} disabled={!n.metadata?.wa_url}>
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Enviar no WhatsApp
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => copyMsg(n)}>
-                    <Copy className="h-4 w-4 mr-2" /> Copiar
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => markSent(n.id)}>
-                    <Check className="h-4 w-4 mr-2" /> Marcar como enviado
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+      <QuickSend companyId={companyId} companyName={activeCompany?.name ?? ""} />
+
+      <div>
+        <h2 className="text-lg font-semibold mb-2">Fila automática</h2>
+        {isLoading ? (
+          <div className="grid place-items-center py-16">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : !data.length ? (
+          <Card>
+            <CardContent className="p-10 text-center text-muted-foreground">
+              <MessageCircle className="h-8 w-8 mx-auto mb-3 opacity-40" />
+              Nenhum lembrete pendente no momento.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {data.map((n: any) => (
+              <Card key={n.id}>
+                <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">{KIND_LABEL[n.kind] ?? n.kind}</Badge>
+                    <CardTitle className="text-base">{n.metadata?.customer_name ?? "Cliente"}</CardTitle>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(n.created_at).toLocaleString("pt-BR")}
+                  </span>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">{n.metadata?.phone ?? "Sem telefone"}</p>
+                  <pre className="whitespace-pre-wrap text-sm bg-muted/50 rounded-md p-3 font-sans">
+                    {n.metadata?.message}
+                  </pre>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" onClick={() => openWa(n)} disabled={!n.metadata?.wa_url}>
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Enviar no WhatsApp
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => copyMsg(n)}>
+                      <Copy className="h-4 w-4 mr-2" /> Copiar
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => markSent(n.id)}>
+                      <Check className="h-4 w-4 mr-2" /> Marcar como enviado
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QuickSend({ companyId, companyName }: { companyId?: string; companyName: string }) {
+  const [templateId, setTemplateId] = useState<string>(TEMPLATES[0].id);
+  const [customerId, setCustomerId] = useState<string>("");
+  const [manualPhone, setManualPhone] = useState("");
+  const [manualName, setManualName] = useState("");
+  const [message, setMessage] = useState<string>(TEMPLATES[0].body);
+
+  const { data: customers = [] } = useQuery({
+    queryKey: ["wa-customers", companyId],
+    enabled: !!companyId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("customers")
+        .select("id,name,phone")
+        .eq("company_id", companyId!)
+        .not("phone", "is", null)
+        .order("name")
+        .limit(500);
+      return (data ?? []) as Array<{ id: string; name: string; phone: string }>;
+    },
+  });
+
+  const selectedCustomer = useMemo(
+    () => customers.find((c) => c.id === customerId) ?? null,
+    [customers, customerId],
+  );
+
+  const applyTemplate = (id: string) => {
+    setTemplateId(id);
+    const tpl = TEMPLATES.find((t) => t.id === id);
+    if (tpl) setMessage(tpl.body);
+  };
+
+  const finalMessage = useMemo(() => {
+    const nome = selectedCustomer?.name ?? manualName ?? "";
+    return message
+      .replaceAll("{{nome}}", nome || "cliente")
+      .replaceAll("{{empresa}}", companyName || "nossa loja");
+  }, [message, selectedCustomer, manualName, companyName]);
+
+  const phoneDigits = (selectedCustomer?.phone ?? manualPhone).replace(/\D/g, "");
+  const waUrl = phoneDigits
+    ? `https://wa.me/${phoneDigits.startsWith("55") ? phoneDigits : "55" + phoneDigits}?text=${encodeURIComponent(finalMessage)}`
+    : null;
+
+  const send = () => {
+    if (!waUrl) {
+      toast.error("Informe um telefone válido");
+      return;
+    }
+    window.open(waUrl, "_blank", "noopener");
+  };
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(finalMessage);
+    toast.success("Mensagem copiada");
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" /> Envio rápido com modelos prontos
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-wrap gap-2">
+          {TEMPLATES.map((t) => (
+            <Button
+              key={t.id}
+              size="sm"
+              variant={templateId === t.id ? "default" : "outline"}
+              onClick={() => applyTemplate(t.id)}
+            >
+              <span className="mr-1">{t.emoji}</span>
+              {t.label}
+            </Button>
           ))}
         </div>
-      )}
-    </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <Label>Cliente cadastrado</Label>
+            <Select value={customerId} onValueChange={setCustomerId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um cliente" />
+              </SelectTrigger>
+              <SelectContent>
+                {customers.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name} — {c.phone}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>Ou nome</Label>
+              <Input value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="Nome" />
+            </div>
+            <div>
+              <Label>Telefone</Label>
+              <Input value={manualPhone} onChange={(e) => setManualPhone(e.target.value)} placeholder="(11) 99999-9999" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <Label>Mensagem</Label>
+          <Textarea rows={6} value={message} onChange={(e) => setMessage(e.target.value)} />
+          <p className="text-xs text-muted-foreground mt-1">
+            Variáveis: <code>{"{{nome}}"}</code> e <code>{"{{empresa}}"}</code>
+          </p>
+        </div>
+
+        <div className="rounded-md bg-muted/50 p-3">
+          <p className="text-xs font-medium text-muted-foreground mb-1">Prévia</p>
+          <pre className="whitespace-pre-wrap text-sm font-sans">{finalMessage}</pre>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={send} disabled={!waUrl}>
+            <Send className="h-4 w-4 mr-2" /> Enviar no WhatsApp
+          </Button>
+          <Button variant="outline" onClick={copy}>
+            <Copy className="h-4 w-4 mr-2" /> Copiar
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
