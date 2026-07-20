@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, MapPin, Phone, Check, Calendar, Clock, ChevronLeft, ChevronRight, User, Instagram, Facebook, Globe, Star, MessageCircle } from "lucide-react";
+import { Sparkles, MapPin, Phone, Check, Calendar, Clock, ChevronLeft, ChevronRight, User, Instagram, Facebook, Globe, Star, MessageCircle, X as XIcon, Image as ImageIcon } from "lucide-react";
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
 
@@ -387,6 +387,7 @@ function BookingPage() {
         <Steps step={step} accent={accent} showStaffStep={showStaffStep} />
 
         {step === 1 && <PortalInfo company={company} hours={hours} primary={primary} accent={accent} />}
+        {step === 1 && <GallerySection companyId={companyId} company={company} primary={primary} accent={accent} />}
         {step === 1 && company.show_reviews_on_portal && <ReviewsSection companyId={companyId} accent={accent} />}
 
         {step === 1 && (
