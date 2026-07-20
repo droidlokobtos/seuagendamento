@@ -309,7 +309,7 @@ function NewCompanyDialog({
   busy,
 }: {
   niches: { id: string; name: string }[];
-  onSubmit: (v: { name: string; slug: string; niche_id: string; email: string; monthly_fee: number }) => void;
+  onSubmit: (v: { name: string; slug: string; niche_id: string; sub_niche_id: string | null; email: string; monthly_fee: number }) => void;
   busy: boolean;
 }) {
   const [name, setName] = useState("");
