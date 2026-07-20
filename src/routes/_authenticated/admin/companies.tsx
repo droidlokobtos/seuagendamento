@@ -13,7 +13,7 @@ import { dateBR, slugify, statusLabel } from "@/lib/format";
 import { toast } from "sonner";
 import { startImpersonation } from "@/lib/impersonation";
 import { useServerFn } from "@tanstack/react-start";
-import { resetUserPassword, deleteCompany } from "@/lib/admin-users.functions";
+import { resetUserPassword, deleteCompany, createCompanyWithAdmin } from "@/lib/admin-users.functions";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/admin/companies")({
@@ -30,6 +30,8 @@ function Companies() {
   const [delOpen, setDelOpen] = useState<{ id: string; name: string } | null>(null);
   const resetPw = useServerFn(resetUserPassword);
   const delCompany = useServerFn(deleteCompany);
+  const createCompanyFn = useServerFn(createCompanyWithAdmin);
+  const [createdInfo, setCreatedInfo] = useState<{ email: string; password: string | null; name: string } | null>(null);
   const { isSuperAdmin } = useAuth();
 
   const { data: companies = [], isLoading } = useQuery({
@@ -57,19 +59,13 @@ function Companies() {
 
   const createMutation = useMutation({
     mutationFn: async (v: { name: string; slug: string; niche_id: string; email: string; monthly_fee: number }) => {
-      const { error } = await supabase.from("companies").insert({
-        name: v.name,
-        slug: v.slug,
-        niche_id: v.niche_id,
-        email: v.email,
-        monthly_fee: v.monthly_fee,
-      });
-      if (error) throw error;
+      return await createCompanyFn({ data: v });
     },
-    onSuccess: () => {
-      toast.success("Empresa criada");
+    onSuccess: (res, v) => {
+      toast.success("Empresa criada e admin configurado");
       qc.invalidateQueries({ queryKey: ["admin-companies"] });
       setOpen(false);
+      setCreatedInfo({ email: res.email, password: res.temp_password, name: v.name });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
   });
@@ -219,6 +215,31 @@ function Companies() {
               }
             }}
           />
+        )}
+      </Dialog>
+
+      <Dialog open={!!createdInfo} onOpenChange={(o) => !o && setCreatedInfo(null)}>
+        {createdInfo && (
+          <DialogContent>
+            <DialogHeader><DialogTitle>Empresa criada</DialogTitle></DialogHeader>
+            <div className="space-y-3 text-sm">
+              <p>A empresa <b>{createdInfo.name}</b> foi criada com sucesso.</p>
+              <div className="rounded-lg border p-3 bg-muted/40 space-y-1">
+                <p><b>E-mail do admin:</b> {createdInfo.email}</p>
+                {createdInfo.password ? (
+                  <>
+                    <p><b>Senha temporária:</b> <code className="bg-background px-2 py-0.5 rounded">{createdInfo.password}</code></p>
+                    <p className="text-xs text-muted-foreground">Envie esses dados ao responsável. Ele será obrigado a trocar a senha no primeiro login.</p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Este e-mail já possuía uma conta. O acesso à empresa foi vinculado à conta existente.</p>
+                )}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setCreatedInfo(null)}>Ok</Button>
+            </DialogFooter>
+          </DialogContent>
         )}
       </Dialog>
     </div>
