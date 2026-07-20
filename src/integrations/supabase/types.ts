@@ -323,6 +323,7 @@ export type Database = {
           slug: string
           state: string | null
           status: Database["public"]["Enums"]["company_status"]
+          sub_niche_id: string | null
           suspended_at: string | null
           theme: string
           tiktok_url: string | null
@@ -370,6 +371,7 @@ export type Database = {
           slug: string
           state?: string | null
           status?: Database["public"]["Enums"]["company_status"]
+          sub_niche_id?: string | null
           suspended_at?: string | null
           theme?: string
           tiktok_url?: string | null
@@ -417,6 +419,7 @@ export type Database = {
           slug?: string
           state?: string | null
           status?: Database["public"]["Enums"]["company_status"]
+          sub_niche_id?: string | null
           suspended_at?: string | null
           theme?: string
           tiktok_url?: string | null
@@ -438,6 +441,13 @@ export type Database = {
             columns: ["parent_company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companies_sub_niche_id_fkey"
+            columns: ["sub_niche_id"]
+            isOneToOne: false
+            referencedRelation: "sub_niches"
             referencedColumns: ["id"]
           },
         ]
@@ -1416,6 +1426,41 @@ export type Database = {
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sub_niches: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          niche_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          niche_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          niche_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_niches_niche_id_fkey"
+            columns: ["niche_id"]
+            isOneToOne: false
+            referencedRelation: "niches"
             referencedColumns: ["id"]
           },
         ]
