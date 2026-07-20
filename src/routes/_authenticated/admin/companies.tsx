@@ -58,7 +58,7 @@ function Companies() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (v: { name: string; slug: string; niche_id: string; email: string; monthly_fee: number }) => {
+    mutationFn: async (v: { name: string; slug: string; niche_id: string; sub_niche_id: string | null; email: string; monthly_fee: number }) => {
       return await createCompanyFn({ data: v });
     },
     onSuccess: (res, v) => {
