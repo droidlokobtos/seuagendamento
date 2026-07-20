@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { brl, dateBR, statusLabel } from "@/lib/format";
-import { CreditCard, Plus, MessageCircle, CalendarClock, PauseCircle, PlayCircle, Copy } from "lucide-react";
+import { CreditCard, Plus, MessageCircle, CalendarClock, PauseCircle, PlayCircle, Copy, FileDown } from "lucide-react";
 import { toast } from "sonner";
+import { generatePaymentReceipt } from "@/lib/receipt";
 
 export const Route = createFileRoute("/_authenticated/admin/payments")({
   component: Payments,
@@ -69,12 +70,12 @@ function Payments() {
 
   const registerPayment = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("payments").insert({
+      const { data: inserted, error } = await supabase.from("payments").insert({
         company_id: selectedId,
         amount: Number(amount),
         note: note || null,
         paid_at: new Date().toISOString(),
-      });
+      }).select("id, amount, paid_at, note").single();
       if (error) throw error;
       // Roll next_due_at forward by 1 month
       if (selected?.next_due_at) {
@@ -82,13 +83,27 @@ function Payments() {
         d.setMonth(d.getMonth() + 1);
         await supabase.from("companies").update({ next_due_at: d.toISOString().slice(0, 10) }).eq("id", selectedId);
       }
+      return inserted;
     },
-    onSuccess: () => {
-      toast.success("Pagamento registrado");
+    onSuccess: (inserted) => {
+      toast.success("Pagamento registrado — gerando comprovante");
       qc.invalidateQueries({ queryKey: ["admin-payments"] });
       qc.invalidateQueries({ queryKey: ["admin-companies-billing"] });
       qc.invalidateQueries({ queryKey: ["admin-companies"] });
       qc.invalidateQueries({ queryKey: ["admin-dashboard"] });
+      // Auto-generate receipt PDF
+      if (inserted && selected) {
+        generatePaymentReceipt({
+          receiptNumber: String(inserted.id).slice(0, 8).toUpperCase(),
+          companyName: selected.name,
+          companySlug: selected.slug,
+          amount: Number(inserted.amount),
+          paidAt: inserted.paid_at,
+          note: inserted.note,
+          pixHolder: settings?.pix_holder,
+          pixKey: settings?.pix_key,
+        });
+      }
       closeDialog();
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
@@ -237,7 +252,8 @@ function Payments() {
                     <th className="text-left p-3 pl-6">Empresa</th>
                     <th className="text-left p-3">Valor</th>
                     <th className="text-left p-3">Pago em</th>
-                    <th className="text-left p-3 pr-6">Observação</th>
+                    <th className="text-left p-3">Observação</th>
+                    <th className="text-right p-3 pr-6">Comprovante</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -249,7 +265,25 @@ function Payments() {
                       </td>
                       <td className="p-3 font-medium">{brl(Number(p.amount))}</td>
                       <td className="p-3 text-muted-foreground">{dateBR(p.paid_at)}</td>
-                      <td className="p-3 pr-6 text-muted-foreground">{p.note ?? "—"}</td>
+                      <td className="p-3 text-muted-foreground">{p.note ?? "—"}</td>
+                      <td className="p-3 pr-6 text-right">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => generatePaymentReceipt({
+                            receiptNumber: String(p.id).slice(0, 8).toUpperCase(),
+                            companyName: p.companies?.name ?? "—",
+                            companySlug: p.companies?.slug,
+                            amount: Number(p.amount),
+                            paidAt: p.paid_at,
+                            note: p.note,
+                            pixHolder: settings?.pix_holder,
+                            pixKey: settings?.pix_key,
+                          })}
+                        >
+                          <FileDown className="h-3.5 w-3.5 mr-1.5" /> PDF
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

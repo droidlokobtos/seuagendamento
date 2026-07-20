@@ -21,6 +21,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -32,12 +33,15 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
+        if (!acceptedTerms) {
+          throw new Error("Você precisa aceitar os Termos de Uso e Contratação para criar sua conta.");
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: window.location.origin,
-            data: { full_name: fullName },
+            data: { full_name: fullName, terms_accepted_at: new Date().toISOString() },
           },
         });
         if (error) throw error;
@@ -138,7 +142,24 @@ function AuthPage() {
                   <Label htmlFor="password">Senha</Label>
                   <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
                 </div>
-                <Button type="submit" disabled={busy} className="w-full">
+                {mode === "signup" && (
+                  <label className="flex items-start gap-2 text-xs text-muted-foreground leading-snug">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 h-4 w-4 rounded border-input accent-primary"
+                      checked={acceptedTerms}
+                      onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    />
+                    <span>
+                      Li e aceito os{" "}
+                      <Link to="/termos" target="_blank" className="text-primary underline hover:no-underline">
+                        Termos de Uso e Contratação
+                      </Link>{" "}
+                      da plataforma.
+                    </span>
+                  </label>
+                )}
+                <Button type="submit" disabled={busy || (mode === "signup" && !acceptedTerms)} className="w-full">
                   {busy ? "Aguarde..." : mode === "signin" ? "Entrar" : "Criar conta"}
                 </Button>
               </form>
