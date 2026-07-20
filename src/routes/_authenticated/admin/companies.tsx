@@ -384,7 +384,7 @@ function NewCompanyDialog({
       </div>
       <DialogFooter>
         <Button
-          onClick={() => onSubmit({ name, slug, niche_id: niche, email, monthly_fee: Number(fee) })}
+          onClick={() => onSubmit({ name, slug, niche_id: niche, sub_niche_id: subNiche || null, email, monthly_fee: Number(fee) })}
           disabled={busy || !name || !slug || !niche || !email || !accepted}
         >
           {busy ? "Criando…" : "Criar empresa"}
