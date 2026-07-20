@@ -217,6 +217,31 @@ function Companies() {
           />
         )}
       </Dialog>
+
+      <Dialog open={!!createdInfo} onOpenChange={(o) => !o && setCreatedInfo(null)}>
+        {createdInfo && (
+          <DialogContent>
+            <DialogHeader><DialogTitle>Empresa criada</DialogTitle></DialogHeader>
+            <div className="space-y-3 text-sm">
+              <p>A empresa <b>{createdInfo.name}</b> foi criada com sucesso.</p>
+              <div className="rounded-lg border p-3 bg-muted/40 space-y-1">
+                <p><b>E-mail do admin:</b> {createdInfo.email}</p>
+                {createdInfo.password ? (
+                  <>
+                    <p><b>Senha temporária:</b> <code className="bg-background px-2 py-0.5 rounded">{createdInfo.password}</code></p>
+                    <p className="text-xs text-muted-foreground">Envie esses dados ao responsável. Ele será obrigado a trocar a senha no primeiro login.</p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Este e-mail já possuía uma conta. O acesso à empresa foi vinculado à conta existente.</p>
+                )}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setCreatedInfo(null)}>Ok</Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   );
 }
