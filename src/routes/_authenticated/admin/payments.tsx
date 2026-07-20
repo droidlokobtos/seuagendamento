@@ -252,7 +252,8 @@ function Payments() {
                     <th className="text-left p-3 pl-6">Empresa</th>
                     <th className="text-left p-3">Valor</th>
                     <th className="text-left p-3">Pago em</th>
-                    <th className="text-left p-3 pr-6">Observação</th>
+                    <th className="text-left p-3">Observação</th>
+                    <th className="text-right p-3 pr-6">Comprovante</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -264,7 +265,25 @@ function Payments() {
                       </td>
                       <td className="p-3 font-medium">{brl(Number(p.amount))}</td>
                       <td className="p-3 text-muted-foreground">{dateBR(p.paid_at)}</td>
-                      <td className="p-3 pr-6 text-muted-foreground">{p.note ?? "—"}</td>
+                      <td className="p-3 text-muted-foreground">{p.note ?? "—"}</td>
+                      <td className="p-3 pr-6 text-right">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => generatePaymentReceipt({
+                            receiptNumber: String(p.id).slice(0, 8).toUpperCase(),
+                            companyName: p.companies?.name ?? "—",
+                            companySlug: p.companies?.slug,
+                            amount: Number(p.amount),
+                            paidAt: p.paid_at,
+                            note: p.note,
+                            pixHolder: settings?.pix_holder,
+                            pixKey: settings?.pix_key,
+                          })}
+                        >
+                          <FileDown className="h-3.5 w-3.5 mr-1.5" /> PDF
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
