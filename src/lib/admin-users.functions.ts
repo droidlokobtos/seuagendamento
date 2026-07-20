@@ -84,6 +84,7 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
     name: z.string().min(2),
     slug: z.string().min(2),
     niche_id: z.string().uuid(),
+    sub_niche_id: z.string().uuid().nullable().optional(),
     email: z.string().email(),
     monthly_fee: z.number().nonnegative(),
     temp_password: z.string().min(8).optional(),
