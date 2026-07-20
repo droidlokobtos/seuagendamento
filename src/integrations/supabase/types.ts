@@ -714,6 +714,53 @@ export type Database = {
           },
         ]
       }
+      gallery_photos: {
+        Row: {
+          category: string | null
+          company_id: string
+          created_at: string
+          description: string | null
+          featured: boolean
+          id: string
+          image_url: string
+          sort_order: number
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          company_id: string
+          created_at?: string
+          description?: string | null
+          featured?: boolean
+          id?: string
+          image_url: string
+          sort_order?: number
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          featured?: boolean
+          id?: string
+          image_url?: string
+          sort_order?: number
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_photos_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_movements: {
         Row: {
           appointment_id: string | null
