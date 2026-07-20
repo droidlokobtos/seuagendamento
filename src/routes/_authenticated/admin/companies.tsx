@@ -13,7 +13,7 @@ import { dateBR, slugify, statusLabel } from "@/lib/format";
 import { toast } from "sonner";
 import { startImpersonation } from "@/lib/impersonation";
 import { useServerFn } from "@tanstack/react-start";
-import { resetUserPassword, deleteCompany } from "@/lib/admin-users.functions";
+import { resetUserPassword, deleteCompany, createCompanyWithAdmin } from "@/lib/admin-users.functions";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/admin/companies")({
