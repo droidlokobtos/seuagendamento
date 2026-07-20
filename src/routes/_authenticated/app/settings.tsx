@@ -67,7 +67,12 @@ function SettingsPage() {
 
   const saveCompany = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("companies").update(form).eq("id", companyId);
+      // Normalize empty strings to null so UNIQUE columns (custom_domain, etc.) don't collide
+      const payload: any = { ...form };
+      for (const k of Object.keys(payload)) {
+        if (typeof payload[k] === "string" && payload[k].trim() === "") payload[k] = null;
+      }
+      const { error } = await supabase.from("companies").update(payload).eq("id", companyId);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Dados salvos"); qc.invalidateQueries({ queryKey: ["company-full", companyId] }); qc.invalidateQueries({ queryKey: ["my-companies"] }); },
