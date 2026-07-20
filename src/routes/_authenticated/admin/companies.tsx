@@ -315,9 +315,17 @@ function NewCompanyDialog({
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [niche, setNiche] = useState("");
+  const [subNiche, setSubNiche] = useState<string>("");
   const [email, setEmail] = useState("");
   const [fee, setFee] = useState("49.90");
   const [accepted, setAccepted] = useState(false);
+
+  const { data: subNiches = [] } = useQuery({
+    queryKey: ["sub-niches", niche],
+    enabled: !!niche,
+    queryFn: async () =>
+      (await supabase.from("sub_niches" as any).select("id, name").eq("niche_id", niche).order("name")).data ?? [],
+  });
 
   return (
     <DialogContent>
