@@ -317,6 +317,7 @@ function NewCompanyDialog({
   const [niche, setNiche] = useState("");
   const [email, setEmail] = useState("");
   const [fee, setFee] = useState("49.90");
+  const [accepted, setAccepted] = useState(false);
 
   return (
     <DialogContent>
@@ -347,11 +348,26 @@ function NewCompanyDialog({
           <Label>Mensalidade (R$)</Label>
           <Input type="number" step="0.01" value={fee} onChange={(e) => setFee(e.target.value)} />
         </div>
+        <label className="flex items-start gap-2 text-xs text-muted-foreground leading-snug pt-1">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 rounded border-input accent-primary"
+            checked={accepted}
+            onChange={(e) => setAccepted(e.target.checked)}
+          />
+          <span>
+            O responsável pela empresa concorda com os{" "}
+            <a href="/termos" target="_blank" rel="noreferrer" className="text-primary underline hover:no-underline">
+              Termos de Uso e Contratação
+            </a>{" "}
+            da plataforma.
+          </span>
+        </label>
       </div>
       <DialogFooter>
         <Button
           onClick={() => onSubmit({ name, slug, niche_id: niche, email, monthly_fee: Number(fee) })}
-          disabled={busy || !name || !slug || !niche || !email}
+          disabled={busy || !name || !slug || !niche || !email || !accepted}
         >
           {busy ? "Criando…" : "Criar empresa"}
         </Button>
