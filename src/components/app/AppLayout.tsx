@@ -22,6 +22,9 @@ import {
   Gift,
   Link2,
   MessageCircle,
+  Image as ImageIcon,
+
+
 
 } from "lucide-react";
 
@@ -44,6 +47,7 @@ const NAV = [
   { to: "/app/customers", label: "Clientes", icon: Users },
   { to: "/app/staff", label: "Funcionários", icon: UserCog },
   { to: "/app/services", label: "Serviços", icon: Scissors },
+  { to: "/app/gallery", label: "Galeria", icon: ImageIcon },
   { to: "/app/finances", label: "Financeiro", icon: Wallet },
   { to: "/app/products", label: "Estoque", icon: Package },
   { to: "/app/reports", label: "Relatórios", icon: BarChart3 },
