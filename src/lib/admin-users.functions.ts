@@ -77,3 +77,86 @@ export const deleteCompany = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+export const createCompanyWithAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({
+    name: z.string().min(2),
+    slug: z.string().min(2),
+    niche_id: z.string().uuid(),
+    email: z.string().email(),
+    monthly_fee: z.number().nonnegative(),
+    temp_password: z.string().min(8).optional(),
+  }).parse(data))
+  .handler(async ({ context, data }) => {
+    const { data: isAdmin } = await context.supabase.rpc("is_super_admin");
+    if (!isAdmin) throw new Error("Apenas Admin Master pode criar empresas.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const email = data.email.toLowerCase();
+
+    // Reuse existing auth user if the e-mail already exists, otherwise create one
+    let userId: string | null = null;
+    const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+    if (listErr) throw listErr;
+    const existing = list.users.find((u) => (u.email ?? "").toLowerCase() === email);
+    const tempPassword = data.temp_password && data.temp_password.length >= 8
+      ? data.temp_password
+      : `Ag${Math.random().toString(36).slice(2, 8)}!${Math.floor(Math.random() * 90 + 10)}`;
+
+    if (existing) {
+      userId = existing.id;
+    } else {
+      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { full_name: data.name },
+      });
+      if (createErr) throw createErr;
+      userId = created.user!.id;
+    }
+
+    // Force password change on first login
+    await supabaseAdmin.from("profiles").update({ must_change_password: true }).eq("id", userId!);
+
+    // Create the company
+    const { data: company, error: cErr } = await supabaseAdmin
+      .from("companies")
+      .insert({
+        name: data.name,
+        slug: data.slug,
+        niche_id: data.niche_id,
+        email,
+        monthly_fee: data.monthly_fee,
+      })
+      .select("id")
+      .single();
+    if (cErr) throw new Error(`Falha ao criar empresa: ${cErr.message}`);
+
+    // Wire admin membership + role (idempotent)
+    await supabaseAdmin.from("company_users").upsert(
+      { company_id: company.id, user_id: userId!, role: "company_admin" },
+      { onConflict: "company_id,user_id" },
+    );
+    await supabaseAdmin.from("user_roles").upsert(
+      { user_id: userId!, role: "company_admin" },
+      { onConflict: "user_id,role" },
+    );
+
+    // Audit
+    await context.supabase.from("admin_access_logs").insert({
+      user_id: context.userId,
+      email,
+      event: "create_company",
+      metadata: { company_id: company.id, admin_user_id: userId, created_user: !existing },
+    });
+
+    return {
+      ok: true,
+      company_id: company.id,
+      admin_user_id: userId,
+      email,
+      temp_password: existing ? null : tempPassword,
+    };
+  });
