@@ -106,6 +106,13 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
 
     if (existing) {
       userId = existing.id;
+      // Ensure existing user is confirmed and set the shared temp password so admin can hand it over
+      const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(existing.id, {
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { ...(existing.user_metadata ?? {}), full_name: data.name },
+      });
+      if (updErr) throw new Error(`Falha ao configurar usuário existente: ${updErr.message}`);
     } else {
       const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
         email,
@@ -157,6 +164,6 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
       company_id: company.id,
       admin_user_id: userId,
       email,
-      temp_password: existing ? null : tempPassword,
+      temp_password: tempPassword,
     };
   });
