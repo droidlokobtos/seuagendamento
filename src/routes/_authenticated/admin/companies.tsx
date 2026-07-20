@@ -349,6 +349,16 @@ function NewCompanyDialog({
           </Select>
         </div>
         <div>
+          <Label>Sub-nicho (opcional)</Label>
+          <Select value={subNiche || "none"} onValueChange={(v) => setSubNiche(v === "none" ? "" : v)} disabled={!niche}>
+            <SelectTrigger><SelectValue placeholder={niche ? "Selecione…" : "Escolha um nicho primeiro"} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">— Nenhum —</SelectItem>
+              {(subNiches as any[]).map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
           <Label>E-mail do responsável</Label>
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="dono@empresa.com" />
         </div>
