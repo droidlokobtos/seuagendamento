@@ -59,19 +59,13 @@ function Companies() {
 
   const createMutation = useMutation({
     mutationFn: async (v: { name: string; slug: string; niche_id: string; email: string; monthly_fee: number }) => {
-      const { error } = await supabase.from("companies").insert({
-        name: v.name,
-        slug: v.slug,
-        niche_id: v.niche_id,
-        email: v.email,
-        monthly_fee: v.monthly_fee,
-      });
-      if (error) throw error;
+      return await createCompanyFn({ data: v });
     },
-    onSuccess: () => {
-      toast.success("Empresa criada");
+    onSuccess: (res, v) => {
+      toast.success("Empresa criada e admin configurado");
       qc.invalidateQueries({ queryKey: ["admin-companies"] });
       setOpen(false);
+      setCreatedInfo({ email: res.email, password: res.temp_password, name: v.name });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
   });
