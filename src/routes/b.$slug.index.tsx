@@ -841,7 +841,7 @@ function GallerySection({ companyId, company, primary, accent }: { companyId: st
       ``,
       `Pode me passar mais informações? 🙏`,
     ].filter(Boolean).join("\n");
-    window.open(`https://wa.me/${wa}?text=${encodeURIComponent(parts)}`, "_blank");
+    window.open(`https://api.whatsapp.com/send?phone=${wa}&text=${encodeURIComponent(parts)}`, "_blank");
   };
 
   return (
