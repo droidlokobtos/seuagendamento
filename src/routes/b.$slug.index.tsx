@@ -365,13 +365,17 @@ function BookingPage() {
                     <Button style={{ background: primary }}>Criar conta e acompanhar</Button>
                   </Link>
                 )}
-                {company.whatsapp && (
-                  <a href={`https://wa.me/${company.whatsapp.replace(/\D/g, "")}?text=${waMsg}`} target="_blank" rel="noreferrer">
-                    <Button style={{ background: "#25D366", color: "white" }}>
-                      <Phone className="h-4 w-4 mr-2" /> Enviar confirmação no WhatsApp
-                    </Button>
-                  </a>
-                )}
+                {company.whatsapp && (() => {
+                  const d = company.whatsapp.replace(/\D/g, "");
+                  const p = d.startsWith("55") ? d : `55${d}`;
+                  return (
+                    <a href={`https://api.whatsapp.com/send?phone=${p}&text=${waMsg}`} target="_blank" rel="noreferrer">
+                      <Button style={{ background: "#25D366", color: "white" }}>
+                        <Phone className="h-4 w-4 mr-2" /> Enviar confirmação no WhatsApp
+                      </Button>
+                    </a>
+                  );
+                })()}
               </div>
             </CardContent>
           </Card>
@@ -676,7 +680,8 @@ function Summary({ selected, staff, dateStr, timeStr, totalMin, totalPrice, disc
 }
 
 function PortalInfo({ company, hours, primary, accent }: { company: any; hours: Hours[]; primary: string; accent: string }) {
-  const wa = (company.whatsapp || "").replace(/\D/g, "");
+  const waDigits = (company.whatsapp || "").replace(/\D/g, "");
+  const wa = waDigits ? (waDigits.startsWith("55") ? waDigits : `55${waDigits}`) : "";
   const socials = [
     company.instagram_url && { icon: Instagram, url: company.instagram_url, label: "Instagram" },
     company.facebook_url && { icon: Facebook, url: company.facebook_url, label: "Facebook" },
@@ -698,7 +703,7 @@ function PortalInfo({ company, hours, primary, accent }: { company: any; hours: 
         <div className="flex flex-wrap gap-2">
           {wa && (
             <a
-              href={`https://wa.me/${wa}?text=${encodeURIComponent(`✨ Olá, *${company.name}*! 👋\n\nGostaria de mais informações sobre agendamentos. 📅`)}`}
+              href={`https://api.whatsapp.com/send?phone=${wa}&text=${encodeURIComponent(`✨ Olá, *${company.name}*! 👋\n\nGostaria de mais informações sobre agendamentos. 📅`)}`}
               target="_blank" rel="noreferrer" className="flex-1 min-w-[140px]"
             >
               <Button className="w-full" style={{ background: "#25D366", color: "white" }}>
@@ -821,7 +826,8 @@ function GallerySection({ companyId, company, primary, accent }: { companyId: st
 
   const categories = Array.from(new Set(photos.map((p) => p.category).filter(Boolean))) as string[];
   const visible = cat === "all" ? photos : photos.filter((p) => (p.category ?? "") === cat);
-  const wa = (company.whatsapp || "").replace(/\D/g, "");
+  const waDigitsG = (company.whatsapp || "").replace(/\D/g, "");
+  const wa = waDigitsG ? (waDigitsG.startsWith("55") ? waDigitsG : `55${waDigitsG}`) : "";
 
   const requestQuote = (p: GalleryPhoto) => {
     if (!wa) return;
@@ -835,7 +841,7 @@ function GallerySection({ companyId, company, primary, accent }: { companyId: st
       ``,
       `Pode me passar mais informações? 🙏`,
     ].filter(Boolean).join("\n");
-    window.open(`https://wa.me/${wa}?text=${encodeURIComponent(parts)}`, "_blank");
+    window.open(`https://api.whatsapp.com/send?phone=${wa}&text=${encodeURIComponent(parts)}`, "_blank");
   };
 
   return (
