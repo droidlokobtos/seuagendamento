@@ -826,7 +826,8 @@ function GallerySection({ companyId, company, primary, accent }: { companyId: st
 
   const categories = Array.from(new Set(photos.map((p) => p.category).filter(Boolean))) as string[];
   const visible = cat === "all" ? photos : photos.filter((p) => (p.category ?? "") === cat);
-  const wa = (company.whatsapp || "").replace(/\D/g, "");
+  const waDigitsG = (company.whatsapp || "").replace(/\D/g, "");
+  const wa = waDigitsG ? (waDigitsG.startsWith("55") ? waDigitsG : `55${waDigitsG}`) : "";
 
   const requestQuote = (p: GalleryPhoto) => {
     if (!wa) return;
