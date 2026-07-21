@@ -365,13 +365,17 @@ function BookingPage() {
                     <Button style={{ background: primary }}>Criar conta e acompanhar</Button>
                   </Link>
                 )}
-                {company.whatsapp && (
-                  <a href={`https://wa.me/${company.whatsapp.replace(/\D/g, "")}?text=${waMsg}`} target="_blank" rel="noreferrer">
-                    <Button style={{ background: "#25D366", color: "white" }}>
-                      <Phone className="h-4 w-4 mr-2" /> Enviar confirmação no WhatsApp
-                    </Button>
-                  </a>
-                )}
+                {company.whatsapp && (() => {
+                  const d = company.whatsapp.replace(/\D/g, "");
+                  const p = d.startsWith("55") ? d : `55${d}`;
+                  return (
+                    <a href={`https://api.whatsapp.com/send?phone=${p}&text=${waMsg}`} target="_blank" rel="noreferrer">
+                      <Button style={{ background: "#25D366", color: "white" }}>
+                        <Phone className="h-4 w-4 mr-2" /> Enviar confirmação no WhatsApp
+                      </Button>
+                    </a>
+                  );
+                })()}
               </div>
             </CardContent>
           </Card>
