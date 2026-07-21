@@ -680,7 +680,8 @@ function Summary({ selected, staff, dateStr, timeStr, totalMin, totalPrice, disc
 }
 
 function PortalInfo({ company, hours, primary, accent }: { company: any; hours: Hours[]; primary: string; accent: string }) {
-  const wa = (company.whatsapp || "").replace(/\D/g, "");
+  const waDigits = (company.whatsapp || "").replace(/\D/g, "");
+  const wa = waDigits ? (waDigits.startsWith("55") ? waDigits : `55${waDigits}`) : "";
   const socials = [
     company.instagram_url && { icon: Instagram, url: company.instagram_url, label: "Instagram" },
     company.facebook_url && { icon: Facebook, url: company.facebook_url, label: "Facebook" },
