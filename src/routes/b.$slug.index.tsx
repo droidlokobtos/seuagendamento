@@ -703,7 +703,7 @@ function PortalInfo({ company, hours, primary, accent }: { company: any; hours: 
         <div className="flex flex-wrap gap-2">
           {wa && (
             <a
-              href={`https://wa.me/${wa}?text=${encodeURIComponent(`✨ Olá, *${company.name}*! 👋\n\nGostaria de mais informações sobre agendamentos. 📅`)}`}
+              href={`https://api.whatsapp.com/send?phone=${wa}&text=${encodeURIComponent(`✨ Olá, *${company.name}*! 👋\n\nGostaria de mais informações sobre agendamentos. 📅`)}`}
               target="_blank" rel="noreferrer" className="flex-1 min-w-[140px]"
             >
               <Button className="w-full" style={{ background: "#25D366", color: "white" }}>
