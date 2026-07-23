@@ -174,12 +174,12 @@ function Services() {
           {data.map((s, idx) => (
             <Card key={s.id} className={!s.active ? "opacity-60 overflow-hidden" : "overflow-hidden"}>
               {s.photo_url && (
-                <div className="h-32 w-full bg-muted">
+                <div className="h-32 w-full bg-muted overflow-hidden">
                   <img
                     src={s.photo_url}
                     alt={s.name}
                     className="h-full w-full object-cover"
-                    style={{ objectPosition: s.photo_position ?? "center center" }}
+                    style={framedImgStyle(s.photo_position)}
                   />
                 </div>
               )}
