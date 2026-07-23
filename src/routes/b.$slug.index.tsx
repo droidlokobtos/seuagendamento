@@ -55,7 +55,21 @@ export const Route = createFileRoute("/b/$slug/")({
   component: BookingPage,
 });
 
-type Service = { id: string; name: string; description: string | null; duration_min: number; price_cents: number; category: string | null; color: string | null };
+type Service = { id: string; name: string; description: string | null; duration_min: number; price_cents: number; category: string | null; color: string | null; photo_url: string | null; photo_position: string | null };
+
+function svcFrame(pos: string | null | undefined): React.CSSProperties {
+  if (!pos) return { objectPosition: "50% 50%" };
+  const p = pos.trim().split(/\s+/);
+  const x = parseFloat(p[0]); const y = parseFloat(p[1]); const z = parseFloat(p[2]);
+  const xx = Number.isFinite(x) ? x : 50;
+  const yy = Number.isFinite(y) ? y : 50;
+  const zz = Number.isFinite(z) && z > 0 ? z : 1;
+  return {
+    objectPosition: `${xx}% ${yy}%`,
+    transform: zz !== 1 ? `scale(${zz})` : undefined,
+    transformOrigin: `${xx}% ${yy}%`,
+  };
+}
 type Staff = { id: string; name: string; role_title: string | null; photo_url: string | null; color: string | null };
 type Hours = { weekday: number; start_time: string; end_time: string; closed: boolean };
 type TimeBlock = { starts_at: string; ends_at: string; staff_id: string | null };
