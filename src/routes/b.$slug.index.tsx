@@ -55,7 +55,21 @@ export const Route = createFileRoute("/b/$slug/")({
   component: BookingPage,
 });
 
-type Service = { id: string; name: string; description: string | null; duration_min: number; price_cents: number; category: string | null; color: string | null };
+type Service = { id: string; name: string; description: string | null; duration_min: number; price_cents: number; category: string | null; color: string | null; photo_url: string | null; photo_position: string | null };
+
+function svcFrame(pos: string | null | undefined): React.CSSProperties {
+  if (!pos) return { objectPosition: "50% 50%" };
+  const p = pos.trim().split(/\s+/);
+  const x = parseFloat(p[0]); const y = parseFloat(p[1]); const z = parseFloat(p[2]);
+  const xx = Number.isFinite(x) ? x : 50;
+  const yy = Number.isFinite(y) ? y : 50;
+  const zz = Number.isFinite(z) && z > 0 ? z : 1;
+  return {
+    objectPosition: `${xx}% ${yy}%`,
+    transform: zz !== 1 ? `scale(${zz})` : undefined,
+    transformOrigin: `${xx}% ${yy}%`,
+  };
+}
 type Staff = { id: string; name: string; role_title: string | null; photo_url: string | null; color: string | null };
 type Hours = { weekday: number; start_time: string; end_time: string; closed: boolean };
 type TimeBlock = { starts_at: string; ends_at: string; staff_id: string | null };
@@ -405,8 +419,13 @@ function BookingPage() {
                   const active = selected.some((x) => x.id === s.id);
                   return (
                     <button key={s.id} onClick={() => toggleService(s)}
-                      className={`w-full text-left rounded-xl border p-3 transition ${active ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}>
-                      <div className="flex items-center justify-between gap-2">
+                      className={`w-full text-left rounded-xl border overflow-hidden transition ${active ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}>
+                      {s.photo_url && (
+                        <div className="h-32 w-full bg-muted overflow-hidden">
+                          <img src={s.photo_url} alt={s.name} className="h-full w-full object-cover" style={svcFrame(s.photo_position)} />
+                        </div>
+                      )}
+                      <div className="p-3 flex items-center justify-between gap-2">
                         <div className="min-w-0">
                           <p className="font-medium truncate">{s.name}</p>
                           <p className="text-xs text-muted-foreground">{s.duration_min} min{s.category ? ` · ${s.category}` : ""}</p>

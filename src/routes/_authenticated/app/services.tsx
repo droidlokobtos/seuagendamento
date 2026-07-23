@@ -12,7 +12,29 @@ import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Scissors, ArrowUp, ArrowDown, Move } from "lucide-react";
+import { Plus, Pencil, Trash2, Scissors, ArrowUp, ArrowDown, Move, ZoomIn, ZoomOut } from "lucide-react";
+
+// photo_position format: "<x>% <y>% <zoom>" (zoom optional, defaults 1)
+function parsePos(v: string | null | undefined) {
+  if (!v) return { x: 50, y: 50, z: 1 };
+  const parts = v.trim().split(/\s+/);
+  const x = parseFloat(parts[0]);
+  const y = parseFloat(parts[1]);
+  const z = parseFloat(parts[2]);
+  return {
+    x: Number.isFinite(x) ? x : 50,
+    y: Number.isFinite(y) ? y : 50,
+    z: Number.isFinite(z) && z > 0 ? z : 1,
+  };
+}
+export function framedImgStyle(pos: string | null | undefined): React.CSSProperties {
+  const { x, y, z } = parsePos(pos);
+  return {
+    objectPosition: `${x}% ${y}%`,
+    transform: z !== 1 ? `scale(${z})` : undefined,
+    transformOrigin: `${x}% ${y}%`,
+  };
+}
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
@@ -152,12 +174,12 @@ function Services() {
           {data.map((s, idx) => (
             <Card key={s.id} className={!s.active ? "opacity-60 overflow-hidden" : "overflow-hidden"}>
               {s.photo_url && (
-                <div className="h-32 w-full bg-muted">
+                <div className="h-32 w-full bg-muted overflow-hidden">
                   <img
                     src={s.photo_url}
                     alt={s.name}
                     className="h-full w-full object-cover"
-                    style={{ objectPosition: s.photo_position ?? "center center" }}
+                    style={framedImgStyle(s.photo_position)}
                   />
                 </div>
               )}
@@ -289,21 +311,15 @@ function ServiceDialog({
 function RepositionEditor({
   url, value, onChange,
 }: { url: string; value: string; onChange: (pos: string) => void }) {
-  const parse = (v: string) => {
-    const [x, y] = v.split(/\s+/);
-    return {
-      x: parseFloat(x) || 50,
-      y: parseFloat(y) || 50,
-    };
-  };
-  const initial = /%/.test(value) ? parse(value) : { x: 50, y: 50 };
-  const [pos, setPos] = useState(initial);
+  const initial = parsePos(value);
+  const [pos, setPos] = useState({ x: initial.x, y: initial.y });
+  const [zoom, setZoom] = useState(initial.z);
   const dragging = useRef(false);
   const boxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    onChange(`${pos.x}% ${pos.y}%`);
-  }, [pos]);
+    onChange(`${pos.x}% ${pos.y}% ${zoom}`);
+  }, [pos, zoom]);
 
   const updateFromEvent = (clientX: number, clientY: number) => {
     const el = boxRef.current;
@@ -313,6 +329,8 @@ function RepositionEditor({
     const y = Math.min(100, Math.max(0, ((clientY - r.top) / r.height) * 100));
     setPos({ x, y });
   };
+
+  const clampZoom = (z: number) => Math.min(4, Math.max(1, Math.round(z * 10) / 10));
 
   return (
     <div className="space-y-2">
@@ -326,17 +344,40 @@ function RepositionEditor({
         }}
         onPointerMove={(e) => { if (dragging.current) updateFromEvent(e.clientX, e.clientY); }}
         onPointerUp={() => { dragging.current = false; }}
+        onWheel={(e) => {
+          e.preventDefault();
+          setZoom((z) => clampZoom(z + (e.deltaY < 0 ? 0.1 : -0.1)));
+        }}
       >
         <img
           src={url}
           alt=""
           className="h-full w-full object-cover pointer-events-none"
-          style={{ objectPosition: `${pos.x}% ${pos.y}%` }}
+          style={{
+            objectPosition: `${pos.x}% ${pos.y}%`,
+            transform: zoom !== 1 ? `scale(${zoom})` : undefined,
+            transformOrigin: `${pos.x}% ${pos.y}%`,
+          }}
         />
       </div>
+      <div className="flex items-center gap-2">
+        <Button type="button" size="icon" variant="outline" onClick={() => setZoom((z) => clampZoom(z - 0.1))} disabled={zoom <= 1}>
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        <input
+          type="range" min={1} max={4} step={0.1} value={zoom}
+          onChange={(e) => setZoom(clampZoom(parseFloat(e.target.value)))}
+          className="flex-1 accent-primary"
+        />
+        <Button type="button" size="icon" variant="outline" onClick={() => setZoom((z) => clampZoom(z + 0.1))} disabled={zoom >= 4}>
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+        <span className="text-xs text-muted-foreground w-10 text-right">{zoom.toFixed(1)}x</span>
+      </div>
       <p className="text-xs text-muted-foreground text-center">
-        Arraste sobre a imagem para ajustar o enquadramento.
+        Arraste para reposicionar · use os botões ou a rolagem para ampliar/reduzir.
       </p>
     </div>
   );
 }
+
