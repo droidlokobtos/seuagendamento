@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/lib/company";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Scissors } from "lucide-react";
+import { Plus, Pencil, Trash2, Scissors, ArrowUp, ArrowDown, Move } from "lucide-react";
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
@@ -25,6 +25,13 @@ type S = {
   id: string; name: string; description: string | null;
   duration_min: number; price_cents: number; category: string | null;
   color: string | null; active: boolean; photo_url: string | null;
+  photo_position: string | null; sort_order: number;
+};
+
+const EMPTY: Partial<S> = {
+  name: "", description: "", duration_min: 30, price_cents: 0,
+  category: "", color: "#8b7355", active: true, photo_url: null,
+  photo_position: "center center", sort_order: 0,
 };
 
 function Services() {
@@ -37,7 +44,12 @@ function Services() {
   const { data = [], isLoading } = useQuery({
     queryKey: ["services", companyId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("services").select("*").eq("company_id", companyId).order("name");
+      const { data, error } = await supabase
+        .from("services")
+        .select("*")
+        .eq("company_id", companyId)
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true });
       if (error) throw error;
       return (data ?? []) as S[];
     },
@@ -50,12 +62,16 @@ function Services() {
 
   const save = useMutation({
     mutationFn: async (v: Partial<S>) => {
-      const payload = { ...v, company_id: companyId };
-      if (edit) {
-        const { error } = await supabase.from("services").update(v).eq("id", edit.id);
+      // Never send id/created_at/updated_at
+      const { id: _id, created_at: _c, updated_at: _u, ...clean } = v as any;
+      if (edit?.id) {
+        const { error } = await supabase.from("services").update(clean).eq("id", edit.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("services").insert(payload as any);
+        const nextSort = data.length ? Math.max(...data.map((s) => s.sort_order ?? 0)) + 1 : 0;
+        const { error } = await supabase.from("services").insert({
+          ...clean, company_id: companyId, sort_order: clean.sort_order ?? nextSort,
+        } as any);
         if (error) throw error;
       }
     },
@@ -76,6 +92,29 @@ function Services() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const reorder = useMutation({
+    mutationFn: async (updates: { id: string; sort_order: number }[]) => {
+      await Promise.all(
+        updates.map((u) => supabase.from("services").update({ sort_order: u.sort_order }).eq("id", u.id)),
+      );
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["services", companyId] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const move = (idx: number, dir: -1 | 1) => {
+    const j = idx + dir;
+    if (j < 0 || j >= data.length) return;
+    const a = data[idx], b = data[j];
+    reorder.mutate([
+      { id: a.id, sort_order: b.sort_order ?? j },
+      { id: b.id, sort_order: a.sort_order ?? idx },
+    ]);
+  };
+
+  const openNew = () => { setEdit(null); setOpen(true); };
+  const openEdit = (s: S) => { setEdit(s); setOpen(true); };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
@@ -85,9 +124,17 @@ function Services() {
         </div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEdit(null); }}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEdit(null)}><Plus className="h-4 w-4 mr-2" /> Novo serviço</Button>
+            <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" /> Novo serviço</Button>
           </DialogTrigger>
-          <ServiceDialog edit={edit} onSave={(v) => save.mutate(v)} loading={save.isPending} categories={categories} />
+          {open && (
+            <ServiceDialog
+              key={edit?.id ?? "new"}
+              edit={edit}
+              onSave={(v) => save.mutate(v)}
+              loading={save.isPending}
+              categories={categories}
+            />
+          )}
         </Dialog>
       </div>
 
@@ -102,11 +149,16 @@ function Services() {
         </Card>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {data.map((s) => (
+          {data.map((s, idx) => (
             <Card key={s.id} className={!s.active ? "opacity-60 overflow-hidden" : "overflow-hidden"}>
               {s.photo_url && (
                 <div className="h-32 w-full bg-muted">
-                  <img src={s.photo_url} alt={s.name} className="h-full w-full object-cover" />
+                  <img
+                    src={s.photo_url}
+                    alt={s.name}
+                    className="h-full w-full object-cover"
+                    style={{ objectPosition: s.photo_position ?? "center center" }}
+                  />
                 </div>
               )}
               <CardContent className="p-5">
@@ -119,7 +171,13 @@ function Services() {
                     {s.category && <p className="text-xs text-muted-foreground mt-0.5">{s.category}</p>}
                   </div>
                   <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => { setEdit(s); setOpen(true); }}>
+                    <Button size="icon" variant="ghost" title="Mover para cima" disabled={idx === 0} onClick={() => move(idx, -1)}>
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" title="Mover para baixo" disabled={idx === data.length - 1} onClick={() => move(idx, 1)}>
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" onClick={() => openEdit(s)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover?")) del.mutate(s.id); }}>
@@ -143,9 +201,8 @@ function Services() {
 function ServiceDialog({
   edit, onSave, loading, categories,
 }: { edit: S | null; onSave: (v: Partial<S>) => void; loading: boolean; categories: string[] }) {
-  const [f, setF] = useState<Partial<S>>(
-    edit ?? { name: "", duration_min: 30, price_cents: 0, color: "#8b7355", active: true },
-  );
+  const [f, setF] = useState<Partial<S>>(edit ? { ...edit } : { ...EMPTY });
+  const [reposition, setReposition] = useState(false);
 
   return (
     <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
@@ -155,7 +212,33 @@ function ServiceDialog({
       <div className="space-y-3">
         <div>
           <Label>Foto</Label>
-          <ImageUpload value={f.photo_url} folder="services" aspect="wide" onChange={(url) => setF({ ...f, photo_url: url })} />
+          <ImageUpload
+            value={f.photo_url}
+            folder="services"
+            aspect="wide"
+            onChange={(url) => setF({ ...f, photo_url: url, photo_position: "center center" })}
+          />
+          {f.photo_url && (
+            <div className="mt-2 space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => setReposition((v) => !v)}
+              >
+                <Move className="h-4 w-4 mr-2" />
+                {reposition ? "Concluir reposicionamento" : "Reposicionar imagem"}
+              </Button>
+              {reposition && (
+                <RepositionEditor
+                  url={f.photo_url}
+                  value={f.photo_position ?? "center center"}
+                  onChange={(pos) => setF({ ...f, photo_position: pos })}
+                />
+              )}
+            </div>
+          )}
         </div>
         <div>
           <Label>Nome</Label>
@@ -200,5 +283,60 @@ function ServiceDialog({
         <Button onClick={() => onSave(f)} disabled={loading || !f.name}>Salvar</Button>
       </DialogFooter>
     </DialogContent>
+  );
+}
+
+function RepositionEditor({
+  url, value, onChange,
+}: { url: string; value: string; onChange: (pos: string) => void }) {
+  const parse = (v: string) => {
+    const [x, y] = v.split(/\s+/);
+    return {
+      x: parseFloat(x) || 50,
+      y: parseFloat(y) || 50,
+    };
+  };
+  const initial = /%/.test(value) ? parse(value) : { x: 50, y: 50 };
+  const [pos, setPos] = useState(initial);
+  const dragging = useRef(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    onChange(`${pos.x}% ${pos.y}%`);
+  }, [pos]);
+
+  const updateFromEvent = (clientX: number, clientY: number) => {
+    const el = boxRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const x = Math.min(100, Math.max(0, ((clientX - r.left) / r.width) * 100));
+    const y = Math.min(100, Math.max(0, ((clientY - r.top) / r.height) * 100));
+    setPos({ x, y });
+  };
+
+  return (
+    <div className="space-y-2">
+      <div
+        ref={boxRef}
+        className="relative h-40 w-full overflow-hidden rounded-md border bg-muted cursor-move select-none touch-none"
+        onPointerDown={(e) => {
+          dragging.current = true;
+          (e.target as HTMLElement).setPointerCapture(e.pointerId);
+          updateFromEvent(e.clientX, e.clientY);
+        }}
+        onPointerMove={(e) => { if (dragging.current) updateFromEvent(e.clientX, e.clientY); }}
+        onPointerUp={() => { dragging.current = false; }}
+      >
+        <img
+          src={url}
+          alt=""
+          className="h-full w-full object-cover pointer-events-none"
+          style={{ objectPosition: `${pos.x}% ${pos.y}%` }}
+        />
+      </div>
+      <p className="text-xs text-muted-foreground text-center">
+        Arraste sobre a imagem para ajustar o enquadramento.
+      </p>
+    </div>
   );
 }
