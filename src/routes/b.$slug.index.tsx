@@ -419,8 +419,13 @@ function BookingPage() {
                   const active = selected.some((x) => x.id === s.id);
                   return (
                     <button key={s.id} onClick={() => toggleService(s)}
-                      className={`w-full text-left rounded-xl border p-3 transition ${active ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}>
-                      <div className="flex items-center justify-between gap-2">
+                      className={`w-full text-left rounded-xl border overflow-hidden transition ${active ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}>
+                      {s.photo_url && (
+                        <div className="h-32 w-full bg-muted overflow-hidden">
+                          <img src={s.photo_url} alt={s.name} className="h-full w-full object-cover" style={svcFrame(s.photo_position)} />
+                        </div>
+                      )}
+                      <div className="p-3 flex items-center justify-between gap-2">
                         <div className="min-w-0">
                           <p className="font-medium truncate">{s.name}</p>
                           <p className="text-xs text-muted-foreground">{s.duration_min} min{s.category ? ` · ${s.category}` : ""}</p>
