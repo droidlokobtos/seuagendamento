@@ -112,7 +112,8 @@ function BookingPage() {
     queryKey: ["pub_services", companyId],
     queryFn: async () => {
       const { data, error } = await supabase.from("services").select("*")
-        .eq("company_id", companyId).eq("active", true).order("name");
+        .eq("company_id", companyId).eq("active", true)
+        .order("sort_order", { ascending: true }).order("name", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Service[];
     },
