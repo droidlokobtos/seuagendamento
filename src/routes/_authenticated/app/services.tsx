@@ -12,7 +12,29 @@ import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Scissors, ArrowUp, ArrowDown, Move } from "lucide-react";
+import { Plus, Pencil, Trash2, Scissors, ArrowUp, ArrowDown, Move, ZoomIn, ZoomOut } from "lucide-react";
+
+// photo_position format: "<x>% <y>% <zoom>" (zoom optional, defaults 1)
+function parsePos(v: string | null | undefined) {
+  if (!v) return { x: 50, y: 50, z: 1 };
+  const parts = v.trim().split(/\s+/);
+  const x = parseFloat(parts[0]);
+  const y = parseFloat(parts[1]);
+  const z = parseFloat(parts[2]);
+  return {
+    x: Number.isFinite(x) ? x : 50,
+    y: Number.isFinite(y) ? y : 50,
+    z: Number.isFinite(z) && z > 0 ? z : 1,
+  };
+}
+export function framedImgStyle(pos: string | null | undefined): React.CSSProperties {
+  const { x, y, z } = parsePos(pos);
+  return {
+    objectPosition: `${x}% ${y}%`,
+    transform: z !== 1 ? `scale(${z})` : undefined,
+    transformOrigin: `${x}% ${y}%`,
+  };
+}
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
