@@ -1317,8 +1317,10 @@ export type Database = {
           duration_min: number
           id: string
           name: string
+          photo_position: string
           photo_url: string | null
           price_cents: number
+          sort_order: number
           updated_at: string
         }
         Insert: {
@@ -1331,8 +1333,10 @@ export type Database = {
           duration_min?: number
           id?: string
           name: string
+          photo_position?: string
           photo_url?: string | null
           price_cents?: number
+          sort_order?: number
           updated_at?: string
         }
         Update: {
@@ -1345,8 +1349,10 @@ export type Database = {
           duration_min?: number
           id?: string
           name?: string
+          photo_position?: string
           photo_url?: string | null
           price_cents?: number
+          sort_order?: number
           updated_at?: string
         }
         Relationships: [
