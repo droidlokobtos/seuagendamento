@@ -215,7 +215,10 @@ function Customers() {
           <h1 className="text-2xl font-semibold">Clientes</h1>
           <p className="text-sm text-muted-foreground">Base de clientes da empresa.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload className="h-4 w-4 mr-2" /> Importar contatos
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" disabled={!filtered.length}>
@@ -235,7 +238,7 @@ function Customers() {
             <DialogTrigger asChild>
               <Button onClick={() => setEdit(null)}><Plus className="h-4 w-4 mr-2" /> Novo cliente</Button>
             </DialogTrigger>
-            <CustomerDialog edit={edit} onSave={(v) => save.mutate(v)} loading={save.isPending} />
+            <CustomerDialog key={edit?.id ?? "new"} edit={edit} onSave={(v) => save.mutate(v)} loading={save.isPending} />
           </Dialog>
         </div>
       </div>
