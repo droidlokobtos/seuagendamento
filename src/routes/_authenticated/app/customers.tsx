@@ -459,28 +459,77 @@ function normalizePhone(s: string): string {
   return (s || "").replace(/\D+/g, "");
 }
 
-function parseVCF(text: string): { name: string; phone: string; email: string }[] {
-  const cards = text.split(/END:VCARD/i);
-  const out: { name: string; phone: string; email: string }[] = [];
-  for (const raw of cards) {
-    if (!/BEGIN:VCARD/i.test(raw)) continue;
-    const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-    let name = "";
-    let phone = "";
-    let email = "";
-    for (const line of lines) {
-      const [rawKey, ...rest] = line.split(":");
-      if (!rawKey || rest.length === 0) continue;
-      const value = rest.join(":").trim();
-      const key = rawKey.split(";")[0].toUpperCase();
-      if (key === "FN" && !name) name = value;
-      else if (key === "N" && !name) {
-        const parts = value.split(";").filter(Boolean);
-        name = [parts[1], parts[0]].filter(Boolean).join(" ").trim() || parts.join(" ");
-      } else if (key === "TEL" && !phone) phone = value;
-      else if (key === "EMAIL" && !email) email = value;
+function decodeQuotedPrintable(input: string, charset = "utf-8"): string {
+  try {
+    const bytes: number[] = [];
+    for (let i = 0; i < input.length; i++) {
+      const c = input[i];
+      if (c === "=" && i + 2 < input.length) {
+        const hex = input.slice(i + 1, i + 3);
+        if (/^[0-9A-Fa-f]{2}$/.test(hex)) {
+          bytes.push(parseInt(hex, 16));
+          i += 2;
+          continue;
+        }
+      }
+      bytes.push(c.charCodeAt(0));
     }
-    if (name || phone) out.push({ name: name || phone || "Sem nome", phone, email });
+    return new TextDecoder(charset.toLowerCase()).decode(new Uint8Array(bytes));
+  } catch {
+    return input;
+  }
+}
+
+function unfoldVcf(text: string): string[] {
+  // vCard line folding: continuation lines begin with space/tab. Also handle
+  // quoted-printable soft line breaks ("=" at end of line).
+  const raw = text.replace(/\r\n/g, "\n").split("\n");
+  const out: string[] = [];
+  for (const line of raw) {
+    if (!out.length) { out.push(line); continue; }
+    const prev = out[out.length - 1];
+    if (/^[ \t]/.test(line)) {
+      out[out.length - 1] = prev + line.slice(1);
+    } else if (/=$/.test(prev) && /ENCODING=QUOTED-PRINTABLE/i.test(prev)) {
+      out[out.length - 1] = prev.slice(0, -1) + line;
+    } else {
+      out.push(line);
+    }
+  }
+  return out;
+}
+
+function parseVCF(text: string): { name: string; phone: string; email: string }[] {
+  const allLines = unfoldVcf(text);
+  const out: { name: string; phone: string; email: string }[] = [];
+  let cur: { name: string; phone: string; email: string } | null = null;
+  for (const line of allLines) {
+    if (/^BEGIN:VCARD/i.test(line)) { cur = { name: "", phone: "", email: "" }; continue; }
+    if (/^END:VCARD/i.test(line)) {
+      if (cur && (cur.name || cur.phone)) out.push({ ...cur, name: cur.name || cur.phone || "Sem nome" });
+      cur = null;
+      continue;
+    }
+    if (!cur) continue;
+    const colonIdx = line.indexOf(":");
+    if (colonIdx < 0) continue;
+    const head = line.slice(0, colonIdx);
+    let value = line.slice(colonIdx + 1).trim();
+    if (!value) continue;
+    const params = head.split(";");
+    const key = params[0].split(".").pop()!.toUpperCase(); // strip "item1." prefix
+    const isQP = params.some((p) => /ENCODING=QUOTED-PRINTABLE/i.test(p));
+    const charsetParam = params.find((p) => /^CHARSET=/i.test(p));
+    const charset = charsetParam ? charsetParam.split("=")[1] : "utf-8";
+    if (isQP) value = decodeQuotedPrintable(value, charset);
+    if (key === "FN") { if (!cur.name) cur.name = value; }
+    else if (key === "N") {
+      if (!cur.name) {
+        const parts = value.split(";");
+        cur.name = [parts[1], parts[0], parts[2]].filter(Boolean).join(" ").trim() || parts.filter(Boolean).join(" ").trim();
+      }
+    } else if (key === "TEL") { if (!cur.phone) cur.phone = value; }
+    else if (key === "EMAIL") { if (!cur.email) cur.email = value; }
   }
   return out;
 }
