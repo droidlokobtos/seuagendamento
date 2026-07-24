@@ -323,6 +323,19 @@ function Customers() {
       <Dialog open={!!historyOf} onOpenChange={(o) => !o && setHistoryOf(null)}>
         {historyOf && <HistoryDialog customer={historyOf} />}
       </Dialog>
+
+      <Dialog open={importOpen} onOpenChange={setImportOpen}>
+        {importOpen && (
+          <ImportContactsDialog
+            existing={data}
+            companyId={companyId}
+            onDone={() => {
+              qc.invalidateQueries({ queryKey: ["customers", companyId] });
+              setImportOpen(false);
+            }}
+          />
+        )}
+      </Dialog>
     </div>
   );
 }
