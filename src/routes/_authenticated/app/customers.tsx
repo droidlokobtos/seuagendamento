@@ -20,8 +20,9 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Plus, Pencil, Trash2, Search, Users, Phone, Mail, MessageCircle, History, Download, FileText, FileSpreadsheet,
+  Plus, Pencil, Trash2, Search, Users, Phone, Mail, MessageCircle, History, Download, FileText, FileSpreadsheet, Upload,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { dateBR, brl } from "@/lib/format";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
