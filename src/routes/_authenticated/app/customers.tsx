@@ -65,6 +65,7 @@ function Customers() {
   const [edit, setEdit] = useState<C | null>(null);
   const [open, setOpen] = useState(false);
   const [historyOf, setHistoryOf] = useState<C | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["customers", companyId],
