@@ -20,8 +20,9 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Plus, Pencil, Trash2, Search, Users, Phone, Mail, MessageCircle, History, Download, FileText, FileSpreadsheet,
+  Plus, Pencil, Trash2, Search, Users, Phone, Mail, MessageCircle, History, Download, FileText, FileSpreadsheet, Upload,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { dateBR, brl } from "@/lib/format";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
@@ -64,6 +65,7 @@ function Customers() {
   const [edit, setEdit] = useState<C | null>(null);
   const [open, setOpen] = useState(false);
   const [historyOf, setHistoryOf] = useState<C | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["customers", companyId],
@@ -213,7 +215,10 @@ function Customers() {
           <h1 className="text-2xl font-semibold">Clientes</h1>
           <p className="text-sm text-muted-foreground">Base de clientes da empresa.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload className="h-4 w-4 mr-2" /> Importar contatos
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" disabled={!filtered.length}>
@@ -233,7 +238,7 @@ function Customers() {
             <DialogTrigger asChild>
               <Button onClick={() => setEdit(null)}><Plus className="h-4 w-4 mr-2" /> Novo cliente</Button>
             </DialogTrigger>
-            <CustomerDialog edit={edit} onSave={(v) => save.mutate(v)} loading={save.isPending} />
+            <CustomerDialog key={edit?.id ?? "new"} edit={edit} onSave={(v) => save.mutate(v)} loading={save.isPending} />
           </Dialog>
         </div>
       </div>
@@ -317,6 +322,19 @@ function Customers() {
 
       <Dialog open={!!historyOf} onOpenChange={(o) => !o && setHistoryOf(null)}>
         {historyOf && <HistoryDialog customer={historyOf} />}
+      </Dialog>
+
+      <Dialog open={importOpen} onOpenChange={setImportOpen}>
+        {importOpen && (
+          <ImportContactsDialog
+            existing={data}
+            companyId={companyId}
+            onDone={() => {
+              qc.invalidateQueries({ queryKey: ["customers", companyId] });
+              setImportOpen(false);
+            }}
+          />
+        )}
       </Dialog>
     </div>
   );
@@ -423,6 +441,236 @@ function HistoryDialog({ customer }: { customer: C }) {
           })}
         </div>
       )}
+    </DialogContent>
+  );
+}
+
+type ImportRow = {
+  name: string;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  selected: boolean;
+  existingId: string | null;
+  action: "create" | "update" | "keep_both" | "ignore";
+};
+
+function normalizePhone(s: string): string {
+  return (s || "").replace(/\D+/g, "");
+}
+
+function parseVCF(text: string): { name: string; phone: string; email: string }[] {
+  const cards = text.split(/END:VCARD/i);
+  const out: { name: string; phone: string; email: string }[] = [];
+  for (const raw of cards) {
+    if (!/BEGIN:VCARD/i.test(raw)) continue;
+    const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    let name = "";
+    let phone = "";
+    let email = "";
+    for (const line of lines) {
+      const [rawKey, ...rest] = line.split(":");
+      if (!rawKey || rest.length === 0) continue;
+      const value = rest.join(":").trim();
+      const key = rawKey.split(";")[0].toUpperCase();
+      if (key === "FN" && !name) name = value;
+      else if (key === "N" && !name) {
+        const parts = value.split(";").filter(Boolean);
+        name = [parts[1], parts[0]].filter(Boolean).join(" ").trim() || parts.join(" ");
+      } else if (key === "TEL" && !phone) phone = value;
+      else if (key === "EMAIL" && !email) email = value;
+    }
+    if (name || phone) out.push({ name: name || phone || "Sem nome", phone, email });
+  }
+  return out;
+}
+
+function parseCSV(text: string): { name: string; phone: string; email: string }[] {
+  const clean = text.replace(/^\ufeff/, "");
+  const lines = clean.split(/\r?\n/).filter((l) => l.trim().length);
+  if (!lines.length) return [];
+  const delim = (lines[0].match(/;/g)?.length ?? 0) > (lines[0].match(/,/g)?.length ?? 0) ? ";" : ",";
+  const splitRow = (line: string): string[] => {
+    const out: string[] = [];
+    let cur = "";
+    let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (c === delim && !inQ) { out.push(cur); cur = ""; }
+      else cur += c;
+    }
+    out.push(cur);
+    return out.map((s) => s.trim());
+  };
+  const header = splitRow(lines[0]).map((h) => h.toLowerCase());
+  const findIdx = (keys: string[]) => header.findIndex((h) => keys.some((k) => h.includes(k)));
+  const iName = findIdx(["nome", "name", "first name", "given name"]);
+  const iLast = findIdx(["sobrenome", "last name", "family name"]);
+  const iPhone = findIdx(["telefone", "phone", "mobile", "celular", "whatsapp"]);
+  const iEmail = findIdx(["e-mail", "email"]);
+  const rows: { name: string; phone: string; email: string }[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = splitRow(lines[i]);
+    const name = [cols[iName] ?? "", cols[iLast] ?? ""].filter(Boolean).join(" ").trim();
+    const phone = iPhone >= 0 ? cols[iPhone] ?? "" : "";
+    const email = iEmail >= 0 ? cols[iEmail] ?? "" : "";
+    if (!name && !phone && !email) continue;
+    rows.push({ name: name || phone || email || "Sem nome", phone, email });
+  }
+  return rows;
+}
+
+function ImportContactsDialog({
+  existing, companyId, onDone,
+}: { existing: C[]; companyId: string; onDone: () => void }) {
+  const [rows, setRows] = useState<ImportRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [fileName, setFileName] = useState("");
+
+  const phoneMap = useMemo(() => {
+    const m = new Map<string, C>();
+    for (const c of existing) {
+      const p = normalizePhone(c.whatsapp || c.phone || "");
+      if (p) m.set(p, c);
+    }
+    return m;
+  }, [existing]);
+
+  const handleFile = async (file: File) => {
+    setFileName(file.name);
+    const text = await file.text();
+    const isVcf = /\.vcf$/i.test(file.name) || /BEGIN:VCARD/i.test(text);
+    const parsed = isVcf ? parseVCF(text) : parseCSV(text);
+    const mapped: ImportRow[] = parsed.map((p) => {
+      const phoneNorm = normalizePhone(p.phone);
+      const existingC = phoneNorm ? phoneMap.get(phoneNorm) ?? null : null;
+      return {
+        name: p.name,
+        phone: p.phone,
+        whatsapp: p.phone,
+        email: p.email,
+        selected: true,
+        existingId: existingC?.id ?? null,
+        action: existingC ? "ignore" : "create",
+      };
+    });
+    setRows(mapped);
+  };
+
+  const toggle = (i: number, patch: Partial<ImportRow>) => {
+    setRows((r) => r.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
+  };
+
+  const selectedCount = rows.filter((r) => r.selected).length;
+  const dupCount = rows.filter((r) => r.existingId).length;
+
+  const runImport = async () => {
+    setLoading(true);
+    try {
+      const toInsert: any[] = [];
+      const toUpdate: { id: string; values: any }[] = [];
+      for (const r of rows) {
+        if (!r.selected) continue;
+        const values = {
+          name: r.name.trim(),
+          phone: r.phone.trim() || null,
+          whatsapp: r.whatsapp.trim() || null,
+          email: r.email.trim() || null,
+          source: "importacao",
+        };
+        if (!values.name) continue;
+        if (r.existingId && r.action === "ignore") continue;
+        if (r.existingId && r.action === "update") {
+          toUpdate.push({ id: r.existingId, values });
+        } else {
+          // create or keep_both
+          toInsert.push({ ...values, company_id: companyId });
+        }
+      }
+      if (toInsert.length) {
+        const { error } = await supabase.from("customers").insert(toInsert as any);
+        if (error) throw error;
+      }
+      for (const u of toUpdate) {
+        const { error } = await supabase.from("customers").update(u.values).eq("id", u.id);
+        if (error) throw error;
+      }
+      toast.success(`Importação concluída: ${toInsert.length} criados, ${toUpdate.length} atualizados`);
+      onDone();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao importar");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>Importar contatos do WhatsApp</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-3">
+        <div className="rounded-md border border-dashed p-4 text-sm">
+          <p className="mb-2 text-muted-foreground">
+            Selecione um arquivo <b>.vcf</b> (exportado do WhatsApp / Google Contatos) ou <b>.csv</b>.
+          </p>
+          <Input
+            type="file"
+            accept=".vcf,.csv,text/vcard,text/csv"
+            onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+          />
+          {fileName && <p className="mt-2 text-xs text-muted-foreground">Arquivo: {fileName} • {rows.length} contatos lidos • {dupCount} já existem</p>}
+        </div>
+
+        {rows.length > 0 && (
+          <div className="rounded-md border">
+            <div className="grid grid-cols-[auto_1fr_1fr_auto] gap-2 border-b bg-muted/40 p-2 text-xs font-medium">
+              <div>Sel.</div>
+              <div>Nome</div>
+              <div>Telefone / E-mail</div>
+              <div>Ação</div>
+            </div>
+            <div className="max-h-[45vh] overflow-y-auto">
+              {rows.map((r, i) => (
+                <div key={i} className={`grid grid-cols-[auto_1fr_1fr_auto] items-center gap-2 border-b p-2 text-xs ${r.existingId ? "bg-amber-50/40" : ""}`}>
+                  <Checkbox checked={r.selected} onCheckedChange={(v) => toggle(i, { selected: !!v })} />
+                  <div className="min-w-0">
+                    <Input className="h-7 text-xs" value={r.name} onChange={(e) => toggle(i, { name: e.target.value })} />
+                    {r.existingId && <p className="mt-0.5 text-[10px] text-amber-700">Já existe no cadastro</p>}
+                  </div>
+                  <div className="min-w-0 space-y-1">
+                    <Input className="h-7 text-xs" value={r.phone} onChange={(e) => toggle(i, { phone: e.target.value, whatsapp: e.target.value })} placeholder="Telefone" />
+                    {r.email && <Input className="h-7 text-xs" value={r.email} onChange={(e) => toggle(i, { email: e.target.value })} placeholder="E-mail" />}
+                  </div>
+                  <div>
+                    {r.existingId ? (
+                      <Select value={r.action} onValueChange={(v) => toggle(i, { action: v as any })}>
+                        <SelectTrigger className="h-7 w-[130px] text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ignore">Ignorar</SelectItem>
+                          <SelectItem value="update">Atualizar</SelectItem>
+                          <SelectItem value="keep_both">Manter ambos</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge variant="secondary" className="text-[10px]">Novo</Badge>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={onDone} disabled={loading}>Cancelar</Button>
+        <Button onClick={runImport} disabled={loading || !selectedCount}>
+          {loading ? "Importando…" : `Importar ${selectedCount} contato(s)`}
+        </Button>
+      </DialogFooter>
     </DialogContent>
   );
 }
