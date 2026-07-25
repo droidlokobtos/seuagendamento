@@ -66,11 +66,16 @@ function Staff() {
   });
 
   const save = useMutation({
-    mutationFn: async ({ v, serviceIds }: { v: Partial<S>; serviceIds: string[] }) => {
+    mutationFn: async ({ v, serviceIds, schedules }: {
+      v: Partial<S>; serviceIds: string[] | null; schedules: Sched[] | null;
+    }) => {
       let staffId = edit?.id;
       if (edit) {
-        const { error } = await supabase.from("staff").update(v).eq("id", edit.id);
-        if (error) throw error;
+        // Atualiza SOMENTE os campos alterados (nunca sobrescreve com vazio/null)
+        if (Object.keys(v).length) {
+          const { error } = await supabase.from("staff").update(v).eq("id", edit.id);
+          if (error) throw error;
+        }
       } else {
         const { data: created, error } = await supabase.from("staff")
           .insert({ ...v, company_id: companyId } as any).select("id").single();
@@ -78,29 +83,48 @@ function Staff() {
         staffId = created.id;
       }
       if (!staffId) return;
-      // Sincroniza vínculos de serviços
-      const current = links.filter((l) => l.staff_id === staffId).map((l) => l.service_id);
-      const toAdd = serviceIds.filter((id) => !current.includes(id));
-      const toRemove = current.filter((id) => !serviceIds.includes(id));
-      if (toRemove.length) {
-        const { error } = await supabase.from("staff_services").delete()
-          .eq("staff_id", staffId).in("service_id", toRemove);
-        if (error) throw error;
+
+      // Sincroniza vínculos de serviços apenas quando houve alteração
+      if (serviceIds) {
+        const { data: currentRows, error: curErr } = await supabase
+          .from("staff_services").select("service_id").eq("staff_id", staffId);
+        if (curErr) throw curErr;
+        const current = (currentRows ?? []).map((r) => r.service_id);
+        const toAdd = serviceIds.filter((id) => !current.includes(id));
+        const toRemove = current.filter((id) => !serviceIds.includes(id));
+        if (toRemove.length) {
+          const { error } = await supabase.from("staff_services").delete()
+            .eq("staff_id", staffId).in("service_id", toRemove);
+          if (error) throw error;
+        }
+        if (toAdd.length) {
+          const { error } = await supabase.from("staff_services")
+            .insert(toAdd.map((service_id) => ({ staff_id: staffId!, service_id })));
+          if (error) throw error;
+        }
       }
-      if (toAdd.length) {
-        const { error } = await supabase.from("staff_services")
-          .insert(toAdd.map((service_id) => ({ staff_id: staffId!, service_id })));
-        if (error) throw error;
+
+      // Sincroniza jornada de trabalho apenas quando houve alteração
+      if (schedules) {
+        const { error: delErr } = await supabase.from("staff_schedules").delete().eq("staff_id", staffId);
+        if (delErr) throw delErr;
+        if (schedules.length) {
+          const { error } = await supabase.from("staff_schedules")
+            .insert(schedules.map((s) => ({ ...s, staff_id: staffId! })));
+          if (error) throw error;
+        }
       }
     },
     onSuccess: () => {
       toast.success(edit ? "Funcionário atualizado" : "Funcionário criado");
       qc.invalidateQueries({ queryKey: ["staff", companyId] });
       qc.invalidateQueries({ queryKey: ["staff_services_links", companyId] });
+      qc.invalidateQueries({ queryKey: ["staff_detail"] });
       setOpen(false); setEdit(null);
     },
     onError: (e: any) => toast.error(e.message),
   });
+
 
   const del = useMutation({
     mutationFn: async (id: string) => {
