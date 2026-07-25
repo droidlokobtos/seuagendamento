@@ -58,6 +58,7 @@ import { Route as AuthenticatedAdminNichesRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated/admin/logs'
 import { Route as AuthenticatedAdminCompaniesRouteImport } from './routes/_authenticated/admin/companies'
 import { Route as BSlugAvaliarAppointmentIdRouteImport } from './routes/b.$slug.avaliar.$appointmentId'
+import { Route as ApiPublicHooksReviewInvitesRouteImport } from './routes/api/public/hooks/review-invites'
 import { Route as ApiPublicHooksRemindersRouteImport } from './routes/api/public/hooks/reminders'
 import { Route as ApiPublicHooksConfirmationsRouteImport } from './routes/api/public/hooks/confirmations'
 
@@ -321,6 +322,12 @@ const BSlugAvaliarAppointmentIdRoute =
     path: '/b/$slug/avaliar/$appointmentId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksReviewInvitesRoute =
+  ApiPublicHooksReviewInvitesRouteImport.update({
+    id: '/api/public/hooks/review-invites',
+    path: '/api/public/hooks/review-invites',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksRemindersRoute = ApiPublicHooksRemindersRouteImport.update({
   id: '/api/public/hooks/reminders',
   path: '/api/public/hooks/reminders',
@@ -383,6 +390,7 @@ export interface FileRoutesByFullPath {
   '/b/$slug/': typeof BSlugIndexRoute
   '/api/public/hooks/confirmations': typeof ApiPublicHooksConfirmationsRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/api/public/hooks/review-invites': typeof ApiPublicHooksReviewInvitesRoute
   '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
 export interface FileRoutesByTo {
@@ -433,6 +441,7 @@ export interface FileRoutesByTo {
   '/b/$slug': typeof BSlugIndexRoute
   '/api/public/hooks/confirmations': typeof ApiPublicHooksConfirmationsRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/api/public/hooks/review-invites': typeof ApiPublicHooksReviewInvitesRoute
   '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
 export interface FileRoutesById {
@@ -487,6 +496,7 @@ export interface FileRoutesById {
   '/b/$slug/': typeof BSlugIndexRoute
   '/api/public/hooks/confirmations': typeof ApiPublicHooksConfirmationsRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/api/public/hooks/review-invites': typeof ApiPublicHooksReviewInvitesRoute
   '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
 export interface FileRouteTypes {
@@ -541,6 +551,7 @@ export interface FileRouteTypes {
     | '/b/$slug/'
     | '/api/public/hooks/confirmations'
     | '/api/public/hooks/reminders'
+    | '/api/public/hooks/review-invites'
     | '/b/$slug/avaliar/$appointmentId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -591,6 +602,7 @@ export interface FileRouteTypes {
     | '/b/$slug'
     | '/api/public/hooks/confirmations'
     | '/api/public/hooks/reminders'
+    | '/api/public/hooks/review-invites'
     | '/b/$slug/avaliar/$appointmentId'
   id:
     | '__root__'
@@ -644,6 +656,7 @@ export interface FileRouteTypes {
     | '/b/$slug/'
     | '/api/public/hooks/confirmations'
     | '/api/public/hooks/reminders'
+    | '/api/public/hooks/review-invites'
     | '/b/$slug/avaliar/$appointmentId'
   fileRoutesById: FileRoutesById
 }
@@ -664,6 +677,7 @@ export interface RootRouteChildren {
   BSlugIndexRoute: typeof BSlugIndexRoute
   ApiPublicHooksConfirmationsRoute: typeof ApiPublicHooksConfirmationsRoute
   ApiPublicHooksRemindersRoute: typeof ApiPublicHooksRemindersRoute
+  ApiPublicHooksReviewInvitesRoute: typeof ApiPublicHooksReviewInvitesRoute
   BSlugAvaliarAppointmentIdRoute: typeof BSlugAvaliarAppointmentIdRoute
 }
 
@@ -1012,6 +1026,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BSlugAvaliarAppointmentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/review-invites': {
+      id: '/api/public/hooks/review-invites'
+      path: '/api/public/hooks/review-invites'
+      fullPath: '/api/public/hooks/review-invites'
+      preLoaderRoute: typeof ApiPublicHooksReviewInvitesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/reminders': {
       id: '/api/public/hooks/reminders'
       path: '/api/public/hooks/reminders'
@@ -1146,6 +1167,7 @@ const rootRouteChildren: RootRouteChildren = {
   BSlugIndexRoute: BSlugIndexRoute,
   ApiPublicHooksConfirmationsRoute: ApiPublicHooksConfirmationsRoute,
   ApiPublicHooksRemindersRoute: ApiPublicHooksRemindersRoute,
+  ApiPublicHooksReviewInvitesRoute: ApiPublicHooksReviewInvitesRoute,
   BSlugAvaliarAppointmentIdRoute: BSlugAvaliarAppointmentIdRoute,
 }
 export const routeTree = rootRouteImport
