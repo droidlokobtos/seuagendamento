@@ -286,6 +286,7 @@ export type Database = {
       companies: {
         Row: {
           address: string | null
+          amenities: string[]
           app_icon_url: string | null
           banner_url: string | null
           buffer_min: number
@@ -334,6 +335,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          amenities?: string[]
           app_icon_url?: string | null
           banner_url?: string | null
           buffer_min?: number
@@ -382,6 +384,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          amenities?: string[]
           app_icon_url?: string | null
           banner_url?: string | null
           buffer_min?: number
