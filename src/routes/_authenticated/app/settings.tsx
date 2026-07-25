@@ -207,6 +207,35 @@ function SettingsPage() {
               </div>
               <Switch checked={form.show_reviews_on_portal} onCheckedChange={(v) => setForm({ ...form, show_reviews_on_portal: v })} />
             </div>
+            <div className="md:col-span-2 space-y-2 pt-2">
+              <div>
+                <p className="text-sm font-medium">Comodidades do estabelecimento</p>
+                <p className="text-xs text-muted-foreground">Opcional. Os ícones ativados aparecem em destaque no perfil público.</p>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-2">
+                {AMENITIES.map((a) => {
+                  const on = form.amenities.includes(a.key);
+                  return (
+                    <div key={a.key} className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2">
+                      <span className="flex items-center gap-2 text-sm">
+                        <a.icon className="h-4 w-4 text-muted-foreground" /> {a.description}
+                      </span>
+                      <Switch
+                        checked={on}
+                        onCheckedChange={(v) =>
+                          setForm({
+                            ...form,
+                            amenities: v
+                              ? [...form.amenities, a.key]
+                              : form.amenities.filter((k) => k !== a.key),
+                          })
+                        }
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
           <div className="pt-2">
             <Button onClick={() => saveCompany.mutate()} disabled={saveCompany.isPending}>Salvar portal</Button>
