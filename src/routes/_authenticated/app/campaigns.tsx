@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { waLink } from "@/lib/format";
 import { useCompany } from "@/lib/company";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -104,9 +105,8 @@ function CampaignCard({ c, onDelete }: { c: Campaign; onDelete: () => void }) {
 
       // Open WhatsApp for each recipient (batch of first — user opens sequentially)
       list.slice(0, 20).forEach((cust) => {
-        const msg = encodeURIComponent(c.message.replace("{{nome}}", cust.name));
-        const phone = cust.phone.replace(/\D/g, "");
-        window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
+        const msg = c.message.replaceAll("{{nome}}", cust.name);
+        window.open(waLink(cust.phone, msg), "_blank");
       });
 
       await supabase.from("campaigns").update({ status: "sent", sent_at: new Date().toISOString(), recipients_count: list.length }).eq("id", c.id);

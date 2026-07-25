@@ -5,6 +5,7 @@ import { useCompany } from "@/lib/company";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Cake, MessageCircle } from "lucide-react";
+import { waLink } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/app/birthdays")({ component: Birthdays });
 
@@ -27,8 +28,8 @@ function Birthdays() {
 
   const send = (b: B) => {
     if (!b.phone) return;
-    const msg = encodeURIComponent(`Olá ${b.name}! 🎂 Parabéns pelo seu aniversário! ${activeCompany?.name} deseja um dia incrível — passe aqui e ganhe um mimo especial 🎁`);
-    window.open(`https://wa.me/${b.phone.replace(/\D/g, "")}?text=${msg}`, "_blank");
+    const msg = `Olá ${b.name}! 🎂 Parabéns pelo seu aniversário! ${activeCompany?.name} deseja um dia incrível — passe aqui e ganhe um mimo especial 🎁`;
+    window.open(waLink(b.phone, msg), "_blank");
   };
 
   return (
