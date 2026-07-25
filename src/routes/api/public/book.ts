@@ -83,12 +83,34 @@ export const Route = createFileRoute("/api/public/book")({
           if (!st || st.company_id !== company.id || !st.active)
             return Response.json({ error: "Profissional indisponível" }, { status: 400 });
           const { data: conflicts } = await supabaseAdmin
-            .from("appointments").select("id").eq("staff_id", staff_id)
+            .from("appointments").select("id")
+            .eq("company_id", company.id)
+            .eq("staff_id", staff_id)
+            .neq("status", "cancelled")
+            .lt("starts_at", end.toISOString()).gt("ends_at", start.toISOString());
+          if (conflicts && conflicts.length > 0)
+            return Response.json({ error: "Horário já ocupado" }, { status: 409 });
+        } else {
+          // Sem profissional escolhido: impede sobreposição com outros
+          // agendamentos "sem profissional" da mesma empresa.
+          const { data: conflicts } = await supabaseAdmin
+            .from("appointments").select("id")
+            .eq("company_id", company.id)
+            .is("staff_id", null)
             .neq("status", "cancelled")
             .lt("starts_at", end.toISOString()).gt("ends_at", start.toISOString());
           if (conflicts && conflicts.length > 0)
             return Response.json({ error: "Horário já ocupado" }, { status: 409 });
         }
+
+        // Bloqueios de agenda (feriados, folgas, etc.)
+        const { data: blocks } = await supabaseAdmin
+          .from("time_blocks").select("id,staff_id")
+          .eq("company_id", company.id)
+          .lt("starts_at", end.toISOString()).gt("ends_at", start.toISOString());
+        if ((blocks ?? []).some((b) => !b.staff_id || b.staff_id === staff_id))
+          return Response.json({ error: "Horário indisponível" }, { status: 409 });
+
 
         // Optional: identify signed-in customer via bearer token
         let authUserId: string | null = null;
