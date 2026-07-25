@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { dateBR } from "@/lib/format";
 
-export const Route = createFileRoute("/admin/logs")({ component: LogsPage });
+export const Route = createFileRoute("/_authenticated/admin/logs")({ component: LogsPage });
 
 const eventColor: Record<string, string> = {
   login: "bg-green-500/15 text-green-700",
