@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { slugify } from "@/lib/format";
+import { AMENITIES } from "@/lib/amenities";
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
   component: SettingsPage,
@@ -38,7 +39,9 @@ function SettingsPage() {
     welcome_message: "", city: "", state: "",
     instagram_url: "", facebook_url: "", tiktok_url: "", website_url: "",
     listed_in_marketplace: false, show_staff_on_portal: true, show_reviews_on_portal: true,
+    amenities: [] as string[],
   });
+
 
   const { data: company } = useQuery({
     queryKey: ["company-full", companyId],
@@ -61,6 +64,7 @@ function SettingsPage() {
         listed_in_marketplace: !!c.listed_in_marketplace,
         show_staff_on_portal: c.show_staff_on_portal !== false,
         show_reviews_on_portal: c.show_reviews_on_portal !== false,
+        amenities: Array.isArray(c.amenities) ? (c.amenities as string[]) : [],
       });
     }
   }, [company]);
@@ -202,6 +206,35 @@ function SettingsPage() {
                 <p className="text-xs text-muted-foreground">Exibe depoimentos publicados dos clientes.</p>
               </div>
               <Switch checked={form.show_reviews_on_portal} onCheckedChange={(v) => setForm({ ...form, show_reviews_on_portal: v })} />
+            </div>
+            <div className="md:col-span-2 space-y-2 pt-2">
+              <div>
+                <p className="text-sm font-medium">Comodidades do estabelecimento</p>
+                <p className="text-xs text-muted-foreground">Opcional. Os ícones ativados aparecem em destaque no perfil público.</p>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-2">
+                {AMENITIES.map((a) => {
+                  const on = form.amenities.includes(a.key);
+                  return (
+                    <div key={a.key} className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2">
+                      <span className="flex items-center gap-2 text-sm">
+                        <a.icon className="h-4 w-4 text-muted-foreground" /> {a.description}
+                      </span>
+                      <Switch
+                        checked={on}
+                        onCheckedChange={(v) =>
+                          setForm({
+                            ...form,
+                            amenities: v
+                              ? [...form.amenities, a.key]
+                              : form.amenities.filter((k) => k !== a.key),
+                          })
+                        }
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
           <div className="pt-2">
