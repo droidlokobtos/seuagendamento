@@ -1468,6 +1468,7 @@ export type Database = {
           pix_holder: string | null
           pix_key: string | null
           platform_name: string
+          review_expiration_days: number
           updated_at: string
         }
         Insert: {
@@ -1476,6 +1477,7 @@ export type Database = {
           pix_holder?: string | null
           pix_key?: string | null
           platform_name?: string
+          review_expiration_days?: number
           updated_at?: string
         }
         Update: {
@@ -1484,6 +1486,7 @@ export type Database = {
           pix_holder?: string | null
           pix_key?: string | null
           platform_name?: string
+          review_expiration_days?: number
           updated_at?: string
         }
         Relationships: []
@@ -1577,6 +1580,238 @@ export type Database = {
         }
         Relationships: []
       }
+      review_invites: {
+        Row: {
+          appointment_id: string
+          channel: string | null
+          company_id: string
+          created_at: string
+          customer_id: string | null
+          error: string | null
+          expires_at: string
+          id: string
+          last_sent_at: string | null
+          message: string | null
+          rating: number | null
+          responded_at: string | null
+          response_ip: string | null
+          response_user_agent: string | null
+          review_id: string | null
+          send_attempts: number
+          send_url: string | null
+          sent_at: string | null
+          staff_id: string | null
+          status: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          channel?: string | null
+          company_id: string
+          created_at?: string
+          customer_id?: string | null
+          error?: string | null
+          expires_at: string
+          id?: string
+          last_sent_at?: string | null
+          message?: string | null
+          rating?: number | null
+          responded_at?: string | null
+          response_ip?: string | null
+          response_user_agent?: string | null
+          review_id?: string | null
+          send_attempts?: number
+          send_url?: string | null
+          sent_at?: string | null
+          staff_id?: string | null
+          status?: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          channel?: string | null
+          company_id?: string
+          created_at?: string
+          customer_id?: string | null
+          error?: string | null
+          expires_at?: string
+          id?: string
+          last_sent_at?: string | null
+          message?: string | null
+          rating?: number | null
+          responded_at?: string | null
+          response_ip?: string | null
+          response_user_agent?: string | null
+          review_id?: string | null
+          send_attempts?: number
+          send_url?: string | null
+          sent_at?: string | null
+          staff_id?: string | null
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_invites_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_invites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_invites_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_invites_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_invites_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_invites_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_logs: {
+        Row: {
+          appointment_id: string | null
+          channel: string | null
+          comment: string | null
+          company_id: string
+          created_at: string
+          customer_id: string | null
+          detail: string | null
+          event: string
+          id: string
+          invite_id: string | null
+          ip: string | null
+          rating: number | null
+          review_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          channel?: string | null
+          comment?: string | null
+          company_id: string
+          created_at?: string
+          customer_id?: string | null
+          detail?: string | null
+          event: string
+          id?: string
+          invite_id?: string | null
+          ip?: string | null
+          rating?: number | null
+          review_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          channel?: string | null
+          comment?: string | null
+          company_id?: string
+          created_at?: string
+          customer_id?: string | null
+          detail?: string | null
+          event?: string
+          id?: string
+          invite_id?: string | null
+          ip?: string | null
+          rating?: number | null
+          review_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_logs_invite_id_fkey"
+            columns: ["invite_id"]
+            isOneToOne: false
+            referencedRelation: "review_invites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_logs_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_settings: {
+        Row: {
+          active_channels: string[]
+          auto_send_enabled: boolean
+          company_id: string
+          created_at: string
+          expiration_days: number
+          google_review_url: string | null
+          message_template: string | null
+          updated_at: string
+        }
+        Insert: {
+          active_channels?: string[]
+          auto_send_enabled?: boolean
+          company_id: string
+          created_at?: string
+          expiration_days?: number
+          google_review_url?: string | null
+          message_template?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active_channels?: string[]
+          auto_send_enabled?: boolean
+          company_id?: string
+          created_at?: string
+          expiration_days?: number
+          google_review_url?: string | null
+          message_template?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           appointment_id: string | null
@@ -1585,10 +1820,18 @@ export type Database = {
           created_at: string
           customer_id: string | null
           id: string
+          invite_id: string | null
+          ip: string | null
           published: boolean
           rating: number
+          service_names: string | null
+          source: string | null
           staff_id: string | null
+          staff_rating: number | null
           updated_at: string
+          user_agent: string | null
+          would_recommend: boolean | null
+          would_return: boolean | null
         }
         Insert: {
           appointment_id?: string | null
@@ -1597,10 +1840,18 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           id?: string
+          invite_id?: string | null
+          ip?: string | null
           published?: boolean
           rating: number
+          service_names?: string | null
+          source?: string | null
           staff_id?: string | null
+          staff_rating?: number | null
           updated_at?: string
+          user_agent?: string | null
+          would_recommend?: boolean | null
+          would_return?: boolean | null
         }
         Update: {
           appointment_id?: string | null
@@ -1609,10 +1860,18 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           id?: string
+          invite_id?: string | null
+          ip?: string | null
           published?: boolean
           rating?: number
+          service_names?: string | null
+          source?: string | null
           staff_id?: string | null
+          staff_rating?: number | null
           updated_at?: string
+          user_agent?: string | null
+          would_recommend?: boolean | null
+          would_return?: boolean | null
         }
         Relationships: [
           {
@@ -1641,6 +1900,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_invite_id_fkey"
+            columns: ["invite_id"]
+            isOneToOne: false
+            referencedRelation: "review_invites"
             referencedColumns: ["id"]
           },
           {
