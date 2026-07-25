@@ -21,3 +21,25 @@ export const statusLabel: Record<string, { label: string; className: string; dot
   overdue: { label: "Em atraso", className: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-500/15 dark:text-orange-300 dark:border-orange-500/30", dot: "bg-orange-500" },
   suspended: { label: "Suspensa", className: "bg-red-100 text-red-800 border-red-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/30", dot: "bg-red-500" },
 };
+
+/**
+ * Normaliza um telefone brasileiro para o formato aceito pelo WhatsApp
+ * (somente dígitos, com DDI 55). Retorna "" quando não há número válido.
+ */
+export const waNumber = (phone: string | null | undefined) => {
+  const d = (phone ?? "").replace(/\D/g, "");
+  if (!d) return "";
+  if (d.startsWith("55")) return d;
+  // 10 dígitos (fixo com DDD) ou 11 dígitos (celular com DDD) => falta o DDI
+  if (d.length === 10 || d.length === 11) return `55${d}`;
+  return d;
+};
+
+/** Monta o link do WhatsApp com número normalizado e texto codificado. */
+export const waLink = (phone: string | null | undefined, message: string) => {
+  const num = waNumber(phone);
+  const text = encodeURIComponent(message);
+  return num
+    ? `https://api.whatsapp.com/send?phone=${num}&text=${text}`
+    : `https://api.whatsapp.com/send?text=${text}`;
+};
