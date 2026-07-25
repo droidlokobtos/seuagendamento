@@ -182,6 +182,13 @@ function Agenda() {
       if (edit) {
         const { error } = await supabase.from("appointments").update(payload).eq("id", edit.id);
         if (error) throw error;
+        // Mantém os serviços do agendamento em sincronia com o serviço escolhido
+        if (v.service_id) {
+          await supabase.from("appointment_services").delete().eq("appointment_id", edit.id);
+          await supabase.from("appointment_services").insert({
+            appointment_id: edit.id, service_id: v.service_id, price_cents: price, duration_min: dur,
+          });
+        }
         return { id: edit.id, isNew: false, ...payload };
       }
       const { data: appt, error } = await supabase.from("appointments").insert(payload).select("id").single();

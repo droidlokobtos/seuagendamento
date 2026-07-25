@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+
 export const resetUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
@@ -15,9 +16,8 @@ export const resetUserPassword = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Find user by email
-    const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    if (listErr) throw listErr;
-    const user = list.users.find((u) => (u.email ?? "").toLowerCase() === data.email.toLowerCase());
+    const { findAuthUserByEmail } = await import("@/lib/admin-users.server");
+    const user = await findAuthUserByEmail(data.email);
     if (!user) throw new Error("Usuário não encontrado com esse e-mail.");
 
     const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
@@ -98,9 +98,8 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
 
     // Reuse existing auth user if the e-mail already exists, otherwise create one
     let userId: string | null = null;
-    const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    if (listErr) throw listErr;
-    const existing = list.users.find((u) => (u.email ?? "").toLowerCase() === email);
+    const { findAuthUserByEmail } = await import("@/lib/admin-users.server");
+    const existing = await findAuthUserByEmail(email);
     const tempPassword = data.temp_password && data.temp_password.length >= 8
       ? data.temp_password
       : `Ag${Math.random().toString(36).slice(2, 8)}!${Math.floor(Math.random() * 90 + 10)}`;
