@@ -205,12 +205,6 @@ function BookingPage() {
       const slotStart = new Date(iso).getTime();
       const slotEnd = slotStart + totalMin * 60_000;
       if (slotStart < minStart) continue;
-      const conflictAppt = taken.some((t) => {
-        const ts = new Date(t.starts_at).getTime();
-        const te = new Date(t.ends_at).getTime();
-        return slotStart < te && slotEnd > ts;
-      });
-      if (conflictAppt) continue;
       const conflictBlock = blocks.some((b) => {
         const bs = new Date(b.starts_at).getTime();
         const be = new Date(b.ends_at).getTime();
@@ -220,7 +214,7 @@ function BookingPage() {
       out.push(`${hh}:${mm}`);
     }
     return out;
-  }, [dateStr, hours, taken, blocks, totalMin, minAdvanceMin]);
+  }, [dateStr, hours, blocks, totalMin, minAdvanceMin]);
 
   const dateOptions = useMemo(() => {
     const list: { iso: string; label: string; wd: number; disabled: boolean }[] = [];
