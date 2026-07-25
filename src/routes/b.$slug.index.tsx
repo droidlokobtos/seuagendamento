@@ -134,24 +134,6 @@ function BookingPage() {
     },
   });
 
-  const { data: staffList = [] } = useQuery({
-    queryKey: ["pub_staff", companyId, selected.map((s) => s.id).join(",")],
-    queryFn: async () => {
-      const ids = selected.map((s) => s.id);
-      if (!ids.length) return [];
-      const { data: links } = await supabase.from("staff_services").select("staff_id,service_id").in("service_id", ids);
-      const { data: st } = await supabase.from("staff").select("id,name,role_title,photo_url,color,company_id,active")
-        .eq("company_id", companyId).eq("active", true);
-      const counts = new Map<string, Set<string>>();
-      (links ?? []).forEach((l: any) => {
-        if (!counts.has(l.staff_id)) counts.set(l.staff_id, new Set());
-        counts.get(l.staff_id)!.add(l.service_id);
-      });
-      return ((st ?? []) as any[]).filter((s) => counts.get(s.id)?.size === ids.length) as Staff[];
-    },
-    enabled: selected.length > 0,
-  });
-
   const { data: hours = [] } = useQuery({
     queryKey: ["pub_hours", companyId],
     queryFn: async () => {
@@ -161,35 +143,40 @@ function BookingPage() {
     },
   });
 
-  const { data: taken = [] } = useQuery({
-    queryKey: ["pub_taken", companyId, dateStr, staff?.id ?? "any"],
-    queryFn: async () => {
-      const from = `${dateStr}T00:00:00`;
-      const to = `${dateStr}T23:59:59`;
-      let q = supabase.from("appointments").select("starts_at,ends_at,staff_id")
-        .eq("company_id", companyId).neq("status", "cancelled")
-        .gte("starts_at", from).lte("starts_at", to);
-      if (staff) q = q.eq("staff_id", staff.id);
-      const { data } = await q;
-      return (data ?? []) as { starts_at: string; ends_at: string; staff_id: string | null }[];
-    },
-    enabled: !!dateStr,
-  });
-
   const { data: blocks = [] } = useQuery({
-    queryKey: ["pub_blocks", companyId, dateStr, staff?.id ?? "any"],
+    queryKey: ["pub_blocks", companyId, dateStr],
     queryFn: async () => {
       const from = `${dateStr}T00:00:00`;
       const to = `${dateStr}T23:59:59`;
       const { data } = await supabase.from("time_blocks").select("starts_at,ends_at,staff_id")
         .eq("company_id", companyId)
         .lt("starts_at", to).gt("ends_at", from);
-      const list = (data ?? []) as TimeBlock[];
-      // Bloqueios sem staff_id são da empresa toda; com staff_id valem só se combinar com o selecionado (ou qualquer, se "any")
-      return list.filter((b) => !b.staff_id || !staff || b.staff_id === staff.id);
+      // Somente bloqueios da empresa toda afetam a lista de horários;
+      // bloqueios por profissional são avaliados no passo "Profissional".
+      return ((data ?? []) as TimeBlock[]).filter((b) => !b.staff_id);
     },
     enabled: !!dateStr,
   });
+
+  // Profissionais habilitados para os serviços escolhidos E livres no horário escolhido.
+  // Todo o filtro (vínculo, jornada, bloqueios e agendamentos) é feito no backend.
+  const serviceIdsKey = selected.map((s) => s.id).join(",");
+  const { data: staffData, isFetching: staffLoading } = useQuery({
+    queryKey: ["pub_staff", company.slug, serviceIdsKey, dateStr, timeStr],
+    queryFn: async () => {
+      const params = new URLSearchParams({ slug: company.slug, service_ids: serviceIdsKey });
+      params.set("date", dateStr);
+      params.set("time", timeStr);
+      params.set("starts_at", new Date(`${dateStr}T${timeStr}:00`).toISOString());
+      const res = await fetch(`/api/public/staff?${params.toString()}`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Falha ao buscar profissionais");
+      return json as { staff: Staff[]; reason: string | null };
+    },
+    enabled: selected.length > 0 && !!dateStr && !!timeStr,
+  });
+  const staffList = staffData?.staff ?? [];
+  const staffReason = staffData?.reason ?? null;
 
   const totalMin = selected.reduce((s, x) => s + x.duration_min, 0);
   const totalPrice = selected.reduce((s, x) => s + x.price_cents, 0) / 100;
