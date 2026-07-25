@@ -188,9 +188,18 @@ function Staff() {
 }
 
 function StaffDialog({
-  edit, onSave, loading,
-}: { edit: S | null; onSave: (v: Partial<S>) => void; loading: boolean }) {
+  edit, onSave, loading, services, selectedServiceIds,
+}: {
+  edit: S | null;
+  onSave: (v: Partial<S>, serviceIds: string[]) => void;
+  loading: boolean;
+  services: { id: string; name: string; active: boolean }[];
+  selectedServiceIds: string[];
+}) {
   const [f, setF] = useState<Partial<S>>(edit ?? { name: "", color: "#8b7355", active: true, commission_pct: 0 });
+  const [svcIds, setSvcIds] = useState<string[]>(selectedServiceIds);
+  const toggleSvc = (id: string) =>
+    setSvcIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   return (
     <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
       <DialogHeader><DialogTitle>{edit ? "Editar funcionário" : "Novo funcionário"}</DialogTitle></DialogHeader>
