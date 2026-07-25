@@ -194,7 +194,9 @@ function Services() {
             <ServiceDialog
               key={edit?.id ?? "new"}
               edit={edit}
-              onSave={(v) => save.mutate(v)}
+              onSave={(v, staffIds) => save.mutate({ v, staffIds })}
+              staffOptions={staffOptions}
+              selectedStaffIds={edit ? links.filter((l) => l.service_id === edit.id).map((l) => l.staff_id) : []}
               loading={save.isPending}
               categories={categories}
             />
