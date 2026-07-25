@@ -265,10 +265,20 @@ function Services() {
 }
 
 function ServiceDialog({
-  edit, onSave, loading, categories,
-}: { edit: S | null; onSave: (v: Partial<S>) => void; loading: boolean; categories: string[] }) {
+  edit, onSave, loading, categories, staffOptions, selectedStaffIds,
+}: {
+  edit: S | null;
+  onSave: (v: Partial<S>, staffIds: string[]) => void;
+  loading: boolean;
+  categories: string[];
+  staffOptions: { id: string; name: string; active: boolean }[];
+  selectedStaffIds: string[];
+}) {
   const [f, setF] = useState<Partial<S>>(edit ? { ...edit } : { ...EMPTY });
   const [reposition, setReposition] = useState(false);
+  const [staffIds, setStaffIds] = useState<string[]>(selectedStaffIds);
+  const toggleStaff = (id: string) =>
+    setStaffIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   return (
     <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
