@@ -47,6 +47,90 @@ export type Database = {
         }
         Relationships: []
       }
+      appointment_confirmations: {
+        Row: {
+          appointment_id: string
+          cancel_reason: string | null
+          channel: string
+          company_id: string
+          created_at: string
+          error: string | null
+          expires_at: string
+          id: string
+          last_sent_at: string | null
+          message: string | null
+          responded_at: string | null
+          response: string | null
+          response_ip: string | null
+          response_user_agent: string | null
+          send_attempts: number
+          send_url: string | null
+          sent_at: string | null
+          status: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          cancel_reason?: string | null
+          channel?: string
+          company_id: string
+          created_at?: string
+          error?: string | null
+          expires_at: string
+          id?: string
+          last_sent_at?: string | null
+          message?: string | null
+          responded_at?: string | null
+          response?: string | null
+          response_ip?: string | null
+          response_user_agent?: string | null
+          send_attempts?: number
+          send_url?: string | null
+          sent_at?: string | null
+          status?: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          cancel_reason?: string | null
+          channel?: string
+          company_id?: string
+          created_at?: string
+          error?: string | null
+          expires_at?: string
+          id?: string
+          last_sent_at?: string | null
+          message?: string | null
+          responded_at?: string | null
+          response?: string | null
+          response_ip?: string | null
+          response_user_agent?: string | null
+          send_attempts?: number
+          send_url?: string | null
+          sent_at?: string | null
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_confirmations_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_confirmations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_reminders: {
         Row: {
           appointment_id: string
@@ -279,6 +363,121 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commissions: {
+        Row: {
+          appointment_id: string | null
+          commission_cents: number
+          commission_type: string
+          commission_value: number
+          company_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          notes: string | null
+          occurred_at: string
+          paid_at: string | null
+          service_amount_cents: number
+          service_id: string | null
+          service_name: string | null
+          staff_id: string | null
+          staff_name: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          commission_cents?: number
+          commission_type?: string
+          commission_value?: number
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          notes?: string | null
+          occurred_at?: string
+          paid_at?: string | null
+          service_amount_cents?: number
+          service_id?: string | null
+          service_name?: string | null
+          staff_id?: string | null
+          staff_name?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          commission_cents?: number
+          commission_type?: string
+          commission_value?: number
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          notes?: string | null
+          occurred_at?: string
+          paid_at?: string | null
+          service_amount_cents?: number
+          service_id?: string | null
+          service_name?: string | null
+          staff_id?: string | null
+          staff_name?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissions_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
         ]
@@ -971,6 +1170,150 @@ export type Database = {
           },
         ]
       }
+      messaging_logs: {
+        Row: {
+          actor_user_id: string | null
+          appointment_id: string | null
+          channel: string | null
+          company_id: string
+          confirmation_id: string | null
+          created_at: string
+          detail: string | null
+          event: string
+          id: string
+          ip: string | null
+          status: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          appointment_id?: string | null
+          channel?: string | null
+          company_id: string
+          confirmation_id?: string | null
+          created_at?: string
+          detail?: string | null
+          event: string
+          id?: string
+          ip?: string | null
+          status?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          appointment_id?: string | null
+          channel?: string | null
+          company_id?: string
+          confirmation_id?: string | null
+          created_at?: string
+          detail?: string | null
+          event?: string
+          id?: string
+          ip?: string | null
+          status?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messaging_logs_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messaging_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messaging_logs_confirmation_id_fkey"
+            columns: ["confirmation_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_confirmations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messaging_settings: {
+        Row: {
+          active_channels: string[]
+          auto_confirmation_enabled: boolean
+          company_id: string
+          created_at: string
+          email_api_token: string | null
+          email_api_url: string | null
+          email_from: string | null
+          email_provider: string | null
+          message_template: string | null
+          reminder_hours: number
+          sms_api_token: string | null
+          sms_api_url: string | null
+          sms_provider: string | null
+          sms_sender: string | null
+          updated_at: string
+          whatsapp_api_token: string | null
+          whatsapp_api_url: string | null
+          whatsapp_instance: string | null
+          whatsapp_provider: string | null
+          whatsapp_sender: string | null
+        }
+        Insert: {
+          active_channels?: string[]
+          auto_confirmation_enabled?: boolean
+          company_id: string
+          created_at?: string
+          email_api_token?: string | null
+          email_api_url?: string | null
+          email_from?: string | null
+          email_provider?: string | null
+          message_template?: string | null
+          reminder_hours?: number
+          sms_api_token?: string | null
+          sms_api_url?: string | null
+          sms_provider?: string | null
+          sms_sender?: string | null
+          updated_at?: string
+          whatsapp_api_token?: string | null
+          whatsapp_api_url?: string | null
+          whatsapp_instance?: string | null
+          whatsapp_provider?: string | null
+          whatsapp_sender?: string | null
+        }
+        Update: {
+          active_channels?: string[]
+          auto_confirmation_enabled?: boolean
+          company_id?: string
+          created_at?: string
+          email_api_token?: string | null
+          email_api_url?: string | null
+          email_from?: string | null
+          email_provider?: string | null
+          message_template?: string | null
+          reminder_hours?: number
+          sms_api_token?: string | null
+          sms_api_url?: string | null
+          sms_provider?: string | null
+          sms_sender?: string | null
+          updated_at?: string
+          whatsapp_api_token?: string | null
+          whatsapp_api_url?: string | null
+          whatsapp_instance?: string | null
+          whatsapp_provider?: string | null
+          whatsapp_sender?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messaging_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       niches: {
         Row: {
           banner_url: string | null
@@ -1314,10 +1657,13 @@ export type Database = {
           active: boolean
           category: string | null
           color: string | null
+          commission_type: string
+          commission_value: number
           company_id: string
           created_at: string
           description: string | null
           duration_min: number
+          has_commission: boolean
           id: string
           name: string
           photo_position: string
@@ -1330,10 +1676,13 @@ export type Database = {
           active?: boolean
           category?: string | null
           color?: string | null
+          commission_type?: string
+          commission_value?: number
           company_id: string
           created_at?: string
           description?: string | null
           duration_min?: number
+          has_commission?: boolean
           id?: string
           name: string
           photo_position?: string
@@ -1346,10 +1695,13 @@ export type Database = {
           active?: boolean
           category?: string | null
           color?: string | null
+          commission_type?: string
+          commission_value?: number
           company_id?: string
           created_at?: string
           description?: string | null
           duration_min?: number
+          has_commission?: boolean
           id?: string
           name?: string
           photo_position?: string
@@ -1669,6 +2021,9 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "no_show"
+        | "reminder_sent"
+        | "cancelled_by_customer"
+        | "cancelled_by_company"
       company_status: "active" | "due_soon" | "overdue" | "suspended"
       movement_type: "in" | "out" | "adjustment"
       payment_method_kind:
@@ -1820,6 +2175,9 @@ export const Constants = {
         "completed",
         "cancelled",
         "no_show",
+        "reminder_sent",
+        "cancelled_by_customer",
+        "cancelled_by_company",
       ],
       company_status: ["active", "due_soon", "overdue", "suspended"],
       movement_type: ["in", "out", "adjustment"],
