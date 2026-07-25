@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Scissors, ArrowUp, ArrowDown, Move, ZoomIn, ZoomOut } from "lucide-react";
+import { Plus, Pencil, Trash2, Scissors, ArrowUp, ArrowDown, Move, ZoomIn, ZoomOut, GripVertical } from "lucide-react";
 
 // photo_position format: "<x>% <y>% <zoom>" (zoom optional, defaults 1)
 function parsePos(v: string | null | undefined) {
