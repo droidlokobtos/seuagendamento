@@ -109,11 +109,11 @@ function Agenda() {
   });
   const { data: staff = [] } = useQuery({
     queryKey: ["staff-lite", companyId],
-    queryFn: async () => (await supabase.from("staff").select("id,name,color").eq("company_id", companyId).eq("active", true).order("name")).data ?? [],
+    queryFn: async () => (await supabase.from("staff").select("id,name,color").eq("company_id", companyId).eq("active", true).order("sort_order", { ascending: true }).order("name")).data ?? [],
   });
   const { data: services = [] } = useQuery({
     queryKey: ["services-lite", companyId],
-    queryFn: async () => (await supabase.from("services").select("id,name,duration_min,price_cents").eq("company_id", companyId).eq("active", true).order("name")).data ?? [],
+    queryFn: async () => (await supabase.from("services").select("id,name,duration_min,price_cents").eq("company_id", companyId).eq("active", true).order("sort_order", { ascending: true }).order("name")).data ?? [],
   });
 
   const activeStaffName = useMemo(
