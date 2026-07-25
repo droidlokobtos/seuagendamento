@@ -16,7 +16,7 @@ export const Route = createFileRoute("/b/$slug/")({
   loader: async ({ params }) => {
     const { data: company, error } = await supabase
       .from("companies")
-      .select("id,name,slug,logo_url,banner_url,primary_color,secondary_color,address,whatsapp,phone,email,status,online_booking_enabled,description,welcome_message,instagram_url,facebook_url,tiktok_url,website_url,show_staff_on_portal,show_reviews_on_portal,min_advance_min,max_advance_days")
+      .select("id,name,slug,logo_url,banner_url,primary_color,secondary_color,address,whatsapp,phone,email,status,online_booking_enabled,description,welcome_message,instagram_url,facebook_url,tiktok_url,website_url,show_staff_on_portal,show_reviews_on_portal,amenities,min_advance_min,max_advance_days")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw error;
