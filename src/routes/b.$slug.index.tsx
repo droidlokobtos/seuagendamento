@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, MapPin, Phone, Check, Calendar, Clock, ChevronLeft, ChevronRight, User, Instagram, Facebook, Globe, Star, MessageCircle, X as XIcon, Image as ImageIcon } from "lucide-react";
 import { brl } from "@/lib/format";
+import { getAmenities } from "@/lib/amenities";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/b/$slug/")({
