@@ -234,7 +234,7 @@ function Services() {
 
       {isLoading ? (
         <Card><CardContent className="p-12 text-center text-muted-foreground">Carregando…</CardContent></Card>
-      ) : !data.length ? (
+      ) : !items.length ? (
         <Card>
           <CardContent className="p-12 text-center">
             <Scissors className="h-8 w-8 mx-auto text-muted-foreground" />
@@ -242,52 +242,82 @@ function Services() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {data.map((s, idx) => (
-            <Card key={s.id} className={!s.active ? "opacity-60 overflow-hidden" : "overflow-hidden"}>
-              {s.photo_url && (
-                <div className="h-32 w-full bg-muted overflow-hidden">
-                  <img
-                    src={s.photo_url}
-                    alt={s.name}
-                    className="h-full w-full object-cover"
-                    style={framedImgStyle(s.photo_position)}
-                  />
-                </div>
-              )}
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="h-3 w-3 rounded-full" style={{ background: s.color ?? "#8b7355" }} />
-                      <p className="font-medium truncate">{s.name}</p>
+        <>
+          {canReorder && (
+            <p className="text-xs text-muted-foreground">
+              Arraste os cartões pelo ícone <GripVertical className="inline h-3 w-3" /> para reorganizar a ordem — ela é salva automaticamente e usada em todas as telas.
+            </p>
+          )}
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {items.map((s, idx) => (
+              <Card
+                key={s.id}
+                draggable={canReorder}
+                onDragStart={() => { dragId.current = s.id; }}
+                onDragOver={(e) => { if (!canReorder || !dragId.current) return; e.preventDefault(); setOverId(s.id); }}
+                onDragLeave={() => setOverId((v) => (v === s.id ? null : v))}
+                onDrop={(e) => { if (!canReorder) return; e.preventDefault(); onDrop(s.id); }}
+                onDragEnd={() => { dragId.current = null; setOverId(null); }}
+                className={[
+                  "overflow-hidden transition-shadow",
+                  !s.active ? "opacity-60" : "",
+                  overId === s.id ? "ring-2 ring-primary" : "",
+                  canReorder ? "cursor-grab active:cursor-grabbing" : "",
+                ].join(" ")}
+              >
+                {s.photo_url && (
+                  <div className="h-32 w-full bg-muted overflow-hidden">
+                    <img
+                      src={s.photo_url}
+                      alt={s.name}
+                      className="h-full w-full object-cover"
+                      style={framedImgStyle(s.photo_position)}
+                    />
+                  </div>
+                )}
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex items-start gap-2">
+                      {canReorder && <GripVertical className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground tabular-nums">{idx + 1}.</span>
+                          <span className="h-3 w-3 rounded-full" style={{ background: s.color ?? "#8b7355" }} />
+                          <p className="font-medium truncate">{s.name}</p>
+                        </div>
+                        {s.category && <p className="text-xs text-muted-foreground mt-0.5">{s.category}</p>}
+                      </div>
                     </div>
-                    {s.category && <p className="text-xs text-muted-foreground mt-0.5">{s.category}</p>}
+                    <div className="flex gap-1">
+                      {canReorder && (
+                        <>
+                          <Button size="icon" variant="ghost" title="Mover para cima" disabled={idx === 0} onClick={() => move(idx, -1)}>
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" title="Mover para baixo" disabled={idx === items.length - 1} onClick={() => move(idx, 1)}>
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(s)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover?")) del.mutate(s.id); }}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" title="Mover para cima" disabled={idx === 0} onClick={() => move(idx, -1)}>
-                      <ArrowUp className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" title="Mover para baixo" disabled={idx === data.length - 1} onClick={() => move(idx, 1)}>
-                      <ArrowDown className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => openEdit(s)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover?")) del.mutate(s.id); }}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <div className="mt-3 flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{s.duration_min} min</span>
+                    <span className="font-semibold">{brl(s.price_cents / 100)}</span>
                   </div>
-                </div>
-                <div className="mt-3 flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{s.duration_min} min</span>
-                  <span className="font-semibold">{brl(s.price_cents / 100)}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
       )}
+
     </div>
   );
 }
