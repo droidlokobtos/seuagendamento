@@ -2260,6 +2260,10 @@ export type Database = {
       is_company_admin: { Args: { _company: string }; Returns: boolean }
       is_company_member: { Args: { _company: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      reorder_services: {
+        Args: { _company: string; _ids: string[] }
+        Returns: undefined
+      }
       user_company_ids: { Args: { _user_id: string }; Returns: string[] }
       validate_coupon: {
         Args: { _code: string; _company: string; _subtotal_cents: number }
