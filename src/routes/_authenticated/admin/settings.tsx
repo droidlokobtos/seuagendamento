@@ -80,6 +80,20 @@ function Settings() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader><CardTitle className="text-base">Avaliações</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <div>
+            <Label>Validade padrão do link de avaliação (dias)</Label>
+            <Input type="number" min={1} max={365} value={reviewDays} onChange={(e) => setReviewDays(e.target.value)} className="max-w-32" />
+            <p className="text-xs text-muted-foreground mt-1">
+              Usada quando a empresa não define uma validade própria. Padrão: 30 dias.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+
       <div className="flex justify-end">
         <Button disabled={save.isPending} onClick={() => save.mutate()}>
           {save.isPending ? "Salvando…" : "Salvar configurações"}
