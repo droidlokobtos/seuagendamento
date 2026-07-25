@@ -23,6 +23,7 @@ function Settings() {
   const [pixHolder, setPixHolder] = useState("");
   const [pixBank, setPixBank] = useState("");
   const [platformName, setPlatformName] = useState("BeautySaaS");
+  const [reviewDays, setReviewDays] = useState("30");
 
   useEffect(() => {
     if (data) {
@@ -30,16 +31,21 @@ function Settings() {
       setPixHolder(data.pix_holder ?? "");
       setPixBank(data.pix_bank ?? "");
       setPlatformName(data.platform_name ?? "BeautySaaS");
+      setReviewDays(String((data as any).review_expiration_days ?? 30));
     }
   }, [data]);
 
   const save = useMutation({
     mutationFn: async () => {
+      const days = Number(reviewDays);
+      if (!Number.isFinite(days) || days < 1 || days > 365)
+        throw new Error("Validade do link de avaliação deve ser entre 1 e 365 dias");
       const payload = {
         pix_key: pixKey || null,
         pix_holder: pixHolder || null,
         pix_bank: pixBank || null,
         platform_name: platformName,
+        review_expiration_days: days,
         updated_at: new Date().toISOString(),
       };
       // platform_settings is a singleton row (id: boolean true)
@@ -49,6 +55,7 @@ function Settings() {
     onSuccess: () => { toast.success("Configurações salvas"); qc.invalidateQueries({ queryKey: ["platform-settings"] }); },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
   });
+
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
