@@ -43,6 +43,8 @@ import { Route as AuthenticatedAppGalleryRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppFinancesRouteImport } from './routes/_authenticated/app/finances'
 import { Route as AuthenticatedAppCustomersRouteImport } from './routes/_authenticated/app/customers'
 import { Route as AuthenticatedAppCouponsRouteImport } from './routes/_authenticated/app/coupons'
+import { Route as AuthenticatedAppConfirmationsRouteImport } from './routes/_authenticated/app/confirmations'
+import { Route as AuthenticatedAppCommissionsRouteImport } from './routes/_authenticated/app/commissions'
 import { Route as AuthenticatedAppCampaignsRouteImport } from './routes/_authenticated/app/campaigns'
 import { Route as AuthenticatedAppBlocksRouteImport } from './routes/_authenticated/app/blocks'
 import { Route as AuthenticatedAppBirthdaysRouteImport } from './routes/_authenticated/app/birthdays'
@@ -233,6 +235,18 @@ const AuthenticatedAppCouponsRoute = AuthenticatedAppCouponsRouteImport.update({
   path: '/coupons',
   getParentRoute: () => AuthenticatedAppRouteRoute,
 } as any)
+const AuthenticatedAppConfirmationsRoute =
+  AuthenticatedAppConfirmationsRouteImport.update({
+    id: '/confirmations',
+    path: '/confirmations',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedAppCommissionsRoute =
+  AuthenticatedAppCommissionsRouteImport.update({
+    id: '/commissions',
+    path: '/commissions',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
 const AuthenticatedAppCampaignsRoute =
   AuthenticatedAppCampaignsRouteImport.update({
     id: '/campaigns',
@@ -329,6 +343,8 @@ export interface FileRoutesByFullPath {
   '/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
   '/app/blocks': typeof AuthenticatedAppBlocksRoute
   '/app/campaigns': typeof AuthenticatedAppCampaignsRoute
+  '/app/commissions': typeof AuthenticatedAppCommissionsRoute
+  '/app/confirmations': typeof AuthenticatedAppConfirmationsRoute
   '/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/app/customers': typeof AuthenticatedAppCustomersRoute
   '/app/finances': typeof AuthenticatedAppFinancesRoute
@@ -375,6 +391,8 @@ export interface FileRoutesByTo {
   '/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
   '/app/blocks': typeof AuthenticatedAppBlocksRoute
   '/app/campaigns': typeof AuthenticatedAppCampaignsRoute
+  '/app/commissions': typeof AuthenticatedAppCommissionsRoute
+  '/app/confirmations': typeof AuthenticatedAppConfirmationsRoute
   '/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/app/customers': typeof AuthenticatedAppCustomersRoute
   '/app/finances': typeof AuthenticatedAppFinancesRoute
@@ -425,6 +443,8 @@ export interface FileRoutesById {
   '/_authenticated/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
   '/_authenticated/app/blocks': typeof AuthenticatedAppBlocksRoute
   '/_authenticated/app/campaigns': typeof AuthenticatedAppCampaignsRoute
+  '/_authenticated/app/commissions': typeof AuthenticatedAppCommissionsRoute
+  '/_authenticated/app/confirmations': typeof AuthenticatedAppConfirmationsRoute
   '/_authenticated/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/_authenticated/app/customers': typeof AuthenticatedAppCustomersRoute
   '/_authenticated/app/finances': typeof AuthenticatedAppFinancesRoute
@@ -475,6 +495,8 @@ export interface FileRouteTypes {
     | '/app/birthdays'
     | '/app/blocks'
     | '/app/campaigns'
+    | '/app/commissions'
+    | '/app/confirmations'
     | '/app/coupons'
     | '/app/customers'
     | '/app/finances'
@@ -521,6 +543,8 @@ export interface FileRouteTypes {
     | '/app/birthdays'
     | '/app/blocks'
     | '/app/campaigns'
+    | '/app/commissions'
+    | '/app/confirmations'
     | '/app/coupons'
     | '/app/customers'
     | '/app/finances'
@@ -570,6 +594,8 @@ export interface FileRouteTypes {
     | '/_authenticated/app/birthdays'
     | '/_authenticated/app/blocks'
     | '/_authenticated/app/campaigns'
+    | '/_authenticated/app/commissions'
+    | '/_authenticated/app/confirmations'
     | '/_authenticated/app/coupons'
     | '/_authenticated/app/customers'
     | '/_authenticated/app/finances'
@@ -855,6 +881,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCouponsRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/confirmations': {
+      id: '/_authenticated/app/confirmations'
+      path: '/confirmations'
+      fullPath: '/app/confirmations'
+      preLoaderRoute: typeof AuthenticatedAppConfirmationsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/commissions': {
+      id: '/_authenticated/app/commissions'
+      path: '/commissions'
+      fullPath: '/app/commissions'
+      preLoaderRoute: typeof AuthenticatedAppCommissionsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/campaigns': {
       id: '/_authenticated/app/campaigns'
       path: '/campaigns'
@@ -979,6 +1019,8 @@ interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppBirthdaysRoute: typeof AuthenticatedAppBirthdaysRoute
   AuthenticatedAppBlocksRoute: typeof AuthenticatedAppBlocksRoute
   AuthenticatedAppCampaignsRoute: typeof AuthenticatedAppCampaignsRoute
+  AuthenticatedAppCommissionsRoute: typeof AuthenticatedAppCommissionsRoute
+  AuthenticatedAppConfirmationsRoute: typeof AuthenticatedAppConfirmationsRoute
   AuthenticatedAppCouponsRoute: typeof AuthenticatedAppCouponsRoute
   AuthenticatedAppCustomersRoute: typeof AuthenticatedAppCustomersRoute
   AuthenticatedAppFinancesRoute: typeof AuthenticatedAppFinancesRoute
@@ -1003,6 +1045,8 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppBirthdaysRoute: AuthenticatedAppBirthdaysRoute,
   AuthenticatedAppBlocksRoute: AuthenticatedAppBlocksRoute,
   AuthenticatedAppCampaignsRoute: AuthenticatedAppCampaignsRoute,
+  AuthenticatedAppCommissionsRoute: AuthenticatedAppCommissionsRoute,
+  AuthenticatedAppConfirmationsRoute: AuthenticatedAppConfirmationsRoute,
   AuthenticatedAppCouponsRoute: AuthenticatedAppCouponsRoute,
   AuthenticatedAppCustomersRoute: AuthenticatedAppCustomersRoute,
   AuthenticatedAppFinancesRoute: AuthenticatedAppFinancesRoute,

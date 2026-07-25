@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { dateBR } from "@/lib/format";
 import { toast } from "sonner";
 import {
   CONFIRMATION_STATUS, DEFAULT_CONFIRMATION_TEMPLATE, RESEND_COOLDOWN_MIN,
@@ -120,7 +119,7 @@ function Confirmations() {
       <div>
         <h1 className="text-2xl font-semibold">Confirmações</h1>
         <p className="text-sm text-muted-foreground">
-          Lembretes automáticos {`${RESEND_COOLDOWN_MIN}`.length ? "" : ""}24h antes com link único de confirmação.
+          Lembretes automáticos antes do horário, com link único de confirmação.
         </p>
       </div>
 

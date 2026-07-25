@@ -23,6 +23,8 @@ import {
   Link2,
   MessageCircle,
   Image as ImageIcon,
+  BadgePercent,
+  CalendarCheck,
 
 
 
@@ -49,6 +51,8 @@ const NAV = [
   { to: "/app/services", label: "Serviços", icon: Scissors },
   { to: "/app/gallery", label: "Galeria", icon: ImageIcon },
   { to: "/app/finances", label: "Financeiro", icon: Wallet },
+  { to: "/app/commissions", label: "Comissões", icon: BadgePercent },
+  { to: "/app/confirmations", label: "Confirmações", icon: CalendarCheck },
   { to: "/app/products", label: "Estoque", icon: Package },
   { to: "/app/reports", label: "Relatórios", icon: BarChart3 },
   { to: "/app/coupons", label: "Cupons", icon: Ticket },
