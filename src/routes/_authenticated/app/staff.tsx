@@ -148,7 +148,7 @@ function StaffDialog({
       <div className="space-y-3">
         <div>
           <Label>Foto</Label>
-          <ImageUpload value={f.photo_url} folder="staff" onChange={(url) => setF({ ...f, photo_url: url })} />
+          <ImageUpload value={f.photo_url} folder="staff" preset="avatar" onChange={(url) => setF({ ...f, photo_url: url })} />
         </div>
         <div><Label>Nome</Label>
           <Input value={f.name ?? ""} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>

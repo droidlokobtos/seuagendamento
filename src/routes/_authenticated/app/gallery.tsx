@@ -213,6 +213,7 @@ function PhotoForm({ value, onChange }: { value: Partial<Photo>; onChange: (p: P
           value={value.image_url}
           folder="gallery"
           aspect="square"
+          preset="gallery"
           onChange={(url) => onChange({ ...value, image_url: url ?? "" })}
         />
       </div>
