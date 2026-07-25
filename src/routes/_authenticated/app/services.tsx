@@ -116,9 +116,9 @@ function Services() {
         const { error } = await supabase.from("services").update(clean).eq("id", edit.id);
         if (error) throw error;
       } else {
-        const nextSort = data.length ? Math.max(...data.map((s) => s.sort_order ?? 0)) + 1 : 0;
+        const nextSort = data.length ? Math.max(...data.map((s) => s.sort_order ?? 0)) + 1 : 1;
         const { data: created, error } = await supabase.from("services").insert({
-          ...clean, company_id: companyId, sort_order: clean.sort_order ?? nextSort,
+          ...clean, company_id: companyId, sort_order: nextSort,
         } as any).select("id").single();
         if (error) throw error;
         serviceId = created.id;
