@@ -134,24 +134,6 @@ function BookingPage() {
     },
   });
 
-  const { data: staffList = [] } = useQuery({
-    queryKey: ["pub_staff", companyId, selected.map((s) => s.id).join(",")],
-    queryFn: async () => {
-      const ids = selected.map((s) => s.id);
-      if (!ids.length) return [];
-      const { data: links } = await supabase.from("staff_services").select("staff_id,service_id").in("service_id", ids);
-      const { data: st } = await supabase.from("staff").select("id,name,role_title,photo_url,color,company_id,active")
-        .eq("company_id", companyId).eq("active", true);
-      const counts = new Map<string, Set<string>>();
-      (links ?? []).forEach((l: any) => {
-        if (!counts.has(l.staff_id)) counts.set(l.staff_id, new Set());
-        counts.get(l.staff_id)!.add(l.service_id);
-      });
-      return ((st ?? []) as any[]).filter((s) => counts.get(s.id)?.size === ids.length) as Staff[];
-    },
-    enabled: selected.length > 0,
-  });
-
   const { data: hours = [] } = useQuery({
     queryKey: ["pub_hours", companyId],
     queryFn: async () => {
@@ -161,35 +143,40 @@ function BookingPage() {
     },
   });
 
-  const { data: taken = [] } = useQuery({
-    queryKey: ["pub_taken", companyId, dateStr, staff?.id ?? "any"],
-    queryFn: async () => {
-      const from = `${dateStr}T00:00:00`;
-      const to = `${dateStr}T23:59:59`;
-      let q = supabase.from("appointments").select("starts_at,ends_at,staff_id")
-        .eq("company_id", companyId).neq("status", "cancelled")
-        .gte("starts_at", from).lte("starts_at", to);
-      if (staff) q = q.eq("staff_id", staff.id);
-      const { data } = await q;
-      return (data ?? []) as { starts_at: string; ends_at: string; staff_id: string | null }[];
-    },
-    enabled: !!dateStr,
-  });
-
   const { data: blocks = [] } = useQuery({
-    queryKey: ["pub_blocks", companyId, dateStr, staff?.id ?? "any"],
+    queryKey: ["pub_blocks", companyId, dateStr],
     queryFn: async () => {
       const from = `${dateStr}T00:00:00`;
       const to = `${dateStr}T23:59:59`;
       const { data } = await supabase.from("time_blocks").select("starts_at,ends_at,staff_id")
         .eq("company_id", companyId)
         .lt("starts_at", to).gt("ends_at", from);
-      const list = (data ?? []) as TimeBlock[];
-      // Bloqueios sem staff_id são da empresa toda; com staff_id valem só se combinar com o selecionado (ou qualquer, se "any")
-      return list.filter((b) => !b.staff_id || !staff || b.staff_id === staff.id);
+      // Somente bloqueios da empresa toda afetam a lista de horários;
+      // bloqueios por profissional são avaliados no passo "Profissional".
+      return ((data ?? []) as TimeBlock[]).filter((b) => !b.staff_id);
     },
     enabled: !!dateStr,
   });
+
+  // Profissionais habilitados para os serviços escolhidos E livres no horário escolhido.
+  // Todo o filtro (vínculo, jornada, bloqueios e agendamentos) é feito no backend.
+  const serviceIdsKey = selected.map((s) => s.id).join(",");
+  const { data: staffData, isFetching: staffLoading } = useQuery({
+    queryKey: ["pub_staff", company.slug, serviceIdsKey, dateStr, timeStr],
+    queryFn: async () => {
+      const params = new URLSearchParams({ slug: company.slug, service_ids: serviceIdsKey });
+      params.set("date", dateStr);
+      params.set("time", timeStr);
+      params.set("starts_at", new Date(`${dateStr}T${timeStr}:00`).toISOString());
+      const res = await fetch(`/api/public/staff?${params.toString()}`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Falha ao buscar profissionais");
+      return json as { staff: Staff[]; reason: string | null };
+    },
+    enabled: selected.length > 0 && !!dateStr && !!timeStr,
+  });
+  const staffList = staffData?.staff ?? [];
+  const staffReason = staffData?.reason ?? null;
 
   const totalMin = selected.reduce((s, x) => s + x.duration_min, 0);
   const totalPrice = selected.reduce((s, x) => s + x.price_cents, 0) / 100;
@@ -218,12 +205,6 @@ function BookingPage() {
       const slotStart = new Date(iso).getTime();
       const slotEnd = slotStart + totalMin * 60_000;
       if (slotStart < minStart) continue;
-      const conflictAppt = taken.some((t) => {
-        const ts = new Date(t.starts_at).getTime();
-        const te = new Date(t.ends_at).getTime();
-        return slotStart < te && slotEnd > ts;
-      });
-      if (conflictAppt) continue;
       const conflictBlock = blocks.some((b) => {
         const bs = new Date(b.starts_at).getTime();
         const be = new Date(b.ends_at).getTime();
@@ -233,7 +214,7 @@ function BookingPage() {
       out.push(`${hh}:${mm}`);
     }
     return out;
-  }, [dateStr, hours, taken, blocks, totalMin, minAdvanceMin]);
+  }, [dateStr, hours, blocks, totalMin, minAdvanceMin]);
 
   const dateOptions = useMemo(() => {
     const list: { iso: string; label: string; wd: number; disabled: boolean }[] = [];
@@ -313,11 +294,12 @@ function BookingPage() {
   const primary = company.primary_color || "#0f172a";
   const accent = company.secondary_color || "#c9a86a";
 
-  // Navegação entre passos, pulando "Profissional" se desativado no portal
+  // Fluxo: 1 Serviços · 2 Data · 3 Horário · 4 Profissional · 5 Dados · 6 Confirmar
+  // (o passo "Profissional" é pulado quando desativado no portal)
   const goNext = () => {
     setStep((s) => {
       let next = (s + 1) as Step;
-      if (next === 2 && !showStaffStep) next = 3;
+      if (next === 4 && !showStaffStep) next = 5;
       if (next > 6) next = 6;
       return next;
     });
@@ -325,7 +307,7 @@ function BookingPage() {
   const goPrev = () => {
     setStep((s) => {
       let prev = (s - 1) as Step;
-      if (prev === 2 && !showStaffStep) prev = 1;
+      if (prev === 4 && !showStaffStep) prev = 3;
       if (prev < 1) prev = 1;
       return prev;
     });
@@ -333,9 +315,9 @@ function BookingPage() {
 
   const canContinue = (() => {
     if (step === 1) return selected.length > 0;
-    if (step === 2) return true; // "qualquer profissional" é válido
-    if (step === 3) return !!dateStr && dateOptions.some((d) => d.iso === dateStr && !d.disabled);
-    if (step === 4) return !!timeStr;
+    if (step === 2) return !!dateStr && dateOptions.some((d) => d.iso === dateStr && !d.disabled);
+    if (step === 3) return !!timeStr;
+    if (step === 4) return !staffLoading && staffList.length > 0; // precisa haver profissional disponível
     if (step === 5) return !!form.name.trim() && !!form.phone.trim();
     return false;
   })();
@@ -444,40 +426,7 @@ function BookingPage() {
           </Card>
         )}
 
-        {step === 2 && showStaffStep && (
-          <Card>
-            <CardContent className="p-4 space-y-3">
-              <h2 className="font-semibold text-lg">Escolha o profissional</h2>
-              <button onClick={() => setStaff(null)}
-                className={`w-full text-left rounded-xl border p-3 ${!staff ? "border-primary bg-primary/5" : "border-border"}`}>
-                <p className="font-medium">Qualquer profissional</p>
-                <p className="text-xs text-muted-foreground">Primeiro disponível no horário</p>
-              </button>
-              {staffList.map((s) => (
-                <button key={s.id} onClick={() => setStaff(s)}
-                  className={`w-full text-left rounded-xl border p-3 flex items-center gap-3 ${staff?.id === s.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}>
-                  {s.photo_url ? (
-                    <img src={s.photo_url} alt="" className="h-10 w-10 rounded-full object-cover" />
-                  ) : (
-                    <div className="h-10 w-10 rounded-full grid place-items-center text-white text-sm font-semibold"
-                      style={{ background: s.color ?? accent }}>{s.name.charAt(0)}</div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{s.name}</p>
-                    {s.role_title && <p className="text-xs text-muted-foreground truncate">{s.role_title}</p>}
-                  </div>
-                </button>
-              ))}
-              {!staffList.length && (
-                <p className="text-xs text-muted-foreground text-center py-2">
-                  Nenhum profissional específico — seguir com "Qualquer profissional".
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {step === 3 && (
+        {step === 2 && (
           <Card>
             <CardContent className="p-4 space-y-4">
               <h2 className="font-semibold text-lg">Escolha a data</h2>
@@ -486,7 +435,7 @@ function BookingPage() {
                 <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
                   {dateOptions.map((d) => (
                     <button key={d.iso} disabled={d.disabled}
-                      onClick={() => { setDateStr(d.iso); setTimeStr(""); }}
+                      onClick={() => { setDateStr(d.iso); setTimeStr(""); setStaff(null); }}
                       className={`shrink-0 rounded-xl border px-3 py-2 min-w-16 text-center transition ${
                         d.disabled ? "opacity-40 cursor-not-allowed" :
                         dateStr === d.iso ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-muted/50"
@@ -506,7 +455,7 @@ function BookingPage() {
           </Card>
         )}
 
-        {step === 4 && (
+        {step === 3 && (
           <Card>
             <CardContent className="p-4 space-y-4">
               <h2 className="font-semibold text-lg">Escolha o horário</h2>
@@ -517,7 +466,7 @@ function BookingPage() {
                 ) : (
                   <div className="grid grid-cols-4 gap-2">
                     {slots.map((t) => (
-                      <button key={t} onClick={() => setTimeStr(t)}
+                      <button key={t} onClick={() => { setTimeStr(t); setStaff(null); }}
                         className={`rounded-lg border py-2 text-sm transition ${
                           timeStr === t ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-muted/50"
                         }`}>{t}</button>
@@ -525,6 +474,57 @@ function BookingPage() {
                   </div>
                 )}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 4 && showStaffStep && (
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <h2 className="font-semibold text-lg">Profissionais disponíveis</h2>
+              <p className="text-xs text-muted-foreground">
+                Somente quem atende os serviços escolhidos e está livre em {dateStr.split("-").reverse().join("/")} às {timeStr}.
+              </p>
+              {staffLoading ? (
+                <p className="text-sm text-muted-foreground text-center py-6">Buscando profissionais…</p>
+              ) : !staffList.length ? (
+                <div className="rounded-xl border border-dashed p-4 text-center space-y-2">
+                  <p className="text-sm font-medium">
+                    {staffReason === "no_link"
+                      ? "Nenhum profissional atende essa combinação de serviços."
+                      : staffReason === "no_staff"
+                        ? "Nenhum profissional cadastrado para atender."
+                        : "Nenhum profissional disponível neste horário."}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Volte e escolha outro horário ou outra data.</p>
+                  <Button variant="outline" size="sm" onClick={() => setStep(3)}>Escolher outro horário</Button>
+                </div>
+              ) : (
+                <>
+                  {staffList.length > 1 && (
+                    <button onClick={() => setStaff(null)}
+                      className={`w-full text-left rounded-xl border p-3 ${!staff ? "border-primary bg-primary/5" : "border-border"}`}>
+                      <p className="font-medium">Qualquer profissional</p>
+                      <p className="text-xs text-muted-foreground">A empresa define quem atende</p>
+                    </button>
+                  )}
+                  {staffList.map((s) => (
+                    <button key={s.id} onClick={() => setStaff(s)}
+                      className={`w-full text-left rounded-xl border p-3 flex items-center gap-3 ${staff?.id === s.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}>
+                      {s.photo_url ? (
+                        <img src={s.photo_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full grid place-items-center text-white text-sm font-semibold"
+                          style={{ background: s.color ?? accent }}>{s.name.charAt(0)}</div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{s.name}</p>
+                        {s.role_title && <p className="text-xs text-muted-foreground truncate">{s.role_title}</p>}
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
             </CardContent>
           </Card>
         )}
@@ -647,10 +647,10 @@ function Hero({ company, primary, accent, slug, loggedIn }: { company: any; prim
 
 function Steps({ step, accent, showStaffStep }: { step: number; accent: string; showStaffStep: boolean }) {
   const labels = showStaffStep
-    ? ["Serviços", "Profissional", "Data", "Horário", "Dados", "Confirmar"]
+    ? ["Serviços", "Data", "Horário", "Profissional", "Dados", "Confirmar"]
     : ["Serviços", "Data", "Horário", "Dados", "Confirmar"];
   // Mapeia o step real (1..6) para o índice visual, pulando "Profissional" quando desativado
-  const visualStep = showStaffStep ? step : (step === 1 ? 1 : step - 1);
+  const visualStep = showStaffStep ? step : (step <= 3 ? step : step - 1);
   return (
     <div className="flex items-center gap-2">
       {labels.map((l, i) => {

@@ -84,24 +84,64 @@ function Services() {
     [data],
   );
 
+  // Profissionais da empresa + vínculos por serviço
+  const { data: staffOptions = [] } = useQuery({
+    queryKey: ["svc_staff_options", companyId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("staff").select("id,name,active")
+        .eq("company_id", companyId).order("name");
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string; active: boolean }[];
+    },
+  });
+
+  const { data: links = [] } = useQuery({
+    queryKey: ["svc_staff_links", companyId, staffOptions.map((s) => s.id).join(",")],
+    queryFn: async () => {
+      const ids = staffOptions.map((s) => s.id);
+      if (!ids.length) return [];
+      const { data: rows, error } = await supabase.from("staff_services").select("staff_id,service_id").in("staff_id", ids);
+      if (error) throw error;
+      return (rows ?? []) as { staff_id: string; service_id: string }[];
+    },
+    enabled: staffOptions.length > 0,
+  });
+
   const save = useMutation({
-    mutationFn: async (v: Partial<S>) => {
+    mutationFn: async ({ v, staffIds }: { v: Partial<S>; staffIds: string[] }) => {
       // Never send id/created_at/updated_at
       const { id: _id, created_at: _c, updated_at: _u, ...clean } = v as any;
+      let serviceId = edit?.id;
       if (edit?.id) {
         const { error } = await supabase.from("services").update(clean).eq("id", edit.id);
         if (error) throw error;
       } else {
         const nextSort = data.length ? Math.max(...data.map((s) => s.sort_order ?? 0)) + 1 : 0;
-        const { error } = await supabase.from("services").insert({
+        const { data: created, error } = await supabase.from("services").insert({
           ...clean, company_id: companyId, sort_order: clean.sort_order ?? nextSort,
-        } as any);
+        } as any).select("id").single();
+        if (error) throw error;
+        serviceId = created.id;
+      }
+      if (!serviceId) return;
+      const current = links.filter((l) => l.service_id === serviceId).map((l) => l.staff_id);
+      const toAdd = staffIds.filter((id) => !current.includes(id));
+      const toRemove = current.filter((id) => !staffIds.includes(id));
+      if (toRemove.length) {
+        const { error } = await supabase.from("staff_services").delete()
+          .eq("service_id", serviceId).in("staff_id", toRemove);
+        if (error) throw error;
+      }
+      if (toAdd.length) {
+        const { error } = await supabase.from("staff_services")
+          .insert(toAdd.map((staff_id) => ({ staff_id, service_id: serviceId! })));
         if (error) throw error;
       }
     },
     onSuccess: () => {
       toast.success(edit ? "Serviço atualizado" : "Serviço criado");
       qc.invalidateQueries({ queryKey: ["services", companyId] });
+      qc.invalidateQueries({ queryKey: ["svc_staff_links", companyId] });
       setOpen(false); setEdit(null);
     },
     onError: (e: any) => toast.error(e.message),
@@ -154,7 +194,9 @@ function Services() {
             <ServiceDialog
               key={edit?.id ?? "new"}
               edit={edit}
-              onSave={(v) => save.mutate(v)}
+              onSave={(v, staffIds) => save.mutate({ v, staffIds })}
+              staffOptions={staffOptions}
+              selectedStaffIds={edit ? links.filter((l) => l.service_id === edit.id).map((l) => l.staff_id) : []}
               loading={save.isPending}
               categories={categories}
             />
@@ -223,10 +265,20 @@ function Services() {
 }
 
 function ServiceDialog({
-  edit, onSave, loading, categories,
-}: { edit: S | null; onSave: (v: Partial<S>) => void; loading: boolean; categories: string[] }) {
+  edit, onSave, loading, categories, staffOptions, selectedStaffIds,
+}: {
+  edit: S | null;
+  onSave: (v: Partial<S>, staffIds: string[]) => void;
+  loading: boolean;
+  categories: string[];
+  staffOptions: { id: string; name: string; active: boolean }[];
+  selectedStaffIds: string[];
+}) {
   const [f, setF] = useState<Partial<S>>(edit ? { ...edit } : { ...EMPTY });
   const [reposition, setReposition] = useState(false);
+  const [staffIds, setStaffIds] = useState<string[]>(selectedStaffIds);
+  const toggleStaff = (id: string) =>
+    setStaffIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   return (
     <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
@@ -335,13 +387,31 @@ function ServiceDialog({
             </div>
           )}
         </div>
+        <div className="rounded-lg border p-3 space-y-2">
+          <Label>Profissionais que realizam este serviço</Label>
+          <p className="text-xs text-muted-foreground">
+            No agendamento online o cliente só verá os profissionais marcados aqui.
+          </p>
+          {!staffOptions.length ? (
+            <p className="text-xs text-muted-foreground">Cadastre funcionários primeiro.</p>
+          ) : (
+            <div className="max-h-44 overflow-y-auto space-y-1">
+              {staffOptions.map((s) => (
+                <label key={s.id} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
+                  <input type="checkbox" className="h-4 w-4" checked={staffIds.includes(s.id)} onChange={() => toggleStaff(s.id)} />
+                  <span className={s.active ? "" : "text-muted-foreground line-through"}>{s.name}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="flex items-center justify-between">
           <Label>Ativo</Label>
           <Switch checked={f.active ?? true} onCheckedChange={(v) => setF({ ...f, active: v })} />
         </div>
       </div>
       <DialogFooter>
-        <Button onClick={() => onSave(f)} disabled={loading || !f.name}>Salvar</Button>
+        <Button onClick={() => onSave(f, staffIds)} disabled={loading || !f.name}>Salvar</Button>
       </DialogFooter>
     </DialogContent>
   );

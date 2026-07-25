@@ -42,19 +42,61 @@ function Staff() {
     },
   });
 
+  // Serviços da empresa + vínculos (quem atende o quê)
+  const { data: services = [] } = useQuery({
+    queryKey: ["staff_services_options", companyId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("services").select("id,name,active")
+        .eq("company_id", companyId).order("sort_order").order("name");
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string; active: boolean }[];
+    },
+  });
+
+  const { data: links = [] } = useQuery({
+    queryKey: ["staff_services_links", companyId, data.map((s) => s.id).join(",")],
+    queryFn: async () => {
+      const ids = data.map((s) => s.id);
+      if (!ids.length) return [];
+      const { data: rows, error } = await supabase.from("staff_services").select("staff_id,service_id").in("staff_id", ids);
+      if (error) throw error;
+      return (rows ?? []) as { staff_id: string; service_id: string }[];
+    },
+    enabled: data.length > 0,
+  });
+
   const save = useMutation({
-    mutationFn: async (v: Partial<S>) => {
+    mutationFn: async ({ v, serviceIds }: { v: Partial<S>; serviceIds: string[] }) => {
+      let staffId = edit?.id;
       if (edit) {
         const { error } = await supabase.from("staff").update(v).eq("id", edit.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("staff").insert({ ...v, company_id: companyId } as any);
+        const { data: created, error } = await supabase.from("staff")
+          .insert({ ...v, company_id: companyId } as any).select("id").single();
+        if (error) throw error;
+        staffId = created.id;
+      }
+      if (!staffId) return;
+      // Sincroniza vínculos de serviços
+      const current = links.filter((l) => l.staff_id === staffId).map((l) => l.service_id);
+      const toAdd = serviceIds.filter((id) => !current.includes(id));
+      const toRemove = current.filter((id) => !serviceIds.includes(id));
+      if (toRemove.length) {
+        const { error } = await supabase.from("staff_services").delete()
+          .eq("staff_id", staffId).in("service_id", toRemove);
+        if (error) throw error;
+      }
+      if (toAdd.length) {
+        const { error } = await supabase.from("staff_services")
+          .insert(toAdd.map((service_id) => ({ staff_id: staffId!, service_id })));
         if (error) throw error;
       }
     },
     onSuccess: () => {
       toast.success(edit ? "Funcionário atualizado" : "Funcionário criado");
       qc.invalidateQueries({ queryKey: ["staff", companyId] });
+      qc.invalidateQueries({ queryKey: ["staff_services_links", companyId] });
       setOpen(false); setEdit(null);
     },
     onError: (e: any) => toast.error(e.message),
@@ -80,7 +122,14 @@ function Staff() {
           <DialogTrigger asChild>
             <Button onClick={() => setEdit(null)}><Plus className="h-4 w-4 mr-2" /> Novo funcionário</Button>
           </DialogTrigger>
-          <StaffDialog edit={edit} onSave={(v) => save.mutate(v)} loading={save.isPending} />
+          <StaffDialog
+            key={edit?.id ?? "new"}
+            edit={edit}
+            services={services}
+            selectedServiceIds={edit ? links.filter((l) => l.staff_id === edit.id).map((l) => l.service_id) : []}
+            onSave={(v, serviceIds) => save.mutate({ v, serviceIds })}
+            loading={save.isPending}
+          />
         </Dialog>
       </div>
 
@@ -139,9 +188,18 @@ function Staff() {
 }
 
 function StaffDialog({
-  edit, onSave, loading,
-}: { edit: S | null; onSave: (v: Partial<S>) => void; loading: boolean }) {
+  edit, onSave, loading, services, selectedServiceIds,
+}: {
+  edit: S | null;
+  onSave: (v: Partial<S>, serviceIds: string[]) => void;
+  loading: boolean;
+  services: { id: string; name: string; active: boolean }[];
+  selectedServiceIds: string[];
+}) {
   const [f, setF] = useState<Partial<S>>(edit ?? { name: "", color: "#8b7355", active: true, commission_pct: 0 });
+  const [svcIds, setSvcIds] = useState<string[]>(selectedServiceIds);
+  const toggleSvc = (id: string) =>
+    setSvcIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   return (
     <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
       <DialogHeader><DialogTitle>{edit ? "Editar funcionário" : "Novo funcionário"}</DialogTitle></DialogHeader>
@@ -167,13 +225,31 @@ function StaffDialog({
           <div><Label>Cor</Label>
             <Input type="color" value={f.color ?? "#8b7355"} onChange={(e) => setF({ ...f, color: e.target.value })} /></div>
         </div>
+        <div className="rounded-lg border p-3 space-y-2">
+          <Label>Serviços que este profissional atende</Label>
+          <p className="text-xs text-muted-foreground">
+            Usado no agendamento online: só aparece para os clientes nos serviços marcados.
+          </p>
+          {!services.length ? (
+            <p className="text-xs text-muted-foreground">Cadastre serviços primeiro.</p>
+          ) : (
+            <div className="max-h-44 overflow-y-auto space-y-1">
+              {services.map((s) => (
+                <label key={s.id} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
+                  <input type="checkbox" className="h-4 w-4" checked={svcIds.includes(s.id)} onChange={() => toggleSvc(s.id)} />
+                  <span className={s.active ? "" : "text-muted-foreground line-through"}>{s.name}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="flex items-center justify-between">
           <Label>Ativo</Label>
           <Switch checked={f.active ?? true} onCheckedChange={(v) => setF({ ...f, active: v })} />
         </div>
       </div>
       <DialogFooter>
-        <Button onClick={() => onSave(f)} disabled={loading || !f.name}>Salvar</Button>
+        <Button onClick={() => onSave(f, svcIds)} disabled={loading || !f.name}>Salvar</Button>
       </DialogFooter>
     </DialogContent>
   );
