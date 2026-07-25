@@ -238,6 +238,7 @@ function ServiceDialog({
             value={f.photo_url}
             folder="services"
             aspect="wide"
+            preset="service"
             onChange={(url) => setF({ ...f, photo_url: url, photo_position: "center center" })}
           />
           {f.photo_url && (

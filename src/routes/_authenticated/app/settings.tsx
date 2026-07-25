@@ -158,10 +158,10 @@ function SettingsPage() {
           <h2 className="font-semibold">Identidade visual</h2>
           <div className="grid md:grid-cols-2 gap-3">
             <div className="md:col-span-2"><Label>Logotipo</Label>
-              <ImageUpload value={form.logo_url} folder="branding" onChange={(url) => setForm({ ...form, logo_url: url ?? "" })} />
+              <ImageUpload value={form.logo_url} folder="branding" preset="logo" onChange={(url) => setForm({ ...form, logo_url: url ?? "" })} />
             </div>
             <div className="md:col-span-2"><Label>Imagem de capa</Label>
-              <ImageUpload value={form.banner_url} folder="branding" aspect="wide" onChange={(url) => setForm({ ...form, banner_url: url ?? "" })} />
+              <ImageUpload value={form.banner_url} folder="branding" aspect="wide" preset="banner" onChange={(url) => setForm({ ...form, banner_url: url ?? "" })} />
             </div>
             <div><Label>Cor primária</Label>
               <Input type="color" value={form.primary_color} onChange={(e) => setForm({ ...form, primary_color: e.target.value })} /></div>
@@ -224,7 +224,7 @@ function SettingsPage() {
             <div><Label>Estado (UF)</Label>
               <Input maxLength={2} value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value.toUpperCase() })} /></div>
             <div className="md:col-span-2"><Label>Ícone do app (PWA)</Label>
-              <ImageUpload value={form.app_icon_url} folder="branding" onChange={(url) => setForm({ ...form, app_icon_url: url ?? "" })} /></div>
+              <ImageUpload value={form.app_icon_url} folder="branding" preset="app_icon" onChange={(url) => setForm({ ...form, app_icon_url: url ?? "" })} /></div>
             <div className="md:col-span-2"><Label>Domínio próprio</Label>
               <Input value={form.custom_domain} onChange={(e) => setForm({ ...form, custom_domain: e.target.value.toLowerCase() })} placeholder="agenda.minhamarca.com.br" />
               <p className="text-xs text-muted-foreground mt-1">Aponte um CNAME do seu domínio para o endereço da plataforma. Configuração de DNS/SSL feita pelo suporte.</p></div>
