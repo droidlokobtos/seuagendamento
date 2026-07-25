@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,7 +26,7 @@ function LogsPage() {
   });
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-4">
         <div>
           <h1 className="text-2xl font-semibold">Logs de acesso</h1>
@@ -62,6 +61,6 @@ function LogsPage() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
+    </>
   );
 }
