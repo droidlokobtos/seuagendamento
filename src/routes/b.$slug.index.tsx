@@ -426,40 +426,7 @@ function BookingPage() {
           </Card>
         )}
 
-        {step === 2 && showStaffStep && (
-          <Card>
-            <CardContent className="p-4 space-y-3">
-              <h2 className="font-semibold text-lg">Escolha o profissional</h2>
-              <button onClick={() => setStaff(null)}
-                className={`w-full text-left rounded-xl border p-3 ${!staff ? "border-primary bg-primary/5" : "border-border"}`}>
-                <p className="font-medium">Qualquer profissional</p>
-                <p className="text-xs text-muted-foreground">Primeiro disponível no horário</p>
-              </button>
-              {staffList.map((s) => (
-                <button key={s.id} onClick={() => setStaff(s)}
-                  className={`w-full text-left rounded-xl border p-3 flex items-center gap-3 ${staff?.id === s.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}>
-                  {s.photo_url ? (
-                    <img src={s.photo_url} alt="" className="h-10 w-10 rounded-full object-cover" />
-                  ) : (
-                    <div className="h-10 w-10 rounded-full grid place-items-center text-white text-sm font-semibold"
-                      style={{ background: s.color ?? accent }}>{s.name.charAt(0)}</div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{s.name}</p>
-                    {s.role_title && <p className="text-xs text-muted-foreground truncate">{s.role_title}</p>}
-                  </div>
-                </button>
-              ))}
-              {!staffList.length && (
-                <p className="text-xs text-muted-foreground text-center py-2">
-                  Nenhum profissional específico — seguir com "Qualquer profissional".
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {step === 3 && (
+        {step === 2 && (
           <Card>
             <CardContent className="p-4 space-y-4">
               <h2 className="font-semibold text-lg">Escolha a data</h2>
@@ -468,7 +435,7 @@ function BookingPage() {
                 <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
                   {dateOptions.map((d) => (
                     <button key={d.iso} disabled={d.disabled}
-                      onClick={() => { setDateStr(d.iso); setTimeStr(""); }}
+                      onClick={() => { setDateStr(d.iso); setTimeStr(""); setStaff(null); }}
                       className={`shrink-0 rounded-xl border px-3 py-2 min-w-16 text-center transition ${
                         d.disabled ? "opacity-40 cursor-not-allowed" :
                         dateStr === d.iso ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-muted/50"
@@ -488,7 +455,7 @@ function BookingPage() {
           </Card>
         )}
 
-        {step === 4 && (
+        {step === 3 && (
           <Card>
             <CardContent className="p-4 space-y-4">
               <h2 className="font-semibold text-lg">Escolha o horário</h2>
@@ -499,7 +466,7 @@ function BookingPage() {
                 ) : (
                   <div className="grid grid-cols-4 gap-2">
                     {slots.map((t) => (
-                      <button key={t} onClick={() => setTimeStr(t)}
+                      <button key={t} onClick={() => { setTimeStr(t); setStaff(null); }}
                         className={`rounded-lg border py-2 text-sm transition ${
                           timeStr === t ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-muted/50"
                         }`}>{t}</button>
@@ -507,6 +474,57 @@ function BookingPage() {
                   </div>
                 )}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 4 && showStaffStep && (
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <h2 className="font-semibold text-lg">Profissionais disponíveis</h2>
+              <p className="text-xs text-muted-foreground">
+                Somente quem atende os serviços escolhidos e está livre em {dateStr.split("-").reverse().join("/")} às {timeStr}.
+              </p>
+              {staffLoading ? (
+                <p className="text-sm text-muted-foreground text-center py-6">Buscando profissionais…</p>
+              ) : !staffList.length ? (
+                <div className="rounded-xl border border-dashed p-4 text-center space-y-2">
+                  <p className="text-sm font-medium">
+                    {staffReason === "no_link"
+                      ? "Nenhum profissional atende essa combinação de serviços."
+                      : staffReason === "no_staff"
+                        ? "Nenhum profissional cadastrado para atender."
+                        : "Nenhum profissional disponível neste horário."}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Volte e escolha outro horário ou outra data.</p>
+                  <Button variant="outline" size="sm" onClick={() => setStep(3)}>Escolher outro horário</Button>
+                </div>
+              ) : (
+                <>
+                  {staffList.length > 1 && (
+                    <button onClick={() => setStaff(null)}
+                      className={`w-full text-left rounded-xl border p-3 ${!staff ? "border-primary bg-primary/5" : "border-border"}`}>
+                      <p className="font-medium">Qualquer profissional</p>
+                      <p className="text-xs text-muted-foreground">A empresa define quem atende</p>
+                    </button>
+                  )}
+                  {staffList.map((s) => (
+                    <button key={s.id} onClick={() => setStaff(s)}
+                      className={`w-full text-left rounded-xl border p-3 flex items-center gap-3 ${staff?.id === s.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}>
+                      {s.photo_url ? (
+                        <img src={s.photo_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full grid place-items-center text-white text-sm font-semibold"
+                          style={{ background: s.color ?? accent }}>{s.name.charAt(0)}</div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{s.name}</p>
+                        {s.role_title && <p className="text-xs text-muted-foreground truncate">{s.role_title}</p>}
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
             </CardContent>
           </Card>
         )}
