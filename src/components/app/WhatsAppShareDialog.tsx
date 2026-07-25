@@ -4,8 +4,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Copy, Share2, MessageCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { waLink } from "@/lib/format";
 
 export function WhatsAppShareDialog({
   open, onOpenChange, title = "Mensagem WhatsApp", message, phone: initialPhone = "",
@@ -19,10 +20,13 @@ export function WhatsAppShareDialog({
   const [msg, setMsg] = useState(message);
   const [phone, setPhone] = useState(initialPhone);
 
-  // Reset when the source message changes
-  if (open && msg !== message && initialPhone !== phone) {
-    // no-op — controlled by parent through key prop when needed
-  }
+  // Sincroniza o conteúdo sempre que o diálogo é reaberto com outra mensagem/telefone
+  useEffect(() => {
+    if (open) {
+      setMsg(message);
+      setPhone(initialPhone);
+    }
+  }, [open, message, initialPhone]);
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(msg); toast.success("Mensagem copiada"); }
@@ -37,11 +41,7 @@ export function WhatsAppShareDialog({
   };
 
   const sendWhats = () => {
-    const num = (phone || "").replace(/\D/g, "");
-    const url = num
-      ? `https://wa.me/${num}?text=${encodeURIComponent(msg)}`
-      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank");
+    window.open(waLink(phone, msg), "_blank");
   };
 
   return (
