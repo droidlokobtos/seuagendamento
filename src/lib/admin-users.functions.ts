@@ -2,6 +2,28 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+/**
+ * Procura um usuário do Auth pelo e-mail percorrendo todas as páginas.
+ * (listUsers pagina em 200 por vez — sem o loop, contas mais antigas
+ * simplesmente não eram encontradas.)
+ */
+async function findAuthUserByEmail(
+  admin: { auth: { admin: { listUsers: (o: { page: number; perPage: number }) => Promise<any> } } },
+  email: string,
+) {
+  const target = email.toLowerCase();
+  const perPage = 200;
+  for (let page = 1; page <= 50; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+    const users = data?.users ?? [];
+    const found = users.find((u: any) => (u.email ?? "").toLowerCase() === target);
+    if (found) return found;
+    if (users.length < perPage) break;
+  }
+  return null;
+}
+
 export const resetUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
@@ -15,9 +37,7 @@ export const resetUserPassword = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Find user by email
-    const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    if (listErr) throw listErr;
-    const user = list.users.find((u) => (u.email ?? "").toLowerCase() === data.email.toLowerCase());
+    const user = await findAuthUserByEmail(supabaseAdmin as any, data.email);
     if (!user) throw new Error("Usuário não encontrado com esse e-mail.");
 
     const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
@@ -98,9 +118,7 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
 
     // Reuse existing auth user if the e-mail already exists, otherwise create one
     let userId: string | null = null;
-    const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    if (listErr) throw listErr;
-    const existing = list.users.find((u) => (u.email ?? "").toLowerCase() === email);
+    const existing = await findAuthUserByEmail(supabaseAdmin as any, email);
     const tempPassword = data.temp_password && data.temp_password.length >= 8
       ? data.temp_password
       : `Ag${Math.random().toString(36).slice(2, 8)}!${Math.floor(Math.random() * 90 + 10)}`;
