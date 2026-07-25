@@ -647,10 +647,10 @@ function Hero({ company, primary, accent, slug, loggedIn }: { company: any; prim
 
 function Steps({ step, accent, showStaffStep }: { step: number; accent: string; showStaffStep: boolean }) {
   const labels = showStaffStep
-    ? ["Serviços", "Profissional", "Data", "Horário", "Dados", "Confirmar"]
+    ? ["Serviços", "Data", "Horário", "Profissional", "Dados", "Confirmar"]
     : ["Serviços", "Data", "Horário", "Dados", "Confirmar"];
   // Mapeia o step real (1..6) para o índice visual, pulando "Profissional" quando desativado
-  const visualStep = showStaffStep ? step : (step === 1 ? 1 : step - 1);
+  const visualStep = showStaffStep ? step : (step <= 3 ? step : step - 1);
   return (
     <div className="flex items-center gap-2">
       {labels.map((l, i) => {
