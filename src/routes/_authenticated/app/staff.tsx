@@ -58,17 +58,8 @@ function Staff() {
     },
   });
 
-  const { data: links = [] } = useQuery({
-    queryKey: ["staff_services_links", companyId, data.map((s) => s.id).join(",")],
-    queryFn: async () => {
-      const ids = data.map((s) => s.id);
-      if (!ids.length) return [];
-      const { data: rows, error } = await supabase.from("staff_services").select("staff_id,service_id").in("staff_id", ids);
-      if (error) throw error;
-      return (rows ?? []) as { staff_id: string; service_id: string }[];
-    },
-    enabled: data.length > 0,
-  });
+  // Os vínculos e horários de cada funcionário são carregados sob demanda no diálogo de edição.
+
 
   const save = useMutation({
     mutationFn: async ({ v, serviceIds, schedules }: {
