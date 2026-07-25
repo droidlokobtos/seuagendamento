@@ -26,6 +26,11 @@ type S = {
   photo_url: string | null; active: boolean;
 };
 
+type Sched = { weekday: number; start_time: string; end_time: string };
+
+const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+
 function Staff() {
   const qc = useQueryClient();
   const { activeCompany } = useCompany();
