@@ -294,11 +294,12 @@ function BookingPage() {
   const primary = company.primary_color || "#0f172a";
   const accent = company.secondary_color || "#c9a86a";
 
-  // Navegação entre passos, pulando "Profissional" se desativado no portal
+  // Fluxo: 1 Serviços · 2 Data · 3 Horário · 4 Profissional · 5 Dados · 6 Confirmar
+  // (o passo "Profissional" é pulado quando desativado no portal)
   const goNext = () => {
     setStep((s) => {
       let next = (s + 1) as Step;
-      if (next === 2 && !showStaffStep) next = 3;
+      if (next === 4 && !showStaffStep) next = 5;
       if (next > 6) next = 6;
       return next;
     });
@@ -306,7 +307,7 @@ function BookingPage() {
   const goPrev = () => {
     setStep((s) => {
       let prev = (s - 1) as Step;
-      if (prev === 2 && !showStaffStep) prev = 1;
+      if (prev === 4 && !showStaffStep) prev = 3;
       if (prev < 1) prev = 1;
       return prev;
     });
@@ -314,9 +315,9 @@ function BookingPage() {
 
   const canContinue = (() => {
     if (step === 1) return selected.length > 0;
-    if (step === 2) return true; // "qualquer profissional" é válido
-    if (step === 3) return !!dateStr && dateOptions.some((d) => d.iso === dateStr && !d.disabled);
-    if (step === 4) return !!timeStr;
+    if (step === 2) return !!dateStr && dateOptions.some((d) => d.iso === dateStr && !d.disabled);
+    if (step === 3) return !!timeStr;
+    if (step === 4) return !staffLoading && staffList.length > 0; // precisa haver profissional disponível
     if (step === 5) return !!form.name.trim() && !!form.phone.trim();
     return false;
   })();
