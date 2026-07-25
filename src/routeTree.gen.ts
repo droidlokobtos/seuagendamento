@@ -15,6 +15,7 @@ import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ConfirmarTokenRouteImport } from './routes/confirmar.$token'
 import { Route as AuthenticatedNoAccessRouteImport } from './routes/_authenticated/no-access'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
@@ -83,6 +84,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfirmarTokenRoute = ConfirmarTokenRouteImport.update({
+  id: '/confirmar/$token',
+  path: '/confirmar/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedNoAccessRoute = AuthenticatedNoAccessRouteImport.update({
@@ -312,6 +318,7 @@ export interface FileRoutesByFullPath {
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
+  '/confirmar/$token': typeof ConfirmarTokenRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
@@ -357,6 +364,7 @@ export interface FileRoutesByTo {
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
+  '/confirmar/$token': typeof ConfirmarTokenRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
@@ -406,6 +414,7 @@ export interface FileRoutesById {
   '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/no-access': typeof AuthenticatedNoAccessRoute
+  '/confirmar/$token': typeof ConfirmarTokenRoute
   '/_authenticated/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/_authenticated/admin/niches': typeof AuthenticatedAdminNichesRoute
@@ -455,6 +464,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/home'
     | '/no-access'
+    | '/confirmar/$token'
     | '/admin/companies'
     | '/admin/logs'
     | '/admin/niches'
@@ -500,6 +510,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/home'
     | '/no-access'
+    | '/confirmar/$token'
     | '/admin/companies'
     | '/admin/logs'
     | '/admin/niches'
@@ -548,6 +559,7 @@ export interface FileRouteTypes {
     | '/_authenticated/change-password'
     | '/_authenticated/home'
     | '/_authenticated/no-access'
+    | '/confirmar/$token'
     | '/_authenticated/admin/companies'
     | '/_authenticated/admin/logs'
     | '/_authenticated/admin/niches'
@@ -592,6 +604,7 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
+  ConfirmarTokenRoute: typeof ConfirmarTokenRoute
   ApiPublicBookRoute: typeof ApiPublicBookRoute
   ApiPublicConfirmRoute: typeof ApiPublicConfirmRoute
   BSlugEntrarRoute: typeof BSlugEntrarRoute
@@ -644,6 +657,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confirmar/$token': {
+      id: '/confirmar/$token'
+      path: '/confirmar/$token'
+      fullPath: '/confirmar/$token'
+      preLoaderRoute: typeof ConfirmarTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/no-access': {
@@ -1032,6 +1052,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
+  ConfirmarTokenRoute: ConfirmarTokenRoute,
   ApiPublicBookRoute: ApiPublicBookRoute,
   ApiPublicConfirmRoute: ApiPublicConfirmRoute,
   BSlugEntrarRoute: BSlugEntrarRoute,
