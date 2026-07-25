@@ -225,13 +225,31 @@ function StaffDialog({
           <div><Label>Cor</Label>
             <Input type="color" value={f.color ?? "#8b7355"} onChange={(e) => setF({ ...f, color: e.target.value })} /></div>
         </div>
+        <div className="rounded-lg border p-3 space-y-2">
+          <Label>Serviços que este profissional atende</Label>
+          <p className="text-xs text-muted-foreground">
+            Usado no agendamento online: só aparece para os clientes nos serviços marcados.
+          </p>
+          {!services.length ? (
+            <p className="text-xs text-muted-foreground">Cadastre serviços primeiro.</p>
+          ) : (
+            <div className="max-h-44 overflow-y-auto space-y-1">
+              {services.map((s) => (
+                <label key={s.id} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
+                  <input type="checkbox" className="h-4 w-4" checked={svcIds.includes(s.id)} onChange={() => toggleSvc(s.id)} />
+                  <span className={s.active ? "" : "text-muted-foreground line-through"}>{s.name}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="flex items-center justify-between">
           <Label>Ativo</Label>
           <Switch checked={f.active ?? true} onCheckedChange={(v) => setF({ ...f, active: v })} />
         </div>
       </div>
       <DialogFooter>
-        <Button onClick={() => onSave(f)} disabled={loading || !f.name}>Salvar</Button>
+        <Button onClick={() => onSave(f, svcIds)} disabled={loading || !f.name}>Salvar</Button>
       </DialogFooter>
     </DialogContent>
   );
