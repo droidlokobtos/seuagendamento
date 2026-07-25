@@ -39,7 +39,9 @@ function SettingsPage() {
     welcome_message: "", city: "", state: "",
     instagram_url: "", facebook_url: "", tiktok_url: "", website_url: "",
     listed_in_marketplace: false, show_staff_on_portal: true, show_reviews_on_portal: true,
+    amenities: [] as string[],
   });
+
 
   const { data: company } = useQuery({
     queryKey: ["company-full", companyId],
