@@ -387,13 +387,31 @@ function ServiceDialog({
             </div>
           )}
         </div>
+        <div className="rounded-lg border p-3 space-y-2">
+          <Label>Profissionais que realizam este serviço</Label>
+          <p className="text-xs text-muted-foreground">
+            No agendamento online o cliente só verá os profissionais marcados aqui.
+          </p>
+          {!staffOptions.length ? (
+            <p className="text-xs text-muted-foreground">Cadastre funcionários primeiro.</p>
+          ) : (
+            <div className="max-h-44 overflow-y-auto space-y-1">
+              {staffOptions.map((s) => (
+                <label key={s.id} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
+                  <input type="checkbox" className="h-4 w-4" checked={staffIds.includes(s.id)} onChange={() => toggleStaff(s.id)} />
+                  <span className={s.active ? "" : "text-muted-foreground line-through"}>{s.name}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="flex items-center justify-between">
           <Label>Ativo</Label>
           <Switch checked={f.active ?? true} onCheckedChange={(v) => setF({ ...f, active: v })} />
         </div>
       </div>
       <DialogFooter>
-        <Button onClick={() => onSave(f)} disabled={loading || !f.name}>Salvar</Button>
+        <Button onClick={() => onSave(f, staffIds)} disabled={loading || !f.name}>Salvar</Button>
       </DialogFooter>
     </DialogContent>
   );
