@@ -25,6 +25,7 @@ import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as BSlugMinhaContaRouteImport } from './routes/b.$slug.minha-conta'
 import { Route as BSlugEntrarRouteImport } from './routes/b.$slug.entrar'
+import { Route as ApiPublicConfirmRouteImport } from './routes/api/public/confirm'
 import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
 import { Route as AuthenticatedAppWhatsappRouteImport } from './routes/_authenticated/app/whatsapp'
 import { Route as AuthenticatedAppUsersRouteImport } from './routes/_authenticated/app/users'
@@ -53,6 +54,7 @@ import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminCompaniesRouteImport } from './routes/_authenticated/admin/companies'
 import { Route as BSlugAvaliarAppointmentIdRouteImport } from './routes/b.$slug.avaliar.$appointmentId'
 import { Route as ApiPublicHooksRemindersRouteImport } from './routes/api/public/hooks/reminders'
+import { Route as ApiPublicHooksConfirmationsRouteImport } from './routes/api/public/hooks/confirmations'
 
 const TermosRoute = TermosRouteImport.update({
   id: '/termos',
@@ -132,6 +134,11 @@ const BSlugMinhaContaRoute = BSlugMinhaContaRouteImport.update({
 const BSlugEntrarRoute = BSlugEntrarRouteImport.update({
   id: '/b/$slug/entrar',
   path: '/b/$slug/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicConfirmRoute = ApiPublicConfirmRouteImport.update({
+  id: '/api/public/confirm',
+  path: '/api/public/confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicBookRoute = ApiPublicBookRouteImport.update({
@@ -287,6 +294,12 @@ const ApiPublicHooksRemindersRoute = ApiPublicHooksRemindersRouteImport.update({
   path: '/api/public/hooks/reminders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksConfirmationsRoute =
+  ApiPublicHooksConfirmationsRouteImport.update({
+    id: '/api/public/hooks/confirmations',
+    path: '/api/public/hooks/confirmations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -325,11 +338,13 @@ export interface FileRoutesByFullPath {
   '/app/users': typeof AuthenticatedAppUsersRoute
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
+  '/api/public/confirm': typeof ApiPublicConfirmRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/b/$slug/': typeof BSlugIndexRoute
+  '/api/public/hooks/confirmations': typeof ApiPublicHooksConfirmationsRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
   '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
@@ -368,11 +383,13 @@ export interface FileRoutesByTo {
   '/app/users': typeof AuthenticatedAppUsersRoute
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
+  '/api/public/confirm': typeof ApiPublicConfirmRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/b/$slug': typeof BSlugIndexRoute
+  '/api/public/hooks/confirmations': typeof ApiPublicHooksConfirmationsRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
   '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
@@ -415,11 +432,13 @@ export interface FileRoutesById {
   '/_authenticated/app/users': typeof AuthenticatedAppUsersRoute
   '/_authenticated/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
+  '/api/public/confirm': typeof ApiPublicConfirmRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/b/$slug/': typeof BSlugIndexRoute
+  '/api/public/hooks/confirmations': typeof ApiPublicHooksConfirmationsRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
   '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
@@ -462,11 +481,13 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app/whatsapp'
     | '/api/public/book'
+    | '/api/public/confirm'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
     | '/admin/'
     | '/app/'
     | '/b/$slug/'
+    | '/api/public/hooks/confirmations'
     | '/api/public/hooks/reminders'
     | '/b/$slug/avaliar/$appointmentId'
   fileRoutesByTo: FileRoutesByTo
@@ -505,11 +526,13 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app/whatsapp'
     | '/api/public/book'
+    | '/api/public/confirm'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
     | '/admin'
     | '/app'
     | '/b/$slug'
+    | '/api/public/hooks/confirmations'
     | '/api/public/hooks/reminders'
     | '/b/$slug/avaliar/$appointmentId'
   id:
@@ -551,11 +574,13 @@ export interface FileRouteTypes {
     | '/_authenticated/app/users'
     | '/_authenticated/app/whatsapp'
     | '/api/public/book'
+    | '/api/public/confirm'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
     | '/b/$slug/'
+    | '/api/public/hooks/confirmations'
     | '/api/public/hooks/reminders'
     | '/b/$slug/avaliar/$appointmentId'
   fileRoutesById: FileRoutesById
@@ -568,9 +593,11 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
   ApiPublicBookRoute: typeof ApiPublicBookRoute
+  ApiPublicConfirmRoute: typeof ApiPublicConfirmRoute
   BSlugEntrarRoute: typeof BSlugEntrarRoute
   BSlugMinhaContaRoute: typeof BSlugMinhaContaRoute
   BSlugIndexRoute: typeof BSlugIndexRoute
+  ApiPublicHooksConfirmationsRoute: typeof ApiPublicHooksConfirmationsRoute
   ApiPublicHooksRemindersRoute: typeof ApiPublicHooksRemindersRoute
   BSlugAvaliarAppointmentIdRoute: typeof BSlugAvaliarAppointmentIdRoute
 }
@@ -687,6 +714,13 @@ declare module '@tanstack/react-router' {
       path: '/b/$slug/entrar'
       fullPath: '/b/$slug/entrar'
       preLoaderRoute: typeof BSlugEntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/confirm': {
+      id: '/api/public/confirm'
+      path: '/api/public/confirm'
+      fullPath: '/api/public/confirm'
+      preLoaderRoute: typeof ApiPublicConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/book': {
@@ -885,6 +919,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/confirmations': {
+      id: '/api/public/hooks/confirmations'
+      path: '/api/public/hooks/confirmations'
+      fullPath: '/api/public/hooks/confirmations'
+      preLoaderRoute: typeof ApiPublicHooksConfirmationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -992,9 +1033,11 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
   ApiPublicBookRoute: ApiPublicBookRoute,
+  ApiPublicConfirmRoute: ApiPublicConfirmRoute,
   BSlugEntrarRoute: BSlugEntrarRoute,
   BSlugMinhaContaRoute: BSlugMinhaContaRoute,
   BSlugIndexRoute: BSlugIndexRoute,
+  ApiPublicHooksConfirmationsRoute: ApiPublicHooksConfirmationsRoute,
   ApiPublicHooksRemindersRoute: ApiPublicHooksRemindersRoute,
   BSlugAvaliarAppointmentIdRoute: BSlugAvaliarAppointmentIdRoute,
 }
