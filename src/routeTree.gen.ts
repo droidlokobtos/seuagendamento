@@ -15,6 +15,7 @@ import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ConfirmarTokenRouteImport } from './routes/confirmar.$token'
 import { Route as AuthenticatedNoAccessRouteImport } from './routes/_authenticated/no-access'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
@@ -25,6 +26,7 @@ import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as BSlugMinhaContaRouteImport } from './routes/b.$slug.minha-conta'
 import { Route as BSlugEntrarRouteImport } from './routes/b.$slug.entrar'
+import { Route as ApiPublicConfirmRouteImport } from './routes/api/public/confirm'
 import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
 import { Route as AuthenticatedAppWhatsappRouteImport } from './routes/_authenticated/app/whatsapp'
 import { Route as AuthenticatedAppUsersRouteImport } from './routes/_authenticated/app/users'
@@ -41,6 +43,8 @@ import { Route as AuthenticatedAppGalleryRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppFinancesRouteImport } from './routes/_authenticated/app/finances'
 import { Route as AuthenticatedAppCustomersRouteImport } from './routes/_authenticated/app/customers'
 import { Route as AuthenticatedAppCouponsRouteImport } from './routes/_authenticated/app/coupons'
+import { Route as AuthenticatedAppConfirmationsRouteImport } from './routes/_authenticated/app/confirmations'
+import { Route as AuthenticatedAppCommissionsRouteImport } from './routes/_authenticated/app/commissions'
 import { Route as AuthenticatedAppCampaignsRouteImport } from './routes/_authenticated/app/campaigns'
 import { Route as AuthenticatedAppBlocksRouteImport } from './routes/_authenticated/app/blocks'
 import { Route as AuthenticatedAppBirthdaysRouteImport } from './routes/_authenticated/app/birthdays'
@@ -53,6 +57,7 @@ import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminCompaniesRouteImport } from './routes/_authenticated/admin/companies'
 import { Route as BSlugAvaliarAppointmentIdRouteImport } from './routes/b.$slug.avaliar.$appointmentId'
 import { Route as ApiPublicHooksRemindersRouteImport } from './routes/api/public/hooks/reminders'
+import { Route as ApiPublicHooksConfirmationsRouteImport } from './routes/api/public/hooks/confirmations'
 
 const TermosRoute = TermosRouteImport.update({
   id: '/termos',
@@ -81,6 +86,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfirmarTokenRoute = ConfirmarTokenRouteImport.update({
+  id: '/confirmar/$token',
+  path: '/confirmar/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedNoAccessRoute = AuthenticatedNoAccessRouteImport.update({
@@ -132,6 +142,11 @@ const BSlugMinhaContaRoute = BSlugMinhaContaRouteImport.update({
 const BSlugEntrarRoute = BSlugEntrarRouteImport.update({
   id: '/b/$slug/entrar',
   path: '/b/$slug/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicConfirmRoute = ApiPublicConfirmRouteImport.update({
+  id: '/api/public/confirm',
+  path: '/api/public/confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicBookRoute = ApiPublicBookRouteImport.update({
@@ -220,6 +235,18 @@ const AuthenticatedAppCouponsRoute = AuthenticatedAppCouponsRouteImport.update({
   path: '/coupons',
   getParentRoute: () => AuthenticatedAppRouteRoute,
 } as any)
+const AuthenticatedAppConfirmationsRoute =
+  AuthenticatedAppConfirmationsRouteImport.update({
+    id: '/confirmations',
+    path: '/confirmations',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedAppCommissionsRoute =
+  AuthenticatedAppCommissionsRouteImport.update({
+    id: '/commissions',
+    path: '/commissions',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
 const AuthenticatedAppCampaignsRoute =
   AuthenticatedAppCampaignsRouteImport.update({
     id: '/campaigns',
@@ -287,6 +314,12 @@ const ApiPublicHooksRemindersRoute = ApiPublicHooksRemindersRouteImport.update({
   path: '/api/public/hooks/reminders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksConfirmationsRoute =
+  ApiPublicHooksConfirmationsRouteImport.update({
+    id: '/api/public/hooks/confirmations',
+    path: '/api/public/hooks/confirmations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -299,6 +332,7 @@ export interface FileRoutesByFullPath {
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
+  '/confirmar/$token': typeof ConfirmarTokenRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
@@ -309,6 +343,8 @@ export interface FileRoutesByFullPath {
   '/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
   '/app/blocks': typeof AuthenticatedAppBlocksRoute
   '/app/campaigns': typeof AuthenticatedAppCampaignsRoute
+  '/app/commissions': typeof AuthenticatedAppCommissionsRoute
+  '/app/confirmations': typeof AuthenticatedAppConfirmationsRoute
   '/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/app/customers': typeof AuthenticatedAppCustomersRoute
   '/app/finances': typeof AuthenticatedAppFinancesRoute
@@ -325,11 +361,13 @@ export interface FileRoutesByFullPath {
   '/app/users': typeof AuthenticatedAppUsersRoute
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
+  '/api/public/confirm': typeof ApiPublicConfirmRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/b/$slug/': typeof BSlugIndexRoute
+  '/api/public/hooks/confirmations': typeof ApiPublicHooksConfirmationsRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
   '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
@@ -342,6 +380,7 @@ export interface FileRoutesByTo {
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
+  '/confirmar/$token': typeof ConfirmarTokenRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
@@ -352,6 +391,8 @@ export interface FileRoutesByTo {
   '/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
   '/app/blocks': typeof AuthenticatedAppBlocksRoute
   '/app/campaigns': typeof AuthenticatedAppCampaignsRoute
+  '/app/commissions': typeof AuthenticatedAppCommissionsRoute
+  '/app/confirmations': typeof AuthenticatedAppConfirmationsRoute
   '/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/app/customers': typeof AuthenticatedAppCustomersRoute
   '/app/finances': typeof AuthenticatedAppFinancesRoute
@@ -368,11 +409,13 @@ export interface FileRoutesByTo {
   '/app/users': typeof AuthenticatedAppUsersRoute
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
+  '/api/public/confirm': typeof ApiPublicConfirmRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/b/$slug': typeof BSlugIndexRoute
+  '/api/public/hooks/confirmations': typeof ApiPublicHooksConfirmationsRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
   '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
@@ -389,6 +432,7 @@ export interface FileRoutesById {
   '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/no-access': typeof AuthenticatedNoAccessRoute
+  '/confirmar/$token': typeof ConfirmarTokenRoute
   '/_authenticated/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/_authenticated/admin/niches': typeof AuthenticatedAdminNichesRoute
@@ -399,6 +443,8 @@ export interface FileRoutesById {
   '/_authenticated/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
   '/_authenticated/app/blocks': typeof AuthenticatedAppBlocksRoute
   '/_authenticated/app/campaigns': typeof AuthenticatedAppCampaignsRoute
+  '/_authenticated/app/commissions': typeof AuthenticatedAppCommissionsRoute
+  '/_authenticated/app/confirmations': typeof AuthenticatedAppConfirmationsRoute
   '/_authenticated/app/coupons': typeof AuthenticatedAppCouponsRoute
   '/_authenticated/app/customers': typeof AuthenticatedAppCustomersRoute
   '/_authenticated/app/finances': typeof AuthenticatedAppFinancesRoute
@@ -415,11 +461,13 @@ export interface FileRoutesById {
   '/_authenticated/app/users': typeof AuthenticatedAppUsersRoute
   '/_authenticated/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
+  '/api/public/confirm': typeof ApiPublicConfirmRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/b/$slug/': typeof BSlugIndexRoute
+  '/api/public/hooks/confirmations': typeof ApiPublicHooksConfirmationsRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
   '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
@@ -436,6 +484,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/home'
     | '/no-access'
+    | '/confirmar/$token'
     | '/admin/companies'
     | '/admin/logs'
     | '/admin/niches'
@@ -446,6 +495,8 @@ export interface FileRouteTypes {
     | '/app/birthdays'
     | '/app/blocks'
     | '/app/campaigns'
+    | '/app/commissions'
+    | '/app/confirmations'
     | '/app/coupons'
     | '/app/customers'
     | '/app/finances'
@@ -462,11 +513,13 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app/whatsapp'
     | '/api/public/book'
+    | '/api/public/confirm'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
     | '/admin/'
     | '/app/'
     | '/b/$slug/'
+    | '/api/public/hooks/confirmations'
     | '/api/public/hooks/reminders'
     | '/b/$slug/avaliar/$appointmentId'
   fileRoutesByTo: FileRoutesByTo
@@ -479,6 +532,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/home'
     | '/no-access'
+    | '/confirmar/$token'
     | '/admin/companies'
     | '/admin/logs'
     | '/admin/niches'
@@ -489,6 +543,8 @@ export interface FileRouteTypes {
     | '/app/birthdays'
     | '/app/blocks'
     | '/app/campaigns'
+    | '/app/commissions'
+    | '/app/confirmations'
     | '/app/coupons'
     | '/app/customers'
     | '/app/finances'
@@ -505,11 +561,13 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app/whatsapp'
     | '/api/public/book'
+    | '/api/public/confirm'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
     | '/admin'
     | '/app'
     | '/b/$slug'
+    | '/api/public/hooks/confirmations'
     | '/api/public/hooks/reminders'
     | '/b/$slug/avaliar/$appointmentId'
   id:
@@ -525,6 +583,7 @@ export interface FileRouteTypes {
     | '/_authenticated/change-password'
     | '/_authenticated/home'
     | '/_authenticated/no-access'
+    | '/confirmar/$token'
     | '/_authenticated/admin/companies'
     | '/_authenticated/admin/logs'
     | '/_authenticated/admin/niches'
@@ -535,6 +594,8 @@ export interface FileRouteTypes {
     | '/_authenticated/app/birthdays'
     | '/_authenticated/app/blocks'
     | '/_authenticated/app/campaigns'
+    | '/_authenticated/app/commissions'
+    | '/_authenticated/app/confirmations'
     | '/_authenticated/app/coupons'
     | '/_authenticated/app/customers'
     | '/_authenticated/app/finances'
@@ -551,11 +612,13 @@ export interface FileRouteTypes {
     | '/_authenticated/app/users'
     | '/_authenticated/app/whatsapp'
     | '/api/public/book'
+    | '/api/public/confirm'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
     | '/b/$slug/'
+    | '/api/public/hooks/confirmations'
     | '/api/public/hooks/reminders'
     | '/b/$slug/avaliar/$appointmentId'
   fileRoutesById: FileRoutesById
@@ -567,10 +630,13 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
+  ConfirmarTokenRoute: typeof ConfirmarTokenRoute
   ApiPublicBookRoute: typeof ApiPublicBookRoute
+  ApiPublicConfirmRoute: typeof ApiPublicConfirmRoute
   BSlugEntrarRoute: typeof BSlugEntrarRoute
   BSlugMinhaContaRoute: typeof BSlugMinhaContaRoute
   BSlugIndexRoute: typeof BSlugIndexRoute
+  ApiPublicHooksConfirmationsRoute: typeof ApiPublicHooksConfirmationsRoute
   ApiPublicHooksRemindersRoute: typeof ApiPublicHooksRemindersRoute
   BSlugAvaliarAppointmentIdRoute: typeof BSlugAvaliarAppointmentIdRoute
 }
@@ -617,6 +683,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confirmar/$token': {
+      id: '/confirmar/$token'
+      path: '/confirmar/$token'
+      fullPath: '/confirmar/$token'
+      preLoaderRoute: typeof ConfirmarTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/no-access': {
@@ -687,6 +760,13 @@ declare module '@tanstack/react-router' {
       path: '/b/$slug/entrar'
       fullPath: '/b/$slug/entrar'
       preLoaderRoute: typeof BSlugEntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/confirm': {
+      id: '/api/public/confirm'
+      path: '/api/public/confirm'
+      fullPath: '/api/public/confirm'
+      preLoaderRoute: typeof ApiPublicConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/book': {
@@ -801,6 +881,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCouponsRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/confirmations': {
+      id: '/_authenticated/app/confirmations'
+      path: '/confirmations'
+      fullPath: '/app/confirmations'
+      preLoaderRoute: typeof AuthenticatedAppConfirmationsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/commissions': {
+      id: '/_authenticated/app/commissions'
+      path: '/commissions'
+      fullPath: '/app/commissions'
+      preLoaderRoute: typeof AuthenticatedAppCommissionsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/campaigns': {
       id: '/_authenticated/app/campaigns'
       path: '/campaigns'
@@ -885,6 +979,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/confirmations': {
+      id: '/api/public/hooks/confirmations'
+      path: '/api/public/hooks/confirmations'
+      fullPath: '/api/public/hooks/confirmations'
+      preLoaderRoute: typeof ApiPublicHooksConfirmationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -918,6 +1019,8 @@ interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppBirthdaysRoute: typeof AuthenticatedAppBirthdaysRoute
   AuthenticatedAppBlocksRoute: typeof AuthenticatedAppBlocksRoute
   AuthenticatedAppCampaignsRoute: typeof AuthenticatedAppCampaignsRoute
+  AuthenticatedAppCommissionsRoute: typeof AuthenticatedAppCommissionsRoute
+  AuthenticatedAppConfirmationsRoute: typeof AuthenticatedAppConfirmationsRoute
   AuthenticatedAppCouponsRoute: typeof AuthenticatedAppCouponsRoute
   AuthenticatedAppCustomersRoute: typeof AuthenticatedAppCustomersRoute
   AuthenticatedAppFinancesRoute: typeof AuthenticatedAppFinancesRoute
@@ -942,6 +1045,8 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppBirthdaysRoute: AuthenticatedAppBirthdaysRoute,
   AuthenticatedAppBlocksRoute: AuthenticatedAppBlocksRoute,
   AuthenticatedAppCampaignsRoute: AuthenticatedAppCampaignsRoute,
+  AuthenticatedAppCommissionsRoute: AuthenticatedAppCommissionsRoute,
+  AuthenticatedAppConfirmationsRoute: AuthenticatedAppConfirmationsRoute,
   AuthenticatedAppCouponsRoute: AuthenticatedAppCouponsRoute,
   AuthenticatedAppCustomersRoute: AuthenticatedAppCustomersRoute,
   AuthenticatedAppFinancesRoute: AuthenticatedAppFinancesRoute,
@@ -991,10 +1096,13 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
+  ConfirmarTokenRoute: ConfirmarTokenRoute,
   ApiPublicBookRoute: ApiPublicBookRoute,
+  ApiPublicConfirmRoute: ApiPublicConfirmRoute,
   BSlugEntrarRoute: BSlugEntrarRoute,
   BSlugMinhaContaRoute: BSlugMinhaContaRoute,
   BSlugIndexRoute: BSlugIndexRoute,
+  ApiPublicHooksConfirmationsRoute: ApiPublicHooksConfirmationsRoute,
   ApiPublicHooksRemindersRoute: ApiPublicHooksRemindersRoute,
   BSlugAvaliarAppointmentIdRoute: BSlugAvaliarAppointmentIdRoute,
 }

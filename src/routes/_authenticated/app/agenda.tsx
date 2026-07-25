@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Plus, MessageCircle, Calendar as CalIcon, Check, CheckCheck, X, Play } from "lucide-react";
 import { brl } from "@/lib/format";
+import { APPOINTMENT_STATUS, FREED_STATUSES } from "@/lib/appointment-status";
 import { toast } from "sonner";
 import { WhatsAppShareDialog } from "@/components/app/WhatsAppShareDialog";
 import { z } from "zod";
@@ -28,14 +29,7 @@ export const Route = createFileRoute("/_authenticated/app/agenda")({
   component: Agenda,
 });
 
-const STATUS: Record<string, { label: string; color: string }> = {
-  scheduled: { label: "Agendado", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30" },
-  confirmed: { label: "Confirmado", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30" },
-  in_progress: { label: "Em atendimento", color: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30" },
-  completed: { label: "Concluído", color: "bg-primary/15 text-primary border-primary/30" },
-  cancelled: { label: "Cancelado", color: "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30" },
-  no_show: { label: "Faltou", color: "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300 border-neutral-500/30" },
-};
+const STATUS = APPOINTMENT_STATUS;
 
 function toLocalInput(d: Date) {
   const p = (n: number) => String(n).padStart(2, "0");
@@ -149,7 +143,7 @@ function Agenda() {
     const buf = bufferMin * 60_000;
     for (const a of appts as any[]) {
       if (ignoreId && a.id === ignoreId) continue;
-      if (a.status === "cancelled" || a.status === "no_show") continue;
+      if (FREED_STATUSES.includes(a.status)) continue;
       if (staff_id && a.staff_id && a.staff_id !== staff_id) continue;
       const as = new Date(a.starts_at).getTime() - buf;
       const ae = new Date(a.ends_at).getTime() + buf;

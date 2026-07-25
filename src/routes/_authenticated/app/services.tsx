@@ -48,12 +48,14 @@ type S = {
   duration_min: number; price_cents: number; category: string | null;
   color: string | null; active: boolean; photo_url: string | null;
   photo_position: string | null; sort_order: number;
+  has_commission: boolean; commission_type: string; commission_value: number;
 };
 
 const EMPTY: Partial<S> = {
   name: "", description: "", duration_min: 30, price_cents: 0,
   category: "", color: "#8b7355", active: true, photo_url: null,
   photo_position: "center center", sort_order: 0,
+  has_commission: false, commission_type: "percent", commission_value: 0,
 };
 
 function Services() {
@@ -296,6 +298,42 @@ function ServiceDialog({
             <Label>Cor</Label>
             <Input type="color" value={f.color ?? "#8b7355"} onChange={(e) => setF({ ...f, color: e.target.value })} />
           </div>
+        </div>
+        <div className="rounded-lg border p-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Comissão</Label>
+              <p className="text-xs text-muted-foreground">Possui comissão para este serviço</p>
+            </div>
+            <Switch
+              checked={f.has_commission ?? false}
+              onCheckedChange={(v) => setF({ ...f, has_commission: v })}
+            />
+          </div>
+          {f.has_commission && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Tipo</Label>
+                <select
+                  className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  value={f.commission_type ?? "percent"}
+                  onChange={(e) => setF({ ...f, commission_type: e.target.value })}
+                >
+                  <option value="percent">Percentual (%)</option>
+                  <option value="fixed">Valor fixo (R$)</option>
+                </select>
+              </div>
+              <div>
+                <Label>{f.commission_type === "fixed" ? "Valor (R$)" : "Percentual (%)"}</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={String(f.commission_value ?? 0)}
+                  onChange={(e) => setF({ ...f, commission_value: parseFloat(e.target.value || "0") })}
+                />
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex items-center justify-between">
           <Label>Ativo</Label>

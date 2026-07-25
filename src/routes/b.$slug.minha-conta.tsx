@@ -37,6 +37,9 @@ const STATUS_LABEL: Record<string, { label: string; variant: "default" | "second
   completed: { label: "Concluído", variant: "secondary" },
   cancelled: { label: "Cancelado", variant: "destructive" },
   no_show: { label: "Faltou", variant: "outline" },
+  reminder_sent: { label: "Lembrete enviado", variant: "secondary" },
+  cancelled_by_customer: { label: "Cancelado", variant: "destructive" },
+  cancelled_by_company: { label: "Cancelado", variant: "destructive" },
 };
 
 function MinhaContaPage() {

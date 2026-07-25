@@ -279,4 +279,7 @@ const statusMap: Record<string, string> = {
   completed: "Concluído",
   cancelled: "Cancelado",
   no_show: "Faltou",
+  reminder_sent: "Lembrete enviado",
+  cancelled_by_customer: "Cancelado pelo cliente",
+  cancelled_by_company: "Cancelado pela empresa",
 };
