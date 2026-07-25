@@ -156,25 +156,53 @@ function Services() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const reorder = useMutation({
-    mutationFn: async (updates: { id: string; sort_order: number }[]) => {
-      await Promise.all(
-        updates.map((u) => supabase.from("services").update({ sort_order: u.sort_order }).eq("id", u.id)),
-      );
+  // Somente admin da empresa (ou master) pode reordenar
+  const { data: canReorder = false } = useQuery({
+    queryKey: ["can_reorder_services", companyId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("is_company_admin", { _company: companyId });
+      if (error) return false;
+      return !!data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["services", companyId] }),
-    onError: (e: any) => toast.error(e.message),
   });
 
-  const move = (idx: number, dir: -1 | 1) => {
-    const j = idx + dir;
-    if (j < 0 || j >= data.length) return;
-    const a = data[idx], b = data[j];
-    reorder.mutate([
-      { id: a.id, sort_order: b.sort_order ?? j },
-      { id: b.id, sort_order: a.sort_order ?? idx },
-    ]);
+  // Lista local para atualização imediata durante o drag & drop
+  const [items, setItems] = useState<S[]>([]);
+  useEffect(() => { setItems(data); }, [data]);
+  const dragId = useRef<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+
+  const reorder = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.rpc("reorder_services", { _company: companyId, _ids: ids });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Ordem atualizada");
+      qc.invalidateQueries({ queryKey: ["services", companyId] });
+    },
+    onError: (e: any) => { toast.error(e.message); setItems(data); },
+  });
+
+  const applyOrder = (from: number, to: number) => {
+    if (from === to || from < 0 || to < 0 || from >= items.length || to >= items.length) return;
+    const next = [...items];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setItems(next);
+    reorder.mutate(next.map((s) => s.id));
   };
+
+  const move = (idx: number, dir: -1 | 1) => applyOrder(idx, idx + dir);
+
+  const onDrop = (targetId: string) => {
+    const fromId = dragId.current;
+    dragId.current = null;
+    setOverId(null);
+    if (!fromId || fromId === targetId) return;
+    applyOrder(items.findIndex((s) => s.id === fromId), items.findIndex((s) => s.id === targetId));
+  };
+
 
   const openNew = () => { setEdit(null); setOpen(true); };
   const openEdit = (s: S) => { setEdit(s); setOpen(true); };
