@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { slugify } from "@/lib/format";
+import { AMENITIES } from "@/lib/amenities";
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
   component: SettingsPage,
