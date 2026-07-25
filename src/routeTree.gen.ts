@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConfirmarTokenRouteImport } from './routes/confirmar.$token'
+import { Route as AvaliacaoTokenRouteImport } from './routes/avaliacao.$token'
 import { Route as AuthenticatedNoAccessRouteImport } from './routes/_authenticated/no-access'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
@@ -26,6 +27,7 @@ import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as BSlugMinhaContaRouteImport } from './routes/b.$slug.minha-conta'
 import { Route as BSlugEntrarRouteImport } from './routes/b.$slug.entrar'
+import { Route as ApiPublicReviewRouteImport } from './routes/api/public/review'
 import { Route as ApiPublicConfirmRouteImport } from './routes/api/public/confirm'
 import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
 import { Route as AuthenticatedAppWhatsappRouteImport } from './routes/_authenticated/app/whatsapp'
@@ -56,6 +58,7 @@ import { Route as AuthenticatedAdminNichesRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated/admin/logs'
 import { Route as AuthenticatedAdminCompaniesRouteImport } from './routes/_authenticated/admin/companies'
 import { Route as BSlugAvaliarAppointmentIdRouteImport } from './routes/b.$slug.avaliar.$appointmentId'
+import { Route as ApiPublicHooksReviewInvitesRouteImport } from './routes/api/public/hooks/review-invites'
 import { Route as ApiPublicHooksRemindersRouteImport } from './routes/api/public/hooks/reminders'
 import { Route as ApiPublicHooksConfirmationsRouteImport } from './routes/api/public/hooks/confirmations'
 
@@ -91,6 +94,11 @@ const IndexRoute = IndexRouteImport.update({
 const ConfirmarTokenRoute = ConfirmarTokenRouteImport.update({
   id: '/confirmar/$token',
   path: '/confirmar/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AvaliacaoTokenRoute = AvaliacaoTokenRouteImport.update({
+  id: '/avaliacao/$token',
+  path: '/avaliacao/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedNoAccessRoute = AuthenticatedNoAccessRouteImport.update({
@@ -142,6 +150,11 @@ const BSlugMinhaContaRoute = BSlugMinhaContaRouteImport.update({
 const BSlugEntrarRoute = BSlugEntrarRouteImport.update({
   id: '/b/$slug/entrar',
   path: '/b/$slug/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicReviewRoute = ApiPublicReviewRouteImport.update({
+  id: '/api/public/review',
+  path: '/api/public/review',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicConfirmRoute = ApiPublicConfirmRouteImport.update({
@@ -309,6 +322,12 @@ const BSlugAvaliarAppointmentIdRoute =
     path: '/b/$slug/avaliar/$appointmentId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksReviewInvitesRoute =
+  ApiPublicHooksReviewInvitesRouteImport.update({
+    id: '/api/public/hooks/review-invites',
+    path: '/api/public/hooks/review-invites',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksRemindersRoute = ApiPublicHooksRemindersRouteImport.update({
   id: '/api/public/hooks/reminders',
   path: '/api/public/hooks/reminders',
@@ -332,6 +351,7 @@ export interface FileRoutesByFullPath {
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
+  '/avaliacao/$token': typeof AvaliacaoTokenRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
@@ -362,6 +382,7 @@ export interface FileRoutesByFullPath {
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
+  '/api/public/review': typeof ApiPublicReviewRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -369,6 +390,7 @@ export interface FileRoutesByFullPath {
   '/b/$slug/': typeof BSlugIndexRoute
   '/api/public/hooks/confirmations': typeof ApiPublicHooksConfirmationsRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/api/public/hooks/review-invites': typeof ApiPublicHooksReviewInvitesRoute
   '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
 export interface FileRoutesByTo {
@@ -380,6 +402,7 @@ export interface FileRoutesByTo {
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
+  '/avaliacao/$token': typeof AvaliacaoTokenRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
@@ -410,6 +433,7 @@ export interface FileRoutesByTo {
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
+  '/api/public/review': typeof ApiPublicReviewRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -417,6 +441,7 @@ export interface FileRoutesByTo {
   '/b/$slug': typeof BSlugIndexRoute
   '/api/public/hooks/confirmations': typeof ApiPublicHooksConfirmationsRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/api/public/hooks/review-invites': typeof ApiPublicHooksReviewInvitesRoute
   '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
 export interface FileRoutesById {
@@ -432,6 +457,7 @@ export interface FileRoutesById {
   '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/no-access': typeof AuthenticatedNoAccessRoute
+  '/avaliacao/$token': typeof AvaliacaoTokenRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/_authenticated/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
@@ -462,6 +488,7 @@ export interface FileRoutesById {
   '/_authenticated/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
+  '/api/public/review': typeof ApiPublicReviewRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -469,6 +496,7 @@ export interface FileRoutesById {
   '/b/$slug/': typeof BSlugIndexRoute
   '/api/public/hooks/confirmations': typeof ApiPublicHooksConfirmationsRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/api/public/hooks/review-invites': typeof ApiPublicHooksReviewInvitesRoute
   '/b/$slug/avaliar/$appointmentId': typeof BSlugAvaliarAppointmentIdRoute
 }
 export interface FileRouteTypes {
@@ -484,6 +512,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/home'
     | '/no-access'
+    | '/avaliacao/$token'
     | '/confirmar/$token'
     | '/admin/companies'
     | '/admin/logs'
@@ -514,6 +543,7 @@ export interface FileRouteTypes {
     | '/app/whatsapp'
     | '/api/public/book'
     | '/api/public/confirm'
+    | '/api/public/review'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
     | '/admin/'
@@ -521,6 +551,7 @@ export interface FileRouteTypes {
     | '/b/$slug/'
     | '/api/public/hooks/confirmations'
     | '/api/public/hooks/reminders'
+    | '/api/public/hooks/review-invites'
     | '/b/$slug/avaliar/$appointmentId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -532,6 +563,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/home'
     | '/no-access'
+    | '/avaliacao/$token'
     | '/confirmar/$token'
     | '/admin/companies'
     | '/admin/logs'
@@ -562,6 +594,7 @@ export interface FileRouteTypes {
     | '/app/whatsapp'
     | '/api/public/book'
     | '/api/public/confirm'
+    | '/api/public/review'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
     | '/admin'
@@ -569,6 +602,7 @@ export interface FileRouteTypes {
     | '/b/$slug'
     | '/api/public/hooks/confirmations'
     | '/api/public/hooks/reminders'
+    | '/api/public/hooks/review-invites'
     | '/b/$slug/avaliar/$appointmentId'
   id:
     | '__root__'
@@ -583,6 +617,7 @@ export interface FileRouteTypes {
     | '/_authenticated/change-password'
     | '/_authenticated/home'
     | '/_authenticated/no-access'
+    | '/avaliacao/$token'
     | '/confirmar/$token'
     | '/_authenticated/admin/companies'
     | '/_authenticated/admin/logs'
@@ -613,6 +648,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/whatsapp'
     | '/api/public/book'
     | '/api/public/confirm'
+    | '/api/public/review'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
     | '/_authenticated/admin/'
@@ -620,6 +656,7 @@ export interface FileRouteTypes {
     | '/b/$slug/'
     | '/api/public/hooks/confirmations'
     | '/api/public/hooks/reminders'
+    | '/api/public/hooks/review-invites'
     | '/b/$slug/avaliar/$appointmentId'
   fileRoutesById: FileRoutesById
 }
@@ -630,14 +667,17 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
+  AvaliacaoTokenRoute: typeof AvaliacaoTokenRoute
   ConfirmarTokenRoute: typeof ConfirmarTokenRoute
   ApiPublicBookRoute: typeof ApiPublicBookRoute
   ApiPublicConfirmRoute: typeof ApiPublicConfirmRoute
+  ApiPublicReviewRoute: typeof ApiPublicReviewRoute
   BSlugEntrarRoute: typeof BSlugEntrarRoute
   BSlugMinhaContaRoute: typeof BSlugMinhaContaRoute
   BSlugIndexRoute: typeof BSlugIndexRoute
   ApiPublicHooksConfirmationsRoute: typeof ApiPublicHooksConfirmationsRoute
   ApiPublicHooksRemindersRoute: typeof ApiPublicHooksRemindersRoute
+  ApiPublicHooksReviewInvitesRoute: typeof ApiPublicHooksReviewInvitesRoute
   BSlugAvaliarAppointmentIdRoute: typeof BSlugAvaliarAppointmentIdRoute
 }
 
@@ -690,6 +730,13 @@ declare module '@tanstack/react-router' {
       path: '/confirmar/$token'
       fullPath: '/confirmar/$token'
       preLoaderRoute: typeof ConfirmarTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/avaliacao/$token': {
+      id: '/avaliacao/$token'
+      path: '/avaliacao/$token'
+      fullPath: '/avaliacao/$token'
+      preLoaderRoute: typeof AvaliacaoTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/no-access': {
@@ -760,6 +807,13 @@ declare module '@tanstack/react-router' {
       path: '/b/$slug/entrar'
       fullPath: '/b/$slug/entrar'
       preLoaderRoute: typeof BSlugEntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/review': {
+      id: '/api/public/review'
+      path: '/api/public/review'
+      fullPath: '/api/public/review'
+      preLoaderRoute: typeof ApiPublicReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/confirm': {
@@ -972,6 +1026,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BSlugAvaliarAppointmentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/review-invites': {
+      id: '/api/public/hooks/review-invites'
+      path: '/api/public/hooks/review-invites'
+      fullPath: '/api/public/hooks/review-invites'
+      preLoaderRoute: typeof ApiPublicHooksReviewInvitesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/reminders': {
       id: '/api/public/hooks/reminders'
       path: '/api/public/hooks/reminders'
@@ -1096,14 +1157,17 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
+  AvaliacaoTokenRoute: AvaliacaoTokenRoute,
   ConfirmarTokenRoute: ConfirmarTokenRoute,
   ApiPublicBookRoute: ApiPublicBookRoute,
   ApiPublicConfirmRoute: ApiPublicConfirmRoute,
+  ApiPublicReviewRoute: ApiPublicReviewRoute,
   BSlugEntrarRoute: BSlugEntrarRoute,
   BSlugMinhaContaRoute: BSlugMinhaContaRoute,
   BSlugIndexRoute: BSlugIndexRoute,
   ApiPublicHooksConfirmationsRoute: ApiPublicHooksConfirmationsRoute,
   ApiPublicHooksRemindersRoute: ApiPublicHooksRemindersRoute,
+  ApiPublicHooksReviewInvitesRoute: ApiPublicHooksReviewInvitesRoute,
   BSlugAvaliarAppointmentIdRoute: BSlugAvaliarAppointmentIdRoute,
 }
 export const routeTree = rootRouteImport
