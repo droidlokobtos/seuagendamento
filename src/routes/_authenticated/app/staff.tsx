@@ -151,16 +151,18 @@ function Staff() {
           <DialogTrigger asChild>
             <Button onClick={() => setEdit(null)}><Plus className="h-4 w-4 mr-2" /> Novo funcionário</Button>
           </DialogTrigger>
-          <StaffDialog
-            key={edit?.id ?? "new"}
-            edit={edit}
-            services={services}
-            selectedServiceIds={edit ? links.filter((l) => l.staff_id === edit.id).map((l) => l.service_id) : []}
-            onSave={(v, serviceIds) => save.mutate({ v, serviceIds })}
-            loading={save.isPending}
-          />
+          {open && (
+            <StaffDialog
+              key={edit?.id ?? "new"}
+              editId={edit?.id ?? null}
+              services={services}
+              onSave={(v, serviceIds, schedules) => save.mutate({ v, serviceIds, schedules })}
+              loading={save.isPending}
+            />
+          )}
         </Dialog>
       </div>
+
 
       {isLoading ? (
         <Card><CardContent className="p-12 text-center text-muted-foreground">Carregando…</CardContent></Card>
