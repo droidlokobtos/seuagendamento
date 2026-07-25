@@ -64,6 +64,7 @@ function SettingsPage() {
         listed_in_marketplace: !!c.listed_in_marketplace,
         show_staff_on_portal: c.show_staff_on_portal !== false,
         show_reviews_on_portal: c.show_reviews_on_portal !== false,
+        amenities: Array.isArray(c.amenities) ? (c.amenities as string[]) : [],
       });
     }
   }, [company]);
