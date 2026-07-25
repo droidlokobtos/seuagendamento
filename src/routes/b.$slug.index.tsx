@@ -710,6 +710,7 @@ function PortalInfo({ company, hours, primary, accent }: { company: any; hours: 
     company.website_url && { icon: Globe, url: company.website_url, label: "Site" },
   ].filter(Boolean) as { icon: any; url: string; label: string }[];
   const orderedHours = [...(hours ?? [])].sort((a, b) => a.weekday - b.weekday);
+  const amenities = getAmenities(company.amenities);
   return (
     <Card>
       <CardContent className="p-4 space-y-4">
@@ -721,6 +722,25 @@ function PortalInfo({ company, hours, primary, accent }: { company: any; hours: 
         {company.description && (
           <p className="text-sm text-muted-foreground whitespace-pre-line">{company.description}</p>
         )}
+        {amenities.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Comodidades</p>
+            <div className="flex flex-wrap gap-2">
+              {amenities.map((a) => (
+                <span
+                  key={a.key}
+                  title={a.description}
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border"
+                  style={{ background: `${accent}12`, borderColor: `${accent}40`, color: primary }}
+                >
+                  <a.icon className="h-3.5 w-3.5" style={{ color: accent }} />
+                  {a.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-2">
           {wa && (
             <a
