@@ -26,6 +26,7 @@ import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as BSlugMinhaContaRouteImport } from './routes/b.$slug.minha-conta'
 import { Route as BSlugEntrarRouteImport } from './routes/b.$slug.entrar'
+import { Route as ApiPublicReviewRouteImport } from './routes/api/public/review'
 import { Route as ApiPublicConfirmRouteImport } from './routes/api/public/confirm'
 import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
 import { Route as AuthenticatedAppWhatsappRouteImport } from './routes/_authenticated/app/whatsapp'
@@ -142,6 +143,11 @@ const BSlugMinhaContaRoute = BSlugMinhaContaRouteImport.update({
 const BSlugEntrarRoute = BSlugEntrarRouteImport.update({
   id: '/b/$slug/entrar',
   path: '/b/$slug/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicReviewRoute = ApiPublicReviewRouteImport.update({
+  id: '/api/public/review',
+  path: '/api/public/review',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicConfirmRoute = ApiPublicConfirmRouteImport.update({
@@ -362,6 +368,7 @@ export interface FileRoutesByFullPath {
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
+  '/api/public/review': typeof ApiPublicReviewRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -410,6 +417,7 @@ export interface FileRoutesByTo {
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
+  '/api/public/review': typeof ApiPublicReviewRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -462,6 +470,7 @@ export interface FileRoutesById {
   '/_authenticated/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
+  '/api/public/review': typeof ApiPublicReviewRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -514,6 +523,7 @@ export interface FileRouteTypes {
     | '/app/whatsapp'
     | '/api/public/book'
     | '/api/public/confirm'
+    | '/api/public/review'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
     | '/admin/'
@@ -562,6 +572,7 @@ export interface FileRouteTypes {
     | '/app/whatsapp'
     | '/api/public/book'
     | '/api/public/confirm'
+    | '/api/public/review'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
     | '/admin'
@@ -613,6 +624,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/whatsapp'
     | '/api/public/book'
     | '/api/public/confirm'
+    | '/api/public/review'
     | '/b/$slug/entrar'
     | '/b/$slug/minha-conta'
     | '/_authenticated/admin/'
@@ -633,6 +645,7 @@ export interface RootRouteChildren {
   ConfirmarTokenRoute: typeof ConfirmarTokenRoute
   ApiPublicBookRoute: typeof ApiPublicBookRoute
   ApiPublicConfirmRoute: typeof ApiPublicConfirmRoute
+  ApiPublicReviewRoute: typeof ApiPublicReviewRoute
   BSlugEntrarRoute: typeof BSlugEntrarRoute
   BSlugMinhaContaRoute: typeof BSlugMinhaContaRoute
   BSlugIndexRoute: typeof BSlugIndexRoute
@@ -760,6 +773,13 @@ declare module '@tanstack/react-router' {
       path: '/b/$slug/entrar'
       fullPath: '/b/$slug/entrar'
       preLoaderRoute: typeof BSlugEntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/review': {
+      id: '/api/public/review'
+      path: '/api/public/review'
+      fullPath: '/api/public/review'
+      preLoaderRoute: typeof ApiPublicReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/confirm': {
@@ -1099,6 +1119,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfirmarTokenRoute: ConfirmarTokenRoute,
   ApiPublicBookRoute: ApiPublicBookRoute,
   ApiPublicConfirmRoute: ApiPublicConfirmRoute,
+  ApiPublicReviewRoute: ApiPublicReviewRoute,
   BSlugEntrarRoute: BSlugEntrarRoute,
   BSlugMinhaContaRoute: BSlugMinhaContaRoute,
   BSlugIndexRoute: BSlugIndexRoute,
