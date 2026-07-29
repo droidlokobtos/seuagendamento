@@ -114,7 +114,7 @@ export const Route = createFileRoute("/api/public/hooks/confirmations")({
           const digits = (cust?.phone ?? "").replace(/\D/g, "");
           const phone = digits ? (digits.startsWith("55") ? digits : `55${digits}`) : "";
           const sendUrl = phone
-            ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+            ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`
             : null;
 
           const { data: conf, error } = await supabaseAdmin

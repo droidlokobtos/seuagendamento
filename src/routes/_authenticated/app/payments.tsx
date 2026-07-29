@@ -21,7 +21,6 @@ import {
   type AppointmentPaymentStatus,
 } from "@/lib/finance";
 import { Check, X, FileText, History, Plus, Wallet, Clock, RotateCcw } from "lucide-react";
-import { WhatsAppActions } from "@/components/app/WhatsAppActions";
 
 export const Route = createFileRoute("/_authenticated/app/payments")({
   component: PaymentsPage,
@@ -68,7 +67,7 @@ function PaymentsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("appointments")
-        .select("id,starts_at,status,total_cents,discount_cents,surcharge_cents,paid_cents,deposit_required_cents,payment_status,customers(name,phone,whatsapp),staff(name)")
+        .select("id,starts_at,status,total_cents,discount_cents,surcharge_cents,paid_cents,deposit_required_cents,payment_status,customers(name),staff(name)")
         .eq("company_id", companyId)
         .gte("starts_at", `${from}T00:00:00`)
         .lte("starts_at", `${to}T23:59:59`)
@@ -296,14 +295,6 @@ function PaymentsPage() {
                       <Button size="sm" variant="ghost" onClick={() => setAuditFor(a)}>
                         <History className="h-4 w-4 mr-1" /> Histórico
                       </Button>
-                      <WhatsAppActions
-                        company={activeCompany}
-                        appointment={a}
-                        size="sm"
-                        variant="outline"
-                        label="WhatsApp"
-                        actions={["deposit_required", "deposit_approved", "deposit_rejected", "appointment_confirmed", "custom"]}
-                      />
                     </div>
                   </div>
                 );

@@ -17,7 +17,6 @@ import { brl } from "@/lib/format";
 import { APPOINTMENT_STATUS, FREED_STATUSES } from "@/lib/appointment-status";
 import { toast } from "sonner";
 import { WhatsAppShareDialog } from "@/components/app/WhatsAppShareDialog";
-import { WhatsAppActions } from "@/components/app/WhatsAppActions";
 import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 
@@ -330,7 +329,6 @@ function Agenda() {
 
       {view === "day" && (
         <DayView
-          company={activeCompany}
           appts={appts as any[]}
           blocks={blocks as any[]}
           onOpen={(a) => { setEdit(a); setOpen(true); }}
@@ -372,9 +370,9 @@ function Agenda() {
 
 /* ---------- Day view ---------- */
 function DayView({
-  company, appts, blocks, onOpen, onNewAt, onConfirmWa, onSetStatus, onDelete,
+  appts, blocks, onOpen, onNewAt, onConfirmWa, onSetStatus, onDelete,
 }: {
-  company: any; appts: any[]; blocks: any[];
+  appts: any[]; blocks: any[];
   onOpen: (a: any) => void;
   onNewAt: (d: Date) => void;
   onConfirmWa: (a: any) => void;
@@ -446,7 +444,9 @@ function DayView({
                   );
                 })()}
                 <div className="mt-1 flex gap-1 justify-end flex-wrap">
-                  <WhatsAppActions company={company} appointment={a} size="icon" variant="ghost" />
+                  <Button size="icon" variant="ghost" title="Confirmar por WhatsApp" onClick={() => onConfirmWa(a)}>
+                    <MessageCircle className="h-4 w-4" />
+                  </Button>
                   {a.status === "scheduled" && (
                     <Button size="icon" variant="ghost" title="Confirmar" onClick={() => onSetStatus(a.id, "confirmed")}>
                       <Check className="h-4 w-4" />

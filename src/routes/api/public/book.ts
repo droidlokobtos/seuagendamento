@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/public/book")({
 
         const { data: company } = await supabaseAdmin
           .from("companies")
-          .select("id,name,status,online_booking_enabled,min_advance_min,max_advance_days,deposit_enabled,deposit_type,deposit_value,pix_key,pix_holder,pix_bank,pix_qr_url,address,phone,whatsapp")
+          .select("id,name,status,online_booking_enabled,min_advance_min,max_advance_days,deposit_enabled,deposit_type,deposit_value,pix_key,pix_holder,pix_bank,pix_qr_url")
           .eq("slug", slug).maybeSingle();
         if (!company) return Response.json({ error: "Empresa não encontrada" }, { status: 404 });
         if (company.status === "suspended")
@@ -184,46 +184,6 @@ export const Route = createFileRoute("/api/public/book")({
         }));
         const { error: asErr } = await supabaseAdmin.from("appointment_services").insert(rows as any);
         if (asErr) return Response.json({ error: asErr.message }, { status: 500 });
-
-        // Mensageria (camada abstrata): enfileira os eventos do agendamento.
-        try {
-          const { queueWaEvent } = await import("@/lib/whatsapp.server");
-          const money = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-          let staffName = "";
-          if (staff_id) {
-            const { data: st } = await supabaseAdmin.from("staff").select("name").eq("id", staff_id).maybeSingle();
-            staffName = st?.name ?? "";
-          }
-          const vars = {
-            nome_cliente: customer.name,
-            nome_empresa: company.name,
-            servico: services.map((s: any) => s.name).filter(Boolean).join(", "),
-            profissional: staffName || "a definir",
-            data: start.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }),
-            horario: start.toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" }),
-            valor: money(dueCents),
-            valor_sinal: money(depositCents),
-            saldo_restante: money(Math.max(0, dueCents - depositCents)),
-            chave_pix: (company as any).pix_key ?? "",
-            telefone_empresa: (company as any).whatsapp ?? (company as any).phone ?? "",
-            endereco_empresa: (company as any).address ?? "",
-            observacoes: customer.notes || "—",
-          };
-          const common = {
-            companyId: company.id,
-            phone: customer.phone,
-            appointmentId: appt.id,
-            customerId,
-          };
-          await queueWaEvent({ ...common, event: "appointment_created", vars });
-          if (depositCents > 0) {
-            await queueWaEvent({ ...common, event: "deposit_required", vars });
-          }
-        } catch {
-          /* mensageria nunca quebra o agendamento */
-        }
-
-
 
         let pixQr: string | null = null;
         if (depositCents > 0 && (company as any).pix_qr_url) {
