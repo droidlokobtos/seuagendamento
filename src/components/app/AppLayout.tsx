@@ -185,11 +185,34 @@ export function AppLayout({ children }: { children?: ReactNode }) {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-64">
-              <div className="h-16 flex items-center gap-2 px-4 border-b">
+            <SheetContent
+              side="left"
+              className="p-0 w-64 flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden"
+            >
+              <div className="h-16 shrink-0 flex items-center gap-2 px-4 border-b">
                 <Brand />
               </div>
-              <NavList />
+              <div
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain"
+                style={{ WebkitOverflowScrolling: "touch" }}
+              >
+                <NavList />
+              </div>
+              <div className="shrink-0 border-t border-border/60 p-3">
+                <p className="mb-2 px-1 text-[10px] text-muted-foreground truncate">{user?.email}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={async () => {
+                    setOpen(false);
+                    await signOut();
+                    void navigate({ to: "/auth", replace: true });
+                  }}
+                >
+                  <LogOut className="h-4 w-4 mr-2" /> Sair
+                </Button>
+              </div>
             </SheetContent>
           </Sheet>
 

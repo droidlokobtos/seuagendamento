@@ -82,14 +82,22 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden"><Menu className="h-5 w-5" /></Button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-64">
-              <div className="h-16 flex items-center gap-2 px-4 border-b">
+            <SheetContent
+              side="left"
+              className="p-0 w-64 flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden"
+            >
+              <div className="h-16 shrink-0 flex items-center gap-2 px-4 border-b">
                 <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">
                   <Sparkles className="h-4 w-4" />
                 </div>
                 <span className="text-sm font-semibold">BeautySaaS</span>
               </div>
-              <NavList />
+              <div
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain"
+                style={{ WebkitOverflowScrolling: "touch" }}
+              >
+                <NavList />
+              </div>
             </SheetContent>
           </Sheet>
           <div className="min-w-0">
