@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { openWhatsApp, waDigits } from "@/lib/whatsapp";
 import { useCompany } from "@/lib/company";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -303,6 +304,15 @@ function Customers() {
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      title="Conversar no WhatsApp"
+                      disabled={!waDigits(c.whatsapp || c.phone)}
+                      onClick={() => openWhatsApp(c.whatsapp || c.phone, `Olá ${c.name}! 👋`)}
+                    >
+                      <MessageCircle className="h-4 w-4 text-emerald-600" />
+                    </Button>
                     <Button size="icon" variant="ghost" title="Histórico" onClick={() => setHistoryOf(c)}>
                       <History className="h-4 w-4" />
                     </Button>
