@@ -618,10 +618,33 @@ function BookingPage() {
           </Card>
         )}
 
-        {step === 6 && (
+        {step === 6 && anamRequired && (
+          <div className="space-y-3">
+            <div className="rounded-xl border p-3 text-sm" style={{ borderColor: accent }}>
+              <p className="font-semibold">🩺 Ficha de anamnese</p>
+              <p className="text-xs text-muted-foreground">
+                {anamQuery.data?.last_filled_at
+                  ? "Sua ficha está vencida (mais de 6 meses) ou o serviço escolhido exige novas informações."
+                  : "Para sua segurança, precisamos de algumas informações de saúde antes do atendimento."}
+              </p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Preencha a ficha para liberar a confirmação do agendamento.
+              </p>
+            </div>
+            <AnamnesisForm
+              sections={(anamQuery.data?.questionnaire ?? []) as any}
+              submitLabel="Enviar ficha"
+              submitting={anamSubmitting}
+              onSubmit={submitAnamnesis}
+            />
+          </div>
+        )}
+
+        {step === 6 && !anamRequired && (
           <Card>
             <CardContent className="p-4 space-y-3">
               <h2 className="font-semibold text-lg">Confirme seu agendamento</h2>
+              {anamDone && <p className="text-xs text-green-700">✅ Ficha de anamnese recebida.</p>}
               <Summary selected={selected} staff={staff} dateStr={dateStr} timeStr={timeStr} totalMin={totalMin} totalPrice={totalPrice} discountCents={coupon?.discount_cents ?? 0} />
               <div className="rounded-xl border p-3 text-sm space-y-1">
                 <p className="font-semibold">Contato</p>
@@ -648,28 +671,6 @@ function BookingPage() {
               </p>
             </CardContent>
           </Card>
-        )}
-
-        {step === 6 && anamRequired && (
-          <div className="mt-4 space-y-3">
-            <div className="rounded-xl border p-3 text-sm" style={{ borderColor: accent }}>
-              <p className="font-semibold">🩺 Ficha de anamnese</p>
-              <p className="text-xs text-muted-foreground">
-                {anamQuery.data?.last_filled_at
-                  ? "Sua ficha está vencida (mais de 6 meses) ou o serviço escolhido exige novas informações."
-                  : "Para sua segurança, precisamos de algumas informações de saúde antes do atendimento."}
-              </p>
-            </div>
-            <AnamnesisForm
-              sections={(anamQuery.data?.questionnaire ?? []) as any}
-              submitLabel="Enviar ficha"
-              submitting={anamSubmitting}
-              onSubmit={submitAnamnesis}
-            />
-          </div>
-        )}
-        {step === 6 && anamDone && (
-          <p className="mt-3 text-center text-xs text-green-700">✅ Ficha de anamnese recebida.</p>
         )}
       </div>
 
