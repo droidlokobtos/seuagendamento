@@ -11,7 +11,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/b/$slug/entrar")({
   loader: async ({ params }) => {
     const { data: company } = await supabase
-      .from("companies")
+      .from("public_companies")
       .select("id,name,slug,logo_url,primary_color,secondary_color,status")
       .eq("slug", params.slug)
       .maybeSingle();

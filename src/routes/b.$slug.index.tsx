@@ -17,8 +17,8 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/b/$slug/")({
   loader: async ({ params }) => {
     const { data: company, error } = await supabase
-      .from("companies")
-      .select("id,name,slug,logo_url,banner_url,primary_color,secondary_color,address,whatsapp,phone,email,status,online_booking_enabled,description,welcome_message,instagram_url,facebook_url,tiktok_url,website_url,show_staff_on_portal,show_reviews_on_portal,amenities,min_advance_min,max_advance_days,deposit_enabled,deposit_type,deposit_value")
+      .from("public_companies")
+      .select("id,name,slug,logo_url,banner_url,primary_color,secondary_color,address,whatsapp,phone,status,online_booking_enabled,description,welcome_message,instagram_url,facebook_url,tiktok_url,website_url,show_staff_on_portal,show_reviews_on_portal,amenities,min_advance_min,max_advance_days,deposit_enabled,deposit_type,deposit_value")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw error;
@@ -149,7 +149,7 @@ function BookingPage() {
     queryFn: async () => {
       const from = `${dateStr}T00:00:00`;
       const to = `${dateStr}T23:59:59`;
-      const { data } = await supabase.from("time_blocks").select("starts_at,ends_at,staff_id")
+      const { data } = await supabase.from("public_time_blocks").select("starts_at,ends_at,staff_id")
         .eq("company_id", companyId)
         .lt("starts_at", to).gt("ends_at", from);
       // Somente bloqueios da empresa toda afetam a lista de horários;
@@ -246,14 +246,17 @@ function BookingPage() {
     setValidating(true);
     try {
       const subtotal = selected.reduce((s, x) => s + x.price_cents, 0);
-      const { data, error } = await supabase.rpc("validate_coupon", {
-        _company: companyId, _code: couponCode.trim(), _subtotal_cents: subtotal,
+      // validação no servidor (funções internas do banco não são mais públicas)
+      const res = await fetch("/api/public/coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ company_id: companyId, code: couponCode.trim(), subtotal_cents: subtotal }),
       });
-      if (error) throw error;
-      const row = Array.isArray(data) ? data[0] : data;
-      if (!row || row.message !== "ok") {
+      const row = await res.json();
+      if (!res.ok || !row?.ok) {
         setCoupon(null);
-        toast.error(row?.message || "Cupom inválido");
+        toast.error(row?.message || row?.error || "Cupom inválido");
+
       } else {
         setCoupon({ code: row.code, discount_cents: row.discount_cents, message: row.message });
         toast.success(`Cupom aplicado: -${brl(row.discount_cents / 100)}`);

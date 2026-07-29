@@ -21,13 +21,13 @@ function ReviewPage() {
 
   useEffect(() => {
     (async () => {
-      const { data: comp } = await supabase.from("companies").select("id,name").eq("slug", slug).maybeSingle();
+      const { data: comp } = await supabase.from("public_companies").select("id,name").eq("slug", slug).maybeSingle();
       if (!comp) return;
       const { data: appt } = await supabase.from("appointments")
         .select("id,company_id,customer_id,staff_id")
-        .eq("id", appointmentId).eq("company_id", comp.id).maybeSingle();
+        .eq("id", appointmentId).eq("company_id", comp.id as string).maybeSingle();
       if (!appt) return;
-      setCtx({ company_id: comp.id, company_name: comp.name, customer_id: appt.customer_id, staff_id: appt.staff_id });
+      setCtx({ company_id: comp.id as string, company_name: comp.name as string, customer_id: appt.customer_id, staff_id: appt.staff_id });
       const { data: existingReview } = await supabase.from("reviews").select("id").eq("appointment_id", appointmentId).maybeSingle();
       if (existingReview) setExisting(true);
     })();

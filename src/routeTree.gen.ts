@@ -31,6 +31,7 @@ import { Route as BSlugEntrarRouteImport } from './routes/b.$slug.entrar'
 import { Route as ApiPublicStaffRouteImport } from './routes/api/public/staff'
 import { Route as ApiPublicReviewRouteImport } from './routes/api/public/review'
 import { Route as ApiPublicDepositRouteImport } from './routes/api/public/deposit'
+import { Route as ApiPublicCouponRouteImport } from './routes/api/public/coupon'
 import { Route as ApiPublicConfirmRouteImport } from './routes/api/public/confirm'
 import { Route as ApiPublicCompanyReviewRouteImport } from './routes/api/public/company-review'
 import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
@@ -175,6 +176,11 @@ const ApiPublicReviewRoute = ApiPublicReviewRouteImport.update({
 const ApiPublicDepositRoute = ApiPublicDepositRouteImport.update({
   id: '/api/public/deposit',
   path: '/api/public/deposit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCouponRoute = ApiPublicCouponRouteImport.update({
+  id: '/api/public/coupon',
+  path: '/api/public/coupon',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicConfirmRoute = ApiPublicConfirmRouteImport.update({
@@ -416,6 +422,7 @@ export interface FileRoutesByFullPath {
   '/api/public/book': typeof ApiPublicBookRoute
   '/api/public/company-review': typeof ApiPublicCompanyReviewRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
+  '/api/public/coupon': typeof ApiPublicCouponRoute
   '/api/public/deposit': typeof ApiPublicDepositRoute
   '/api/public/review': typeof ApiPublicReviewRoute
   '/api/public/staff': typeof ApiPublicStaffRoute
@@ -472,6 +479,7 @@ export interface FileRoutesByTo {
   '/api/public/book': typeof ApiPublicBookRoute
   '/api/public/company-review': typeof ApiPublicCompanyReviewRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
+  '/api/public/coupon': typeof ApiPublicCouponRoute
   '/api/public/deposit': typeof ApiPublicDepositRoute
   '/api/public/review': typeof ApiPublicReviewRoute
   '/api/public/staff': typeof ApiPublicStaffRoute
@@ -532,6 +540,7 @@ export interface FileRoutesById {
   '/api/public/book': typeof ApiPublicBookRoute
   '/api/public/company-review': typeof ApiPublicCompanyReviewRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
+  '/api/public/coupon': typeof ApiPublicCouponRoute
   '/api/public/deposit': typeof ApiPublicDepositRoute
   '/api/public/review': typeof ApiPublicReviewRoute
   '/api/public/staff': typeof ApiPublicStaffRoute
@@ -592,6 +601,7 @@ export interface FileRouteTypes {
     | '/api/public/book'
     | '/api/public/company-review'
     | '/api/public/confirm'
+    | '/api/public/coupon'
     | '/api/public/deposit'
     | '/api/public/review'
     | '/api/public/staff'
@@ -648,6 +658,7 @@ export interface FileRouteTypes {
     | '/api/public/book'
     | '/api/public/company-review'
     | '/api/public/confirm'
+    | '/api/public/coupon'
     | '/api/public/deposit'
     | '/api/public/review'
     | '/api/public/staff'
@@ -707,6 +718,7 @@ export interface FileRouteTypes {
     | '/api/public/book'
     | '/api/public/company-review'
     | '/api/public/confirm'
+    | '/api/public/coupon'
     | '/api/public/deposit'
     | '/api/public/review'
     | '/api/public/staff'
@@ -734,6 +746,7 @@ export interface RootRouteChildren {
   ApiPublicBookRoute: typeof ApiPublicBookRoute
   ApiPublicCompanyReviewRoute: typeof ApiPublicCompanyReviewRoute
   ApiPublicConfirmRoute: typeof ApiPublicConfirmRoute
+  ApiPublicCouponRoute: typeof ApiPublicCouponRoute
   ApiPublicDepositRoute: typeof ApiPublicDepositRoute
   ApiPublicReviewRoute: typeof ApiPublicReviewRoute
   ApiPublicStaffRoute: typeof ApiPublicStaffRoute
@@ -900,6 +913,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/deposit'
       fullPath: '/api/public/deposit'
       preLoaderRoute: typeof ApiPublicDepositRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/coupon': {
+      id: '/api/public/coupon'
+      path: '/api/public/coupon'
+      fullPath: '/api/public/coupon'
+      preLoaderRoute: typeof ApiPublicCouponRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/confirm': {
@@ -1265,6 +1285,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBookRoute: ApiPublicBookRoute,
   ApiPublicCompanyReviewRoute: ApiPublicCompanyReviewRoute,
   ApiPublicConfirmRoute: ApiPublicConfirmRoute,
+  ApiPublicCouponRoute: ApiPublicCouponRoute,
   ApiPublicDepositRoute: ApiPublicDepositRoute,
   ApiPublicReviewRoute: ApiPublicReviewRoute,
   ApiPublicStaffRoute: ApiPublicStaffRoute,
