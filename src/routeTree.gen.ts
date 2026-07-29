@@ -56,6 +56,7 @@ import { Route as AuthenticatedAppCommissionsRouteImport } from './routes/_authe
 import { Route as AuthenticatedAppCampaignsRouteImport } from './routes/_authenticated/app/campaigns'
 import { Route as AuthenticatedAppBlocksRouteImport } from './routes/_authenticated/app/blocks'
 import { Route as AuthenticatedAppBirthdaysRouteImport } from './routes/_authenticated/app/birthdays'
+import { Route as AuthenticatedAppAttendanceRouteImport } from './routes/_authenticated/app/attendance'
 import { Route as AuthenticatedAppAiRouteImport } from './routes/_authenticated/app/ai'
 import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app/agenda'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
@@ -314,6 +315,12 @@ const AuthenticatedAppBirthdaysRoute =
     path: '/birthdays',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
+const AuthenticatedAppAttendanceRoute =
+  AuthenticatedAppAttendanceRouteImport.update({
+    id: '/attendance',
+    path: '/attendance',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
 const AuthenticatedAppAiRoute = AuthenticatedAppAiRouteImport.update({
   id: '/ai',
   path: '/ai',
@@ -398,6 +405,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
+  '/app/attendance': typeof AuthenticatedAppAttendanceRoute
   '/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
   '/app/blocks': typeof AuthenticatedAppBlocksRoute
   '/app/campaigns': typeof AuthenticatedAppCampaignsRoute
@@ -455,6 +463,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
+  '/app/attendance': typeof AuthenticatedAppAttendanceRoute
   '/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
   '/app/blocks': typeof AuthenticatedAppBlocksRoute
   '/app/campaigns': typeof AuthenticatedAppCampaignsRoute
@@ -516,6 +525,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
+  '/_authenticated/app/attendance': typeof AuthenticatedAppAttendanceRoute
   '/_authenticated/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
   '/_authenticated/app/blocks': typeof AuthenticatedAppBlocksRoute
   '/_authenticated/app/campaigns': typeof AuthenticatedAppCampaignsRoute
@@ -577,6 +587,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/app/agenda'
     | '/app/ai'
+    | '/app/attendance'
     | '/app/birthdays'
     | '/app/blocks'
     | '/app/campaigns'
@@ -634,6 +645,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/app/agenda'
     | '/app/ai'
+    | '/app/attendance'
     | '/app/birthdays'
     | '/app/blocks'
     | '/app/campaigns'
@@ -694,6 +706,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/settings'
     | '/_authenticated/app/agenda'
     | '/_authenticated/app/ai'
+    | '/_authenticated/app/attendance'
     | '/_authenticated/app/birthdays'
     | '/_authenticated/app/blocks'
     | '/_authenticated/app/campaigns'
@@ -1090,6 +1103,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppBirthdaysRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/attendance': {
+      id: '/_authenticated/app/attendance'
+      path: '/attendance'
+      fullPath: '/app/attendance'
+      preLoaderRoute: typeof AuthenticatedAppAttendanceRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/ai': {
       id: '/_authenticated/app/ai'
       path: '/ai'
@@ -1197,6 +1217,7 @@ const AuthenticatedAdminRouteRouteWithChildren =
 interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppAgendaRoute: typeof AuthenticatedAppAgendaRoute
   AuthenticatedAppAiRoute: typeof AuthenticatedAppAiRoute
+  AuthenticatedAppAttendanceRoute: typeof AuthenticatedAppAttendanceRoute
   AuthenticatedAppBirthdaysRoute: typeof AuthenticatedAppBirthdaysRoute
   AuthenticatedAppBlocksRoute: typeof AuthenticatedAppBlocksRoute
   AuthenticatedAppCampaignsRoute: typeof AuthenticatedAppCampaignsRoute
@@ -1224,6 +1245,7 @@ interface AuthenticatedAppRouteRouteChildren {
 const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppAgendaRoute: AuthenticatedAppAgendaRoute,
   AuthenticatedAppAiRoute: AuthenticatedAppAiRoute,
+  AuthenticatedAppAttendanceRoute: AuthenticatedAppAttendanceRoute,
   AuthenticatedAppBirthdaysRoute: AuthenticatedAppBirthdaysRoute,
   AuthenticatedAppBlocksRoute: AuthenticatedAppBlocksRoute,
   AuthenticatedAppCampaignsRoute: AuthenticatedAppCampaignsRoute,
