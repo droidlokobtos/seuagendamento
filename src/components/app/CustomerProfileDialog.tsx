@@ -15,7 +15,7 @@ import {
 } from "@/lib/attendance";
 
 import { Phone, Mail, MessageCircle } from "lucide-react";
-import { AnamnesisTab } from "@/components/app/AnamnesisTab";
+import { AnamnesisTab, useIsCompanyAdmin } from "@/components/app/AnamnesisTab";
 
 
 
