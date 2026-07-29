@@ -425,7 +425,7 @@ function PublicReviewLink({ companyId, companyName }: { companyId?: string; comp
   const qc = useQueryClient();
   const [qr, setQr] = useState<string>("");
 
-  const { data: settings } = useQuery({
+  const { data: settings, isSuccess } = useQuery({
     queryKey: ["review-settings", companyId],
     enabled: !!companyId,
     queryFn: async () =>
@@ -446,19 +446,23 @@ function PublicReviewLink({ companyId, companyName }: { companyId?: string; comp
     mutationFn: async (patch: Record<string, unknown>) => {
       const { error } = await supabase
         .from("review_settings")
-        .upsert({ company_id: companyId!, ...patch } as any);
+        .upsert({ company_id: companyId!, ...patch } as any, { onConflict: "company_id" });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["review-settings"] }),
     onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
   });
 
-  // Gera o token na primeira vez que a empresa abre a aba
+  // Gera o token na primeira vez que a empresa abre a aba.
+  // Importante: a empresa pode ainda NÃO ter linha em review_settings
+  // (settings === null); nesse caso também precisamos criar o registro.
   useEffect(() => {
-    if (!companyId || !settings || token) return;
+    if (!companyId || !isSuccess || token || upsert.isPending) return;
     upsert.mutate({ public_token: reviewToken(10) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId, settings, token]);
+  }, [companyId, isSuccess, token]);
+
+
 
   const waText = encodeURIComponent(
     `Olá! 👋\n\nObrigado por escolher a ${companyName} 💛\nSua opinião é muito importante para nós.\n\n⭐ Avalie seu atendimento: ${url}`,
