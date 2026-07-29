@@ -31,6 +31,7 @@ import { Route as ApiPublicStaffRouteImport } from './routes/api/public/staff'
 import { Route as ApiPublicReviewRouteImport } from './routes/api/public/review'
 import { Route as ApiPublicDepositRouteImport } from './routes/api/public/deposit'
 import { Route as ApiPublicConfirmRouteImport } from './routes/api/public/confirm'
+import { Route as ApiPublicCompanyReviewRouteImport } from './routes/api/public/company-review'
 import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
 import { Route as AuthenticatedAppWhatsappRouteImport } from './routes/_authenticated/app/whatsapp'
 import { Route as AuthenticatedAppUsersRouteImport } from './routes/_authenticated/app/users'
@@ -173,6 +174,11 @@ const ApiPublicDepositRoute = ApiPublicDepositRouteImport.update({
 const ApiPublicConfirmRoute = ApiPublicConfirmRouteImport.update({
   id: '/api/public/confirm',
   path: '/api/public/confirm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCompanyReviewRoute = ApiPublicCompanyReviewRouteImport.update({
+  id: '/api/public/company-review',
+  path: '/api/public/company-review',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicBookRoute = ApiPublicBookRouteImport.update({
@@ -401,6 +407,7 @@ export interface FileRoutesByFullPath {
   '/app/users': typeof AuthenticatedAppUsersRoute
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
+  '/api/public/company-review': typeof ApiPublicCompanyReviewRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
   '/api/public/deposit': typeof ApiPublicDepositRoute
   '/api/public/review': typeof ApiPublicReviewRoute
@@ -455,6 +462,7 @@ export interface FileRoutesByTo {
   '/app/users': typeof AuthenticatedAppUsersRoute
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
+  '/api/public/company-review': typeof ApiPublicCompanyReviewRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
   '/api/public/deposit': typeof ApiPublicDepositRoute
   '/api/public/review': typeof ApiPublicReviewRoute
@@ -513,6 +521,7 @@ export interface FileRoutesById {
   '/_authenticated/app/users': typeof AuthenticatedAppUsersRoute
   '/_authenticated/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
+  '/api/public/company-review': typeof ApiPublicCompanyReviewRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
   '/api/public/deposit': typeof ApiPublicDepositRoute
   '/api/public/review': typeof ApiPublicReviewRoute
@@ -571,6 +580,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app/whatsapp'
     | '/api/public/book'
+    | '/api/public/company-review'
     | '/api/public/confirm'
     | '/api/public/deposit'
     | '/api/public/review'
@@ -625,6 +635,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app/whatsapp'
     | '/api/public/book'
+    | '/api/public/company-review'
     | '/api/public/confirm'
     | '/api/public/deposit'
     | '/api/public/review'
@@ -682,6 +693,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/users'
     | '/_authenticated/app/whatsapp'
     | '/api/public/book'
+    | '/api/public/company-review'
     | '/api/public/confirm'
     | '/api/public/deposit'
     | '/api/public/review'
@@ -707,6 +719,7 @@ export interface RootRouteChildren {
   AvaliacaoTokenRoute: typeof AvaliacaoTokenRoute
   ConfirmarTokenRoute: typeof ConfirmarTokenRoute
   ApiPublicBookRoute: typeof ApiPublicBookRoute
+  ApiPublicCompanyReviewRoute: typeof ApiPublicCompanyReviewRoute
   ApiPublicConfirmRoute: typeof ApiPublicConfirmRoute
   ApiPublicDepositRoute: typeof ApiPublicDepositRoute
   ApiPublicReviewRoute: typeof ApiPublicReviewRoute
@@ -874,6 +887,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/confirm'
       fullPath: '/api/public/confirm'
       preLoaderRoute: typeof ApiPublicConfirmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/company-review': {
+      id: '/api/public/company-review'
+      path: '/api/public/company-review'
+      fullPath: '/api/public/company-review'
+      preLoaderRoute: typeof ApiPublicCompanyReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/book': {
@@ -1222,6 +1242,7 @@ const rootRouteChildren: RootRouteChildren = {
   AvaliacaoTokenRoute: AvaliacaoTokenRoute,
   ConfirmarTokenRoute: ConfirmarTokenRoute,
   ApiPublicBookRoute: ApiPublicBookRoute,
+  ApiPublicCompanyReviewRoute: ApiPublicCompanyReviewRoute,
   ApiPublicConfirmRoute: ApiPublicConfirmRoute,
   ApiPublicDepositRoute: ApiPublicDepositRoute,
   ApiPublicReviewRoute: ApiPublicReviewRoute,
@@ -1237,13 +1258,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
