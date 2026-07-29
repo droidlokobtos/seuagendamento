@@ -7,7 +7,9 @@ import { brl, dateBR } from "@/lib/format";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SmartProfilePanel } from "@/components/app/SmartProfile";
+import { CustomerTimeline } from "@/components/app/CustomerTimeline";
 import { useSmartHistory, useSmartStats, COMMUNICATION_PREFS, NOTE_KINDS } from "@/lib/smart-profile";
+
 import { Phone, Mail, MessageCircle } from "lucide-react";
 
 type Customer = {
