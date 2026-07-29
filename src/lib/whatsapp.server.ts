@@ -49,13 +49,17 @@ const webBridgeProvider: Provider = {
       return { status: "failed", error: "Bridge não configurado (URL/token ausentes)" };
     }
     try {
-      const res = await fetch(`${integration.api_url.replace(/\/$/, "")}/messages`, {
+      const res = await fetch(`${integration.api_url.replace(/\/$/, "")}/messages/send`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${integration.api_token}`,
         },
-        body: JSON.stringify({ session: integration.session_ref, to, message: content }),
+        body: JSON.stringify({
+          session: integration.session_ref ?? integration.company_id,
+          to,
+          text: content,
+        }),
       });
       if (!res.ok) return { status: "failed", error: `Bridge respondeu ${res.status}` };
       return { status: "sent" };
