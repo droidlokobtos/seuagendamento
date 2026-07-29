@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/lib/company";
 import {
   connectWhatsApp,
+  syncWhatsAppSession,
   disconnectWhatsApp,
   processWhatsAppQueue,
 } from "@/lib/whatsapp.functions";
