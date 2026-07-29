@@ -885,6 +885,240 @@ export type Database = {
           },
         ]
       }
+      customer_dates: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          date: string
+          id: string
+          kind: string
+          notes: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          date: string
+          id?: string
+          kind?: string
+          notes?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          date?: string
+          id?: string
+          kind?: string
+          notes?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_dates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_dates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_dates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_notes: {
+        Row: {
+          company_id: string
+          content: string
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          kind: string
+          pinned: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          company_id: string
+          content: string
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          kind?: string
+          pinned?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          kind?: string
+          pinned?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_notes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_profile_history: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          company_id: string
+          created_at: string
+          customer_id: string
+          entity: string
+          field: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          company_id: string
+          created_at?: string
+          customer_id: string
+          entity: string
+          field?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          company_id?: string
+          created_at?: string
+          customer_id?: string
+          entity?: string
+          field?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_profile_history_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_profiles: {
+        Row: {
+          communication_pref: string
+          company_id: string
+          created_at: string
+          customer_id: string
+          general_notes: string | null
+          preferred_staff_id: string | null
+          restrictions: string[]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          communication_pref?: string
+          company_id: string
+          created_at?: string
+          customer_id: string
+          general_notes?: string | null
+          preferred_staff_id?: string | null
+          restrictions?: string[]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          communication_pref?: string
+          company_id?: string
+          created_at?: string
+          customer_id?: string
+          general_notes?: string | null
+          preferred_staff_id?: string | null
+          restrictions?: string[]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_profiles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_profiles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_profiles_preferred_staff_id_fkey"
+            columns: ["preferred_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           birthdate: string | null
