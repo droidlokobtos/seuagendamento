@@ -238,10 +238,59 @@ function Reviews() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="list" className="pt-4">
+        <TabsContent value="list" className="pt-4 space-y-4">
+          <Card>
+            <CardContent className="p-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5 items-end">
+              <div className="space-y-1">
+                <Label className="text-xs">De</Label>
+                <Input type="date" value={fFrom} onChange={(e) => setFFrom(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Até</Label>
+                <Input type="date" value={fTo} onChange={(e) => setFTo(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Profissional</Label>
+                <select
+                  className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                  value={fStaff}
+                  onChange={(e) => setFStaff(e.target.value)}
+                >
+                  <option value="">Todos</option>
+                  {staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Serviço</Label>
+                <Input placeholder="Buscar serviço" value={fService} onChange={(e) => setFService(e.target.value)} />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={onlyBest ? "default" : "outline"}
+                  className="flex-1"
+                  onClick={() => setOnlyBest((v) => !v)}
+                >
+                  <Award className="h-4 w-4 mr-1" /> Melhores
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => { setFFrom(""); setFTo(""); setFStaff(""); setFService(""); setOnlyBest(false); }}
+                >
+                  Limpar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="text-xs text-muted-foreground">
+            {filtered.length} avaliações · média {filteredAvg ? filteredAvg.toFixed(1) : "—"}★
+          </div>
+
           <div className="grid gap-3">
-            {data.map((r) => (
-              <Card key={r.id}>
+            {filtered.map((r) => (
+              <Card key={r.id} className={r.rating === 5 ? "border-primary/40" : undefined}>
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -250,12 +299,16 @@ function Reviews() {
                           <Star key={i} className={`h-4 w-4 ${i < r.rating ? "fill-primary text-primary" : "text-muted-foreground/40"}`} />
                         ))}
                         {!r.published && <Badge variant="secondary" className="ml-2">Oculta</Badge>}
+                        {r.rating === 5 && (
+                          <Badge className="ml-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30">Destaque</Badge>
+                        )}
+                        {r.source === "public_link" && <Badge variant="outline" className="ml-1">Link público</Badge>}
                         {r.rating <= NEGATIVE_ALERT_MAX_RATING && (
                           <Badge className="ml-1 bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30">Atenção</Badge>
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        {r.customer_id ? custMap[r.customer_id]?.name ?? "Cliente" : "Anônimo"} ·{" "}
+                        {r.customer_id ? custMap[r.customer_id]?.name ?? "Cliente" : r.customer_name || "Anônimo"} ·{" "}
                         {new Date(r.created_at).toLocaleDateString("pt-BR")}
                         {r.staff_id ? ` · ${staffMap[r.staff_id] ?? "Profissional"}` : ""}
                         {r.service_names ? ` · ${r.service_names}` : ""}
@@ -277,13 +330,18 @@ function Reviews() {
                 </CardContent>
               </Card>
             ))}
-            {data.length === 0 && (
+            {filtered.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                Nenhuma avaliação ainda. Os convites são gerados automaticamente ao concluir um atendimento.
+                Nenhuma avaliação encontrada com os filtros atuais.
               </p>
             )}
           </div>
         </TabsContent>
+
+        <TabsContent value="link" className="pt-4">
+          <PublicReviewLink companyId={companyId} companyName={activeCompany?.name ?? "nosso estabelecimento"} />
+        </TabsContent>
+
 
         <TabsContent value="invites" className="pt-4">
           <div className="grid gap-2">
