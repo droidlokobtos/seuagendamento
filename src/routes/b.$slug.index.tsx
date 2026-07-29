@@ -129,7 +129,7 @@ function BookingPage() {
     },
   });
   const anamCheckActive = step === 6 && !!customerPhone && selected.length > 0 && !anamDone;
-  const anamChecking = anamCheckActive && (anamQuery.isLoading || anamQuery.isFetching || anamQuery.data === undefined);
+  const anamChecking = anamCheckActive && !anamQuery.isError && (anamQuery.isLoading || anamQuery.isFetching || anamQuery.data === undefined);
   const anamRequired = !anamDone && anamQuery.data?.required === true;
   const anamBlocked = anamChecking || anamRequired || (anamCheckActive && anamQuery.isError);
 
