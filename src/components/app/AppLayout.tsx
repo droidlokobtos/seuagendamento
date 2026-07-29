@@ -54,6 +54,8 @@ const NAV = [
   { to: "/app/payments", label: "Pagamentos", icon: Wallet },
   { to: "/app/commissions", label: "Comissões", icon: BadgePercent },
   { to: "/app/confirmations", label: "Confirmações", icon: CalendarCheck },
+  { to: "/app/attendance", label: "Comparecimento", icon: ShieldAlert },
+
   { to: "/app/products", label: "Estoque", icon: Package },
   { to: "/app/reports", label: "Relatórios", icon: BarChart3 },
   { to: "/app/coupons", label: "Cupons", icon: Ticket },

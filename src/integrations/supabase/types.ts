@@ -426,6 +426,153 @@ export type Database = {
           },
         ]
       }
+      attendance_events: {
+        Row: {
+          amount_cents: number
+          appointment_id: string | null
+          company_id: string
+          created_at: string
+          customer_id: string
+          event: string
+          hours_before: number | null
+          id: string
+          notes: string | null
+          occurred_at: string
+          scheduled_for: string | null
+        }
+        Insert: {
+          amount_cents?: number
+          appointment_id?: string | null
+          company_id: string
+          created_at?: string
+          customer_id: string
+          event: string
+          hours_before?: number | null
+          id?: string
+          notes?: string | null
+          occurred_at?: string
+          scheduled_for?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          appointment_id?: string | null
+          company_id?: string
+          created_at?: string
+          customer_id?: string
+          event?: string
+          hours_before?: number | null
+          id?: string
+          notes?: string | null
+          occurred_at?: string
+          scheduled_for?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_events_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_settings: {
+        Row: {
+          attention_score: number
+          company_id: string
+          created_at: string
+          late_cancel_hours: number
+          lookback_days: number
+          min_no_shows_for_action: number
+          reminder_offsets_hours: number[]
+          risk_action: string
+          risk_score: number
+          updated_at: string
+          waitlist_enabled: boolean
+          weight_cancel: number
+          weight_completed: number
+          weight_late_cancel: number
+          weight_no_show: number
+        }
+        Insert: {
+          attention_score?: number
+          company_id: string
+          created_at?: string
+          late_cancel_hours?: number
+          lookback_days?: number
+          min_no_shows_for_action?: number
+          reminder_offsets_hours?: number[]
+          risk_action?: string
+          risk_score?: number
+          updated_at?: string
+          waitlist_enabled?: boolean
+          weight_cancel?: number
+          weight_completed?: number
+          weight_late_cancel?: number
+          weight_no_show?: number
+        }
+        Update: {
+          attention_score?: number
+          company_id?: string
+          created_at?: string
+          late_cancel_hours?: number
+          lookback_days?: number
+          min_no_shows_for_action?: number
+          reminder_offsets_hours?: number[]
+          risk_action?: string
+          risk_score?: number
+          updated_at?: string
+          waitlist_enabled?: boolean
+          weight_cancel?: number
+          weight_completed?: number
+          weight_late_cancel?: number
+          weight_no_show?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
           audience: string
@@ -2858,6 +3005,113 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist_entries: {
+        Row: {
+          company_id: string
+          converted_appointment_id: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string
+          id: string
+          notes: string | null
+          notified_at: string | null
+          phone: string | null
+          preferred_date: string | null
+          preferred_period: string
+          service_id: string | null
+          staff_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          converted_appointment_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name: string
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          phone?: string | null
+          preferred_date?: string | null
+          preferred_period?: string
+          service_id?: string | null
+          staff_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          converted_appointment_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          phone?: string | null
+          preferred_date?: string | null
+          preferred_period?: string
+          service_id?: string | null
+          staff_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_entries_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_entries_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_entries_converted_appointment_id_fkey"
+            columns: ["converted_appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_entries_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_entries_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_entries_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_entries_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_integrations: {
         Row: {
           api_token: string | null
@@ -3286,6 +3540,30 @@ export type Database = {
       }
     }
     Functions: {
+      customer_booking_rule: {
+        Args: { _company: string; _customer: string }
+        Returns: {
+          action: string
+          classification: string
+          no_shows: number
+          score: number
+        }[]
+      }
+      customer_reliability: {
+        Args: { _company: string }
+        Returns: {
+          attendance_rate: number
+          cancels: number
+          classification: string
+          completed: number
+          customer_id: string
+          last_event_at: string
+          late_cancels: number
+          no_shows: number
+          score: number
+          total: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

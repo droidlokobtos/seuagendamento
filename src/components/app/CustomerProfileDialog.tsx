@@ -9,8 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { SmartProfilePanel } from "@/components/app/SmartProfile";
 import { CustomerTimeline } from "@/components/app/CustomerTimeline";
 import { useSmartHistory, useSmartStats, COMMUNICATION_PREFS, NOTE_KINDS } from "@/lib/smart-profile";
+import { Progress } from "@/components/ui/progress";
+import {
+  ATTENDANCE_EVENTS, CLASSIFICATION, useAttendanceSettings, useCustomerAttendance, summarize,
+} from "@/lib/attendance";
 
 import { Phone, Mail, MessageCircle } from "lucide-react";
+
 
 type Customer = {
   id: string; name: string; phone: string | null; whatsapp: string | null; email: string | null;
@@ -71,9 +76,11 @@ export function CustomerProfileDialog({
           <TabsTrigger value="agendamentos">Agendamentos</TabsTrigger>
           <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
           <TabsTrigger value="avaliacoes">Avaliações</TabsTrigger>
+          <TabsTrigger value="comparecimento">Comparecimento</TabsTrigger>
           <TabsTrigger value="timeline">Linha do Tempo</TabsTrigger>
           <TabsTrigger value="smart">Perfil Inteligente</TabsTrigger>
         </TabsList>
+
 
 
         <TabsContent value="dados" className="mt-4 space-y-3">
@@ -144,7 +151,12 @@ export function CustomerProfileDialog({
           ))}
         </TabsContent>
 
+        <TabsContent value="comparecimento" className="mt-4">
+          <AttendanceTab companyId={companyId} customerId={customer.id} />
+        </TabsContent>
+
         <TabsContent value="timeline" className="mt-4">
+
           <CustomerTimeline customerId={customer.id} customer={{ name: customer.name, created_at: customer.created_at }} />
         </TabsContent>
 
@@ -162,6 +174,67 @@ function MiniStat({ label, value }: { label: string; value: string }) {
     <div className="rounded-lg border p-3">
       <p className="text-[11px] text-muted-foreground">{label}</p>
       <p className="mt-0.5 text-sm font-medium">{value}</p>
+    </div>
+  );
+}
+
+function AttendanceTab({ companyId, customerId }: { companyId: string; customerId: string }) {
+  const { data: settings } = useAttendanceSettings(companyId);
+  const { data: events = [], isLoading } = useCustomerAttendance(customerId);
+  const s = summarize(events, settings);
+  const meta = CLASSIFICATION[s.classification];
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">Confiabilidade do cliente</p>
+            <Badge variant="outline" className={meta.badge}>{meta.emoji} {meta.label}</Badge>
+          </div>
+          <div>
+            <p className="mb-1 text-[11px] text-muted-foreground">Pontuação: {s.score}/100</p>
+            <Progress value={s.score} className="h-2" />
+          </div>
+          <div>
+            <p className="mb-1 text-[11px] text-muted-foreground">Taxa de comparecimento: {s.rate}%</p>
+            <Progress value={s.rate} className="h-2" />
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+            <MiniStat label="Presenças" value={String(s.completed)} />
+            <MiniStat label="Faltas" value={String(s.noShows)} />
+            <MiniStat label="Cancel. em cima da hora" value={String(s.lateCancels)} />
+            <MiniStat label="Prejuízo gerado" value={brl(s.lostCents / 100)} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {isLoading && <p className="py-6 text-center text-sm text-muted-foreground">Carregando…</p>}
+      {!isLoading && !events.length && (
+        <p className="py-8 text-center text-sm text-muted-foreground">Nenhum registro de comparecimento ainda.</p>
+      )}
+
+      <div className="space-y-2">
+        {events.map((e) => {
+          const em = ATTENDANCE_EVENTS[e.event] ?? { label: e.event, emoji: "•", tone: "" };
+          return (
+            <div key={e.id} className="flex items-center justify-between rounded-md border p-3 text-sm">
+              <div>
+                <p className="font-medium">{em.emoji} {em.label}</p>
+                <p className="text-xs text-muted-foreground">
+                  {dateBR(e.occurred_at)}
+                  {e.hours_before != null && e.event !== "completed"
+                    ? ` · ${Math.max(0, Math.round(Number(e.hours_before)))}h de antecedência`
+                    : ""}
+                </p>
+              </div>
+              {e.amount_cents > 0 && (
+                <Badge variant="secondary" className="text-[10px]">{brl(e.amount_cents / 100)}</Badge>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

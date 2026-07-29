@@ -158,9 +158,29 @@ export const Route = createFileRoute("/api/public/book")({
           customerId = created.id;
         }
 
+        // Controle de comparecimento: bloqueio ou sinal obrigatório por histórico de faltas
+        const { data: ruleRows } = await supabaseAdmin.rpc("customer_booking_rule", {
+          _company: company.id,
+          _customer: customerId,
+        });
+        const rule = (ruleRows as any[] | null)?.[0] ?? { action: "none" };
+        if (rule.action === "block") {
+          return Response.json(
+            {
+              error:
+                "Não é possível concluir o agendamento online devido a faltas anteriores. Entre em contato com o estabelecimento.",
+            },
+            { status: 403 },
+          );
+        }
+
         // Regra financeira central: total devido e sinal exigido
         const dueCents = Math.max(0, totalCents - discountCents);
-        const depositCents = computeDepositCents(dueCents, depositConfigFromCompany(company));
+        let depositCents = computeDepositCents(dueCents, depositConfigFromCompany(company));
+        if (rule.action === "require_deposit" && depositCents === 0 && dueCents > 0) {
+          depositCents = Math.round(dueCents * 0.5);
+        }
+
 
         const { data: appt, error: aErr } = await supabaseAdmin
           .from("appointments")
