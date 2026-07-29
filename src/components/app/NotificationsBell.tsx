@@ -16,13 +16,20 @@ export function NotificationsBell() {
     queryFn: async () => {
       if (!companyId) return [];
       const { data } = await supabase.from("notifications")
-        .select("*").eq("company_id", companyId)
+        // só as colunas usadas na lista
+        .select("id,title,body,link,read_at,created_at,kind,metadata")
+
+        .eq("company_id", companyId)
         .order("created_at", { ascending: false }).limit(20);
       return data ?? [];
     },
     enabled: !!companyId,
-    refetchInterval: 30_000,
+    staleTime: 60_000,
+    // 30s gerava ~2x mais consultas do que o necessário; 60s já é tempo real o bastante
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
   });
+
 
   const unread = data.filter((n: any) => !n.read_at).length;
 
