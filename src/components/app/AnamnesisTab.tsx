@@ -126,8 +126,12 @@ export function AnamnesisTab({
             <Badge variant="outline" className={expired ? "bg-destructive/10 text-destructive" : "bg-green-500/10 text-green-700"}>
               {expired ? "⚠️ Pendente" : "✅ Válida"}
             </Badge>
-            <Button size="sm" onClick={() => setCreating(true)}><Plus className="mr-1 h-4 w-4" /> Nova ficha</Button>
           </div>
+        </CardContent>
+      </Card>
+      <p className="text-xs text-muted-foreground">
+        A ficha é preenchida exclusivamente pelo cliente durante o agendamento no link público.
+      </p>
         </CardContent>
       </Card>
 
