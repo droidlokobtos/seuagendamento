@@ -31,9 +31,11 @@ export const Route = createFileRoute("/_authenticated/app/reviews")({ component:
 type R = {
   id: string; rating: number; comment: string | null; published: boolean; created_at: string;
   customer_id: string | null; appointment_id: string | null; staff_id: string | null;
+  customer_name: string | null;
   staff_rating: number | null; would_return: boolean | null; would_recommend: boolean | null;
   service_names: string | null; source: string | null;
 };
+
 
 type Invite = {
   id: string; token: string; status: string; channel: string | null; message: string | null;
