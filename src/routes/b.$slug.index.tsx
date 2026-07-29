@@ -648,7 +648,30 @@ function BookingPage() {
             </CardContent>
           </Card>
         )}
+
+        {step === 6 && anamRequired && (
+          <div className="mt-4 space-y-3">
+            <div className="rounded-xl border p-3 text-sm" style={{ borderColor: accent }}>
+              <p className="font-semibold">🩺 Ficha de anamnese</p>
+              <p className="text-xs text-muted-foreground">
+                {anamQuery.data?.last_filled_at
+                  ? "Sua ficha está vencida (mais de 6 meses) ou o serviço escolhido exige novas informações."
+                  : "Para sua segurança, precisamos de algumas informações de saúde antes do atendimento."}
+              </p>
+            </div>
+            <AnamnesisForm
+              sections={(anamQuery.data?.questionnaire ?? []) as any}
+              submitLabel="Enviar ficha"
+              submitting={anamSubmitting}
+              onSubmit={submitAnamnesis}
+            />
+          </div>
+        )}
+        {step === 6 && anamDone && (
+          <p className="mt-3 text-center text-xs text-green-700">✅ Ficha de anamnese recebida.</p>
+        )}
       </div>
+
 
       <div className="fixed bottom-0 inset-x-0 border-t bg-card/90 backdrop-blur p-3">
         <div className="max-w-lg mx-auto flex items-center gap-2">
@@ -673,9 +696,9 @@ function BookingPage() {
             </Button>
           ) : (
             <Button size="lg" style={{ background: primary }}
-              disabled={submitting || !form.name || !form.phone || !timeStr}
+              disabled={submitting || !form.name || !form.phone || !timeStr || anamRequired}
               onClick={submit}>
-              {submitting ? "Enviando…" : "Confirmar"}
+              {submitting ? "Enviando…" : anamRequired ? "Preencha a ficha" : "Confirmar"}
             </Button>
           )}
         </div>
