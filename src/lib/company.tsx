@@ -43,7 +43,10 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       return (data ?? []) as Company[];
     },
+    // lista de empresas muda muito pouco — evita refetch a cada navegação
+    staleTime: 5 * 60_000,
   });
+
 
   useEffect(() => {
     if (!companies.length) return;
