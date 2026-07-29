@@ -143,25 +143,15 @@ export const Route = createFileRoute("/api/public/book")({
             }
           }
         }
-        if (!customerId) {
-          const { data: created, error: cuErr } = await supabaseAdmin
-            .from("customers")
-            .insert({
-              company_id: company.id,
-              name: customer.name, phone: customer.phone,
-              email: customer.email || null,
-              user_id: authUserId,
-              source: "portal_publico",
-              notes: customer.notes ? `[Portal público] ${customer.notes}` : null,
-            } as any)
-            .select("id").single();
-          if (cuErr) return Response.json({ error: cuErr.message }, { status: 500 });
-          customerId = created.id;
-        }
-
         // Segurança do fluxo público: não permite criar a reserva quando a
         // anamnese obrigatória ainda não foi preenchida ou está vencida.
         const requiredSections = sectionsForServices(services ?? []);
+        if (!customerId) {
+          return Response.json(
+            { error: "Preencha a ficha de anamnese antes de confirmar o agendamento.", anamnesis_required: true },
+            { status: 409 },
+          );
+        }
         const { data: lastAnamnesis } = await supabaseAdmin
           .from("anamnesis_records")
           .select("id,filled_at,sections")
