@@ -36,6 +36,18 @@ export function CustomerProfileDialog({
       return data ?? [];
     },
   });
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["customer-reviews", customer.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("reviews")
+        .select("id,rating,comment,service_names,created_at")
+        .eq("customer_id", customer.id)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
 
   const totalPaid = (payments as any[])
     .filter((p) => p.status === "approved")
