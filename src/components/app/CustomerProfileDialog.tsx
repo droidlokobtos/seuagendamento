@@ -151,7 +151,12 @@ export function CustomerProfileDialog({
           ))}
         </TabsContent>
 
+        <TabsContent value="comparecimento" className="mt-4">
+          <AttendanceTab companyId={companyId} customerId={customer.id} />
+        </TabsContent>
+
         <TabsContent value="timeline" className="mt-4">
+
           <CustomerTimeline customerId={customer.id} customer={{ name: customer.name, created_at: customer.created_at }} />
         </TabsContent>
 
