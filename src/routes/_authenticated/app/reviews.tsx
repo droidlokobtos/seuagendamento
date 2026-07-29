@@ -194,7 +194,9 @@ function Reviews() {
         <TabsList>
           <TabsTrigger value="panel">Painel</TabsTrigger>
           <TabsTrigger value="list">Avaliações</TabsTrigger>
+          <TabsTrigger value="link">Link público</TabsTrigger>
           <TabsTrigger value="invites">Convites</TabsTrigger>
+
           <TabsTrigger value="settings">Configurações</TabsTrigger>
         </TabsList>
 
