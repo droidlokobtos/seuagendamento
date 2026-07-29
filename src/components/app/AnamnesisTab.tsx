@@ -132,8 +132,6 @@ export function AnamnesisTab({
       <p className="text-xs text-muted-foreground">
         A ficha é preenchida exclusivamente pelo cliente durante o agendamento no link público.
       </p>
-        </CardContent>
-      </Card>
 
       {!!last?.alerts?.length && (
         <Card className="border-destructive/40 bg-destructive/5">
