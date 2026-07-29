@@ -617,6 +617,10 @@ function ApptDialog({
             <SelectContent>{customers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
           </Select>
         </div>
+        {f.customer_id && (
+          <SmartProfileSummary customerId={f.customer_id} selectedStaffId={f.staff_id || null} />
+        )}
+
         <div>
           <Label>Funcionário</Label>
           <Select value={f.staff_id} onValueChange={(v) => setF({ ...f, staff_id: v })}>
