@@ -267,7 +267,7 @@ function Customers() {
         <CardContent className="p-4 grid gap-3 md:grid-cols-4">
           <div className="relative md:col-span-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar por nome, telefone, WhatsApp ou e-mail…" className="pl-9"
+            <Input placeholder="Buscar por nome, contato ou observações (ex.: alergia)…" className="pl-9"
               value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
           <Select value={sourceFilter} onValueChange={setSourceFilter}>
@@ -323,7 +323,7 @@ function Customers() {
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <Button size="icon" variant="ghost" title="Histórico" onClick={() => setHistoryOf(c)}>
+                    <Button size="icon" variant="ghost" title="Perfil inteligente" onClick={() => setHistoryOf(c)}>
                       <History className="h-4 w-4" />
                     </Button>
                     <Button size="icon" variant="ghost" onClick={() => { setEdit(c); setOpen(true); }}>
