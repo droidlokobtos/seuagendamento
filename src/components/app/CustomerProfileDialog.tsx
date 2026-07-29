@@ -115,8 +115,8 @@ export function CustomerProfileDialog({
           {!payments.length && <p className="py-6 text-center text-sm text-muted-foreground">Nenhum pagamento registrado.</p>}
         </TabsContent>
 
-        <TabsContent value="timeline" className="mt-4 space-y-2">
         <TabsContent value="avaliacoes" className="mt-4 space-y-2">
+
           {!reviews.length && <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma avaliação ainda.</p>}
           {(reviews as any[]).map((r) => (
             <div key={r.id} className="rounded-md border p-3 text-sm">
