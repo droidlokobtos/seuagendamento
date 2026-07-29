@@ -376,7 +376,7 @@ function BookingPage() {
                   const d = company.whatsapp.replace(/\D/g, "");
                   const p = d.startsWith("55") ? d : `55${d}`;
                   return (
-                    <a href={`https://api.whatsapp.com/send?phone=${p}&text=${waMsg}`} target="_blank" rel="noreferrer">
+                    <a href={`https://wa.me/${p}?text=${waMsg}`} target="_blank" rel="noreferrer">
                       <Button style={{ background: "#25D366", color: "white" }}>
                         <Phone className="h-4 w-4 mr-2" /> Enviar confirmação no WhatsApp
                       </Button>
@@ -772,7 +772,7 @@ function PortalInfo({ company, hours, primary, accent }: { company: any; hours: 
         <div className="flex flex-wrap gap-2">
           {wa && (
             <a
-              href={`https://api.whatsapp.com/send?phone=${wa}&text=${encodeURIComponent(`✨ Olá, *${company.name}*! 👋\n\nGostaria de mais informações sobre agendamentos. 📅`)}`}
+              href={`https://wa.me/${wa}?text=${encodeURIComponent(`✨ Olá, *${company.name}*! 👋\n\nGostaria de mais informações sobre agendamentos. 📅`)}`}
               target="_blank" rel="noreferrer" className="flex-1 min-w-[140px]"
             >
               <Button className="w-full" style={{ background: "#25D366", color: "white" }}>
@@ -910,7 +910,7 @@ function GallerySection({ companyId, company, primary, accent }: { companyId: st
       ``,
       `Pode me passar mais informações? 🙏`,
     ].filter(Boolean).join("\n");
-    window.open(`https://api.whatsapp.com/send?phone=${wa}&text=${encodeURIComponent(parts)}`, "_blank");
+    window.open(`https://wa.me/${wa}?text=${encodeURIComponent(parts)}`, "_blank");
   };
 
   return (
