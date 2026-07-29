@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { listPublicCompanies } from "@/lib/public-portal.functions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,12 +34,8 @@ function Marketplace() {
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["marketplace"],
     queryFn: async () =>
-      // view pública: expõe apenas colunas de vitrine (sem PIX/documento/e-mail)
-      (await supabase
-        .from("public_companies")
-        .select("id, name, slug, logo_url, primary_color, short_description, city, state, niche_id")
-        .eq("listed_in_marketplace", true)
-        .order("name")).data ?? [],
+      // função pública no servidor: expõe apenas colunas de vitrine
+      await listPublicCompanies(),
   });
 
   const nicheName = (id: string | null) => niches.find((n: any) => n.id === id)?.name ?? "—";

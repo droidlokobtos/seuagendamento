@@ -13,15 +13,11 @@ import { brl } from "@/lib/format";
 import { computeDepositCents, depositConfigFromCompany } from "@/lib/finance";
 import { getAmenities } from "@/lib/amenities";
 import { toast } from "sonner";
+import { getPublicCompany, getPublicTimeBlocks } from "@/lib/public-portal.functions";
 
 export const Route = createFileRoute("/b/$slug/")({
   loader: async ({ params }) => {
-    const { data: company, error } = await supabase
-      .from("public_companies")
-      .select("id,name,slug,logo_url,banner_url,primary_color,secondary_color,address,whatsapp,phone,status,online_booking_enabled,description,welcome_message,instagram_url,facebook_url,tiktok_url,website_url,show_staff_on_portal,show_reviews_on_portal,amenities,min_advance_min,max_advance_days,deposit_enabled,deposit_type,deposit_value")
-      .eq("slug", params.slug)
-      .maybeSingle();
-    if (error) throw error;
+    const company = await getPublicCompany({ data: { slug: params.slug } });
     if (!company || company.status === "suspended") throw notFound();
     return { company };
   },
@@ -129,7 +125,10 @@ function BookingPage() {
   const { data: services = [] } = useQuery({
     queryKey: ["pub_services", companyId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("services").select("*")
+      // apenas colunas de catálogo público (sem dados de comissão)
+      const { data, error } = await supabase
+        .from("services")
+        .select("id,company_id,name,description,duration_min,price_cents,category,color,photo_url,photo_position,sort_order,active")
         .eq("company_id", companyId).eq("active", true)
         .order("sort_order", { ascending: true }).order("name", { ascending: true });
       if (error) throw error;
@@ -149,11 +148,9 @@ function BookingPage() {
   const { data: blocks = [] } = useQuery({
     queryKey: ["pub_blocks", companyId, dateStr],
     queryFn: async () => {
-      const from = `${dateStr}T00:00:00`;
-      const to = `${dateStr}T23:59:59`;
-      const { data } = await supabase.from("public_time_blocks").select("starts_at,ends_at,staff_id")
-        .eq("company_id", companyId)
-        .lt("starts_at", to).gt("ends_at", from);
+      const data = await getPublicTimeBlocks({
+        data: { companyId, from: `${dateStr}T00:00:00`, to: `${dateStr}T23:59:59` },
+      });
       // Somente bloqueios da empresa toda afetam a lista de horários;
       // bloqueios por profissional são avaliados no passo "Profissional".
       return ((data ?? []) as TimeBlock[]).filter((b) => !b.staff_id);

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Star, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { getPublicCompany } from "@/lib/public-portal.functions";
 
 export const Route = createFileRoute("/b/$slug/avaliar/$appointmentId")({ component: ReviewPage });
 
@@ -21,7 +22,7 @@ function ReviewPage() {
 
   useEffect(() => {
     (async () => {
-      const { data: comp } = await supabase.from("public_companies").select("id,name").eq("slug", slug).maybeSingle();
+      const comp = await getPublicCompany({ data: { slug } });
       if (!comp) return;
       const { data: appt } = await supabase.from("appointments")
         .select("id,company_id,customer_id,staff_id")
