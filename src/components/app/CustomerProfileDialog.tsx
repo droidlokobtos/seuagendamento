@@ -27,6 +27,7 @@ type Customer = {
 export function CustomerProfileDialog({
   customer, companyId, initialTab = "dados",
 }: { customer: Customer; companyId: string; initialTab?: string }) {
+  const canSeeAnamnesis = useIsCompanyAdmin(companyId);
   const { data: statsData, isLoading } = useSmartStats(customer.id);
   const appts = statsData?.appointments ?? [];
   const { data: history = [] } = useSmartHistory(customer.id);
