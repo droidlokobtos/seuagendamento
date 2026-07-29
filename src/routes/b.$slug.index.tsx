@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, MapPin, Phone, Check, Calendar, Clock, ChevronLeft, ChevronRight, User, Instagram, Facebook, Globe, Star, MessageCircle, X as XIcon, Image as ImageIcon } from "lucide-react";
 import { brl } from "@/lib/format";
+import { computeDepositCents, depositConfigFromCompany } from "@/lib/finance";
 import { getAmenities } from "@/lib/amenities";
 import { toast } from "sonner";
 
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/b/$slug/")({
   loader: async ({ params }) => {
     const { data: company, error } = await supabase
       .from("companies")
-      .select("id,name,slug,logo_url,banner_url,primary_color,secondary_color,address,whatsapp,phone,email,status,online_booking_enabled,description,welcome_message,instagram_url,facebook_url,tiktok_url,website_url,show_staff_on_portal,show_reviews_on_portal,amenities,min_advance_min,max_advance_days")
+      .select("id,name,slug,logo_url,banner_url,primary_color,secondary_color,address,whatsapp,phone,email,status,online_booking_enabled,description,welcome_message,instagram_url,facebook_url,tiktok_url,website_url,show_staff_on_portal,show_reviews_on_portal,amenities,min_advance_min,max_advance_days,deposit_enabled,deposit_type,deposit_value")
       .eq("slug", params.slug)
       .maybeSingle();
     if (error) throw error;
@@ -105,7 +106,7 @@ function BookingPage() {
   const [coupon, setCoupon] = useState<{ code: string; discount_cents: number; message: string } | null>(null);
   const [validating, setValidating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState<{ starts_at: string } | null>(null);
+  const [done, setDone] = useState<any | null>(null);
   const [session, setSession] = useState<{ userId: string; email?: string | null } | null>(null);
 
   useEffect(() => {
@@ -283,7 +284,7 @@ function BookingPage() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Falha ao agendar");
-      setDone({ starts_at: json.starts_at });
+      setDone(json);
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -340,19 +341,27 @@ function BookingPage() {
       (coupon ? ` (cupom ${coupon.code})` : "") +
       `\n\n🙏 Aguardo a confirmação. Obrigado(a)!`
     );
+    const depositCents = Number(done.deposit_required_cents ?? 0);
     return (
       <div className="min-h-screen bg-background">
         <Hero company={company} primary={primary} accent={accent} slug={company.slug} loggedIn={!!session} />
-        <div className="max-w-lg mx-auto p-6">
+        <div className="max-w-lg mx-auto p-6 space-y-4">
           <Card>
             <CardContent className="p-8 text-center space-y-4">
               <div className="mx-auto grid h-14 w-14 place-items-center rounded-full" style={{ background: accent }}>
                 <Check className="h-7 w-7 text-white" />
               </div>
-              <h2 className="text-2xl font-semibold">Agendamento confirmado!</h2>
+              <h2 className="text-2xl font-semibold">
+                {depositCents > 0 ? "Agendamento registrado!" : "Agendamento confirmado!"}
+              </h2>
               <p className="text-muted-foreground">
                 {dateLabel} às {timeLabel}
               </p>
+              {depositCents > 0 && (
+                <p className="text-sm text-amber-700">
+                  Aguardando confirmação do pagamento antecipado.
+                </p>
+              )}
               <div className="flex flex-col gap-2 items-center pt-2">
                 {session ? (
                   <Link to="/b/$slug/minha-conta" params={{ slug: company.slug }}>
@@ -377,6 +386,10 @@ function BookingPage() {
               </div>
             </CardContent>
           </Card>
+
+          {depositCents > 0 && (
+            <DepositPanel booking={done} phone={form.phone} primary={primary} accent={accent} />
+          )}
         </div>
       </div>
     );
@@ -567,6 +580,21 @@ function BookingPage() {
                 <p className="text-xs text-muted-foreground">{form.name} · {form.phone}{form.email ? ` · ${form.email}` : ""}</p>
                 {form.notes && <p className="text-xs text-muted-foreground italic">"{form.notes}"</p>}
               </div>
+              {(() => {
+                const dueCents = Math.max(0, Math.round(totalPrice * 100) - (coupon?.discount_cents ?? 0));
+                const dep = computeDepositCents(dueCents, depositConfigFromCompany(company));
+                if (dep <= 0) return null;
+                return (
+                  <div className="rounded-xl border p-3 text-sm space-y-1" style={{ borderColor: accent }}>
+                    <p className="font-semibold">Garantia da reserva</p>
+                    <p className="text-xs text-muted-foreground">
+                      Este horário exige um pagamento antecipado de <strong>{brl(dep / 100)}</strong>.
+                      O saldo restante de {brl((dueCents - dep) / 100)} é pago no atendimento.
+                      Os dados do PIX aparecem na próxima tela.
+                    </p>
+                  </div>
+                );
+              })()}
               <p className="text-xs text-muted-foreground">
                 Ao confirmar você aceita as condições de agendamento desta empresa.
               </p>
@@ -971,3 +999,122 @@ function GallerySection({ companyId, company, primary, accent }: { companyId: st
   );
 }
 
+
+/**
+ * Garantia da reserva — pagamento antecipado (sinal) via PIX externo.
+ * O sistema não processa o pagamento: exibe os dados e recebe o comprovante.
+ */
+function DepositPanel({ booking, phone, primary, accent }: {
+  booking: any; phone: string; primary: string; accent: string;
+}) {
+  const [ref, setRef] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const deposit = Number(booking.deposit_required_cents ?? 0);
+  const total = Number(booking.total_cents ?? 0);
+  const balance = Math.max(0, total - deposit);
+  const pix = booking.pix ?? {};
+
+  const toBase64 = (f: File) =>
+    new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(f);
+    });
+
+  const send = async () => {
+    if (!file && !ref.trim()) {
+      toast.error("Anexe o comprovante ou informe o identificador da transação");
+      return;
+    }
+    setSending(true);
+    try {
+      if (file && file.size > 5 * 1024 * 1024) throw new Error("Arquivo acima de 5MB");
+      const res = await fetch("/api/public/deposit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          appointment_id: booking.appointment_id,
+          phone,
+          transaction_ref: ref.trim(),
+          file_base64: file ? await toBase64(file) : "",
+          file_name: file?.name ?? "",
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Falha ao enviar comprovante");
+      setSent(true);
+      toast.success("Comprovante enviado! Aguarde a confirmação.");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-5 space-y-4">
+        <div>
+          <h3 className="font-semibold text-lg">Garantia da Reserva</h3>
+          <p className="text-sm text-muted-foreground">
+            Para confirmar este horário é necessário realizar um pagamento antecipado.
+          </p>
+        </div>
+
+        <div className="rounded-xl border p-3 text-sm space-y-1">
+          <div className="flex justify-between"><span>Valor do serviço</span><span className="font-medium">{brl(total / 100)}</span></div>
+          <div className="flex justify-between"><span>Valor do sinal</span><span className="font-semibold" style={{ color: primary }}>{brl(deposit / 100)}</span></div>
+          <div className="flex justify-between"><span>Saldo restante</span><span className="font-medium">{brl(balance / 100)}</span></div>
+        </div>
+
+        <div className="rounded-xl border p-3 text-sm space-y-2" style={{ borderColor: accent }}>
+          <p className="font-semibold">Pagamento via PIX</p>
+          {pix.key ? (
+            <>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 break-all rounded bg-muted px-2 py-1 text-xs">{pix.key}</code>
+                <Button size="sm" variant="outline" onClick={() => {
+                  navigator.clipboard?.writeText(pix.key);
+                  toast.success("Chave PIX copiada");
+                }}>Copiar</Button>
+              </div>
+              {pix.holder && <p className="text-xs text-muted-foreground">Recebedor: {pix.holder}</p>}
+              {pix.bank && <p className="text-xs text-muted-foreground">Banco: {pix.bank}</p>}
+              {pix.qr_url && (
+                <img src={pix.qr_url} alt="QR Code PIX" className="mx-auto h-44 w-44 object-contain rounded-lg border" />
+              )}
+            </>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Entre em contato com o estabelecimento para receber os dados de pagamento.
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            O pagamento é feito diretamente no seu banco. O sistema apenas informa os dados.
+          </p>
+        </div>
+
+        {sent ? (
+          <div className="rounded-xl border p-3 text-sm bg-emerald-50 text-emerald-800">
+            Comprovante recebido! Assim que a equipe aprovar, sua reserva será confirmada.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Label className="text-sm">Comprovante (imagem ou PDF)</Label>
+            <Input type="file" accept="image/*,application/pdf"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+            <Label className="text-sm">Identificador da transação (opcional)</Label>
+            <Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Ex.: E1234567890" />
+            <Button className="w-full" style={{ background: primary }} disabled={sending} onClick={send}>
+              {sending ? "Enviando…" : "Enviar comprovante"}
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

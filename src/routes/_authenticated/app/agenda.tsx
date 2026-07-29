@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Plus, MessageCircle, Calendar as CalIcon, Check, CheckCheck, X, Play } from "lucide-react";
+import { computeFinance, PAYMENT_STATUS_META, type AppointmentPaymentStatus } from "@/lib/finance";
 import { brl } from "@/lib/format";
 import { APPOINTMENT_STATUS, FREED_STATUSES } from "@/lib/appointment-status";
 import { toast } from "sonner";
@@ -72,7 +73,7 @@ function Agenda() {
     queryFn: async () => {
       let q = supabase
         .from("appointments")
-        .select("id,starts_at,ends_at,status,total_cents,notes,customer_id,staff_id,customers(name,phone,whatsapp),staff(name,color),appointment_services(services(name))")
+        .select("id,starts_at,ends_at,status,total_cents,discount_cents,surcharge_cents,paid_cents,deposit_required_cents,payment_status,notes,customer_id,staff_id,customers(name,phone,whatsapp),staff(name,color),appointment_services(services(name))")
         .eq("company_id", companyId)
         .gte("starts_at", range.from.toISOString())
         .lt("starts_at", range.to.toISOString())
@@ -419,10 +420,29 @@ function DayView({
                     </span>
                   )}
                   <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full border ${st.color}`}>{st.label}</span>
+                  {(() => {
+                    const meta = PAYMENT_STATUS_META[(a.payment_status ?? "pending") as AppointmentPaymentStatus];
+                    return meta ? (
+                      <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full ${meta.className}`}>{meta.label}</span>
+                    ) : null;
+                  })()}
                 </div>
               </div>
               <div className="text-right shrink-0">
                 <p className="text-sm font-semibold">{brl((a.total_cents ?? 0) / 100)}</p>
+                {(() => {
+                  const f = computeFinance({
+                    subtotalCents: a.total_cents, discountCents: a.discount_cents,
+                    surchargeCents: a.surcharge_cents, paidCents: a.paid_cents,
+                    depositRequiredCents: a.deposit_required_cents,
+                  });
+                  if (!f.paidCents && !f.depositRequiredCents) return null;
+                  return (
+                    <p className="text-[10px] text-muted-foreground">
+                      Pago {brl(f.paidCents / 100)} · Saldo {brl(f.balanceCents / 100)}
+                    </p>
+                  );
+                })()}
                 <div className="mt-1 flex gap-1 justify-end flex-wrap">
                   <Button size="icon" variant="ghost" title="Confirmar por WhatsApp" onClick={() => onConfirmWa(a)}>
                     <MessageCircle className="h-4 w-4" />

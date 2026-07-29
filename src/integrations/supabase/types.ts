@@ -131,6 +131,78 @@ export type Database = {
           },
         ]
       }
+      appointment_payments: {
+        Row: {
+          amount_cents: number
+          appointment_id: string
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          method: string | null
+          notes: string | null
+          proof_url: string | null
+          reject_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          transaction_ref: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          appointment_id: string
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          method?: string | null
+          notes?: string | null
+          proof_url?: string | null
+          reject_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          transaction_ref?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          appointment_id?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          method?: string | null
+          notes?: string | null
+          proof_url?: string | null
+          reject_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          transaction_ref?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_payments_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_payments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_reminders: {
         Row: {
           appointment_id: string
@@ -226,15 +298,19 @@ export type Database = {
           coupon_id: string | null
           created_at: string
           customer_id: string | null
+          deposit_required_cents: number
           discount_cents: number
           ends_at: string
           id: string
           loyalty_credited_at: string | null
           loyalty_points_earned: number
           notes: string | null
+          paid_cents: number
+          payment_status: string
           staff_id: string | null
           starts_at: string
           status: Database["public"]["Enums"]["appointment_status"]
+          surcharge_cents: number
           total_cents: number
           updated_at: string
         }
@@ -245,15 +321,19 @@ export type Database = {
           coupon_id?: string | null
           created_at?: string
           customer_id?: string | null
+          deposit_required_cents?: number
           discount_cents?: number
           ends_at: string
           id?: string
           loyalty_credited_at?: string | null
           loyalty_points_earned?: number
           notes?: string | null
+          paid_cents?: number
+          payment_status?: string
           staff_id?: string | null
           starts_at: string
           status?: Database["public"]["Enums"]["appointment_status"]
+          surcharge_cents?: number
           total_cents?: number
           updated_at?: string
         }
@@ -264,15 +344,19 @@ export type Database = {
           coupon_id?: string | null
           created_at?: string
           customer_id?: string | null
+          deposit_required_cents?: number
           discount_cents?: number
           ends_at?: string
           id?: string
           loyalty_credited_at?: string | null
           loyalty_points_earned?: number
           notes?: string | null
+          paid_cents?: number
+          payment_status?: string
           staff_id?: string | null
           starts_at?: string
           status?: Database["public"]["Enums"]["appointment_status"]
+          surcharge_cents?: number
           total_cents?: number
           updated_at?: string
         }
@@ -492,6 +576,9 @@ export type Database = {
           city: string | null
           created_at: string
           custom_domain: string | null
+          deposit_enabled: boolean
+          deposit_type: string
+          deposit_value: number
           description: string | null
           document: string | null
           due_day: number
@@ -514,6 +601,10 @@ export type Database = {
           online_booking_enabled: boolean
           parent_company_id: string | null
           phone: string | null
+          pix_bank: string | null
+          pix_holder: string | null
+          pix_key: string | null
+          pix_qr_url: string | null
           primary_color: string
           responsible_name: string | null
           secondary_color: string
@@ -541,6 +632,9 @@ export type Database = {
           city?: string | null
           created_at?: string
           custom_domain?: string | null
+          deposit_enabled?: boolean
+          deposit_type?: string
+          deposit_value?: number
           description?: string | null
           document?: string | null
           due_day?: number
@@ -563,6 +657,10 @@ export type Database = {
           online_booking_enabled?: boolean
           parent_company_id?: string | null
           phone?: string | null
+          pix_bank?: string | null
+          pix_holder?: string | null
+          pix_key?: string | null
+          pix_qr_url?: string | null
           primary_color?: string
           responsible_name?: string | null
           secondary_color?: string
@@ -590,6 +688,9 @@ export type Database = {
           city?: string | null
           created_at?: string
           custom_domain?: string | null
+          deposit_enabled?: boolean
+          deposit_type?: string
+          deposit_value?: number
           description?: string | null
           document?: string | null
           due_day?: number
@@ -612,6 +713,10 @@ export type Database = {
           online_booking_enabled?: boolean
           parent_company_id?: string | null
           phone?: string | null
+          pix_bank?: string | null
+          pix_holder?: string | null
+          pix_key?: string | null
+          pix_qr_url?: string | null
           primary_color?: string
           responsible_name?: string | null
           secondary_color?: string
@@ -839,10 +944,58 @@ export type Database = {
           },
         ]
       }
+      financial_audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          amount_cents: number
+          appointment_id: string | null
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          payment_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          amount_cents?: number
+          appointment_id?: string | null
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          amount_cents?: number
+          appointment_id?: string | null
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_audit_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_transactions: {
         Row: {
           amount: number
           appointment_id: string | null
+          appointment_payment_id: string | null
           category: string
           company_id: string
           created_at: string
@@ -858,6 +1011,7 @@ export type Database = {
         Insert: {
           amount: number
           appointment_id?: string | null
+          appointment_payment_id?: string | null
           category: string
           company_id: string
           created_at?: string
@@ -873,6 +1027,7 @@ export type Database = {
         Update: {
           amount?: number
           appointment_id?: string | null
+          appointment_payment_id?: string | null
           category?: string
           company_id?: string
           created_at?: string
@@ -891,6 +1046,13 @@ export type Database = {
             columns: ["appointment_id"]
             isOneToOne: false
             referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_appointment_payment_id_fkey"
+            columns: ["appointment_payment_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_payments"
             referencedColumns: ["id"]
           },
           {
@@ -2260,8 +2422,16 @@ export type Database = {
       is_company_admin: { Args: { _company: string }; Returns: boolean }
       is_company_member: { Args: { _company: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      recalc_appointment_finance: {
+        Args: { _appt: string }
+        Returns: undefined
+      }
       reorder_services: {
         Args: { _company: string; _ids: string[] }
+        Returns: undefined
+      }
+      sync_appointment_commissions: {
+        Args: { _appt: string }
         Returns: undefined
       }
       user_company_ids: { Args: { _user_id: string }; Returns: string[] }

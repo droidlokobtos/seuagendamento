@@ -40,6 +40,8 @@ function SettingsPage() {
     instagram_url: "", facebook_url: "", tiktok_url: "", website_url: "",
     listed_in_marketplace: false, show_staff_on_portal: true, show_reviews_on_portal: true,
     amenities: [] as string[],
+    deposit_enabled: false, deposit_type: "percent", deposit_value: 50,
+    pix_key: "", pix_holder: "", pix_bank: "", pix_qr_url: "",
   });
 
 
@@ -65,6 +67,11 @@ function SettingsPage() {
         show_staff_on_portal: c.show_staff_on_portal !== false,
         show_reviews_on_portal: c.show_reviews_on_portal !== false,
         amenities: Array.isArray(c.amenities) ? (c.amenities as string[]) : [],
+        deposit_enabled: !!c.deposit_enabled,
+        deposit_type: c.deposit_type === "fixed" ? "fixed" : "percent",
+        deposit_value: Number(c.deposit_value ?? 50),
+        pix_key: c.pix_key ?? "", pix_holder: c.pix_holder ?? "",
+        pix_bank: c.pix_bank ?? "", pix_qr_url: c.pix_qr_url ?? "",
       });
     }
   }, [company]);
@@ -316,6 +323,74 @@ function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <div>
+            <h2 className="font-semibold">Pagamento antecipado (garantia da vaga)</h2>
+            <p className="text-xs text-muted-foreground">
+              Exija um sinal via PIX para confirmar agendamentos online. O pagamento é feito
+              fora do sistema — aqui você informa os dados e confere o comprovante.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2">
+            <div>
+              <p className="text-sm font-medium">Exigir pagamento antecipado</p>
+              <p className="text-xs text-muted-foreground">O horário só é reservado após aprovação do comprovante.</p>
+            </div>
+            <Switch checked={form.deposit_enabled} onCheckedChange={(v) => setForm({ ...form, deposit_enabled: v })} />
+          </div>
+
+          {form.deposit_enabled && (
+            <div className="grid md:grid-cols-2 gap-3">
+              <div>
+                <Label>Tipo do sinal</Label>
+                <select
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  value={form.deposit_type}
+                  onChange={(e) => setForm({ ...form, deposit_type: e.target.value })}
+                >
+                  <option value="percent">Percentual (%)</option>
+                  <option value="fixed">Valor fixo (R$)</option>
+                </select>
+              </div>
+              <div>
+                <Label>{form.deposit_type === "fixed" ? "Valor do sinal (R$)" : "Percentual do sinal (%)"}</Label>
+                <Input
+                  type="number" min={0} step="0.01"
+                  max={form.deposit_type === "percent" ? 100 : undefined}
+                  value={form.deposit_value}
+                  onChange={(e) => {
+                    let v = parseFloat(e.target.value || "0");
+                    if (!Number.isFinite(v) || v < 0) v = 0;
+                    if (form.deposit_type === "percent" && v > 100) v = 100;
+                    setForm({ ...form, deposit_value: v });
+                  }}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {form.deposit_type === "percent"
+                    ? "Máximo permitido: 100%."
+                    : "Se o serviço custar menos que o sinal, cobramos o valor do serviço."}
+                </p>
+              </div>
+              <div><Label>Chave PIX</Label>
+                <Input value={form.pix_key} onChange={(e) => setForm({ ...form, pix_key: e.target.value })} placeholder="CPF/CNPJ, e-mail, telefone ou aleatória" /></div>
+              <div><Label>Nome do recebedor</Label>
+                <Input value={form.pix_holder} onChange={(e) => setForm({ ...form, pix_holder: e.target.value })} /></div>
+              <div><Label>Banco (opcional)</Label>
+                <Input value={form.pix_bank} onChange={(e) => setForm({ ...form, pix_bank: e.target.value })} /></div>
+              <div className="md:col-span-2"><Label>QR Code PIX (opcional)</Label>
+                <ImageUpload value={form.pix_qr_url} folder="pix" onChange={(url) => setForm({ ...form, pix_qr_url: url ?? "" })} /></div>
+            </div>
+          )}
+
+          <div className="pt-2">
+            <Button onClick={() => saveCompany.mutate()} disabled={saveCompany.isPending}>Salvar pagamento antecipado</Button>
+          </div>
+        </CardContent>
+      </Card>
+
     </div>
   );
 }

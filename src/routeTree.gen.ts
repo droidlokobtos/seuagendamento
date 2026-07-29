@@ -29,6 +29,7 @@ import { Route as BSlugMinhaContaRouteImport } from './routes/b.$slug.minha-cont
 import { Route as BSlugEntrarRouteImport } from './routes/b.$slug.entrar'
 import { Route as ApiPublicStaffRouteImport } from './routes/api/public/staff'
 import { Route as ApiPublicReviewRouteImport } from './routes/api/public/review'
+import { Route as ApiPublicDepositRouteImport } from './routes/api/public/deposit'
 import { Route as ApiPublicConfirmRouteImport } from './routes/api/public/confirm'
 import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
 import { Route as AuthenticatedAppWhatsappRouteImport } from './routes/_authenticated/app/whatsapp'
@@ -40,6 +41,7 @@ import { Route as AuthenticatedAppRewardsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppReviewsRouteImport } from './routes/_authenticated/app/reviews'
 import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app/reports'
 import { Route as AuthenticatedAppProductsRouteImport } from './routes/_authenticated/app/products'
+import { Route as AuthenticatedAppPaymentsRouteImport } from './routes/_authenticated/app/payments'
 import { Route as AuthenticatedAppLoyaltyRouteImport } from './routes/_authenticated/app/loyalty'
 import { Route as AuthenticatedAppLinkRouteImport } from './routes/_authenticated/app/link'
 import { Route as AuthenticatedAppGalleryRouteImport } from './routes/_authenticated/app/gallery'
@@ -163,6 +165,11 @@ const ApiPublicReviewRoute = ApiPublicReviewRouteImport.update({
   path: '/api/public/review',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicDepositRoute = ApiPublicDepositRouteImport.update({
+  id: '/api/public/deposit',
+  path: '/api/public/deposit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicConfirmRoute = ApiPublicConfirmRouteImport.update({
   id: '/api/public/confirm',
   path: '/api/public/confirm',
@@ -220,6 +227,12 @@ const AuthenticatedAppProductsRoute =
   AuthenticatedAppProductsRouteImport.update({
     id: '/products',
     path: '/products',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedAppPaymentsRoute =
+  AuthenticatedAppPaymentsRouteImport.update({
+    id: '/payments',
+    path: '/payments',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
 const AuthenticatedAppLoyaltyRoute = AuthenticatedAppLoyaltyRouteImport.update({
@@ -377,6 +390,7 @@ export interface FileRoutesByFullPath {
   '/app/gallery': typeof AuthenticatedAppGalleryRoute
   '/app/link': typeof AuthenticatedAppLinkRoute
   '/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
+  '/app/payments': typeof AuthenticatedAppPaymentsRoute
   '/app/products': typeof AuthenticatedAppProductsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/reviews': typeof AuthenticatedAppReviewsRoute
@@ -388,6 +402,7 @@ export interface FileRoutesByFullPath {
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
+  '/api/public/deposit': typeof ApiPublicDepositRoute
   '/api/public/review': typeof ApiPublicReviewRoute
   '/api/public/staff': typeof ApiPublicStaffRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
@@ -429,6 +444,7 @@ export interface FileRoutesByTo {
   '/app/gallery': typeof AuthenticatedAppGalleryRoute
   '/app/link': typeof AuthenticatedAppLinkRoute
   '/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
+  '/app/payments': typeof AuthenticatedAppPaymentsRoute
   '/app/products': typeof AuthenticatedAppProductsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/reviews': typeof AuthenticatedAppReviewsRoute
@@ -440,6 +456,7 @@ export interface FileRoutesByTo {
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
+  '/api/public/deposit': typeof ApiPublicDepositRoute
   '/api/public/review': typeof ApiPublicReviewRoute
   '/api/public/staff': typeof ApiPublicStaffRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
@@ -485,6 +502,7 @@ export interface FileRoutesById {
   '/_authenticated/app/gallery': typeof AuthenticatedAppGalleryRoute
   '/_authenticated/app/link': typeof AuthenticatedAppLinkRoute
   '/_authenticated/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
+  '/_authenticated/app/payments': typeof AuthenticatedAppPaymentsRoute
   '/_authenticated/app/products': typeof AuthenticatedAppProductsRoute
   '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
   '/_authenticated/app/reviews': typeof AuthenticatedAppReviewsRoute
@@ -496,6 +514,7 @@ export interface FileRoutesById {
   '/_authenticated/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
+  '/api/public/deposit': typeof ApiPublicDepositRoute
   '/api/public/review': typeof ApiPublicReviewRoute
   '/api/public/staff': typeof ApiPublicStaffRoute
   '/b/$slug/entrar': typeof BSlugEntrarRoute
@@ -541,6 +560,7 @@ export interface FileRouteTypes {
     | '/app/gallery'
     | '/app/link'
     | '/app/loyalty'
+    | '/app/payments'
     | '/app/products'
     | '/app/reports'
     | '/app/reviews'
@@ -552,6 +572,7 @@ export interface FileRouteTypes {
     | '/app/whatsapp'
     | '/api/public/book'
     | '/api/public/confirm'
+    | '/api/public/deposit'
     | '/api/public/review'
     | '/api/public/staff'
     | '/b/$slug/entrar'
@@ -593,6 +614,7 @@ export interface FileRouteTypes {
     | '/app/gallery'
     | '/app/link'
     | '/app/loyalty'
+    | '/app/payments'
     | '/app/products'
     | '/app/reports'
     | '/app/reviews'
@@ -604,6 +626,7 @@ export interface FileRouteTypes {
     | '/app/whatsapp'
     | '/api/public/book'
     | '/api/public/confirm'
+    | '/api/public/deposit'
     | '/api/public/review'
     | '/api/public/staff'
     | '/b/$slug/entrar'
@@ -648,6 +671,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/gallery'
     | '/_authenticated/app/link'
     | '/_authenticated/app/loyalty'
+    | '/_authenticated/app/payments'
     | '/_authenticated/app/products'
     | '/_authenticated/app/reports'
     | '/_authenticated/app/reviews'
@@ -659,6 +683,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/whatsapp'
     | '/api/public/book'
     | '/api/public/confirm'
+    | '/api/public/deposit'
     | '/api/public/review'
     | '/api/public/staff'
     | '/b/$slug/entrar'
@@ -683,6 +708,7 @@ export interface RootRouteChildren {
   ConfirmarTokenRoute: typeof ConfirmarTokenRoute
   ApiPublicBookRoute: typeof ApiPublicBookRoute
   ApiPublicConfirmRoute: typeof ApiPublicConfirmRoute
+  ApiPublicDepositRoute: typeof ApiPublicDepositRoute
   ApiPublicReviewRoute: typeof ApiPublicReviewRoute
   ApiPublicStaffRoute: typeof ApiPublicStaffRoute
   BSlugEntrarRoute: typeof BSlugEntrarRoute
@@ -836,6 +862,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/deposit': {
+      id: '/api/public/deposit'
+      path: '/api/public/deposit'
+      fullPath: '/api/public/deposit'
+      preLoaderRoute: typeof ApiPublicDepositRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/confirm': {
       id: '/api/public/confirm'
       path: '/api/public/confirm'
@@ -911,6 +944,13 @@ declare module '@tanstack/react-router' {
       path: '/products'
       fullPath: '/app/products'
       preLoaderRoute: typeof AuthenticatedAppProductsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/payments': {
+      id: '/_authenticated/app/payments'
+      path: '/payments'
+      fullPath: '/app/payments'
+      preLoaderRoute: typeof AuthenticatedAppPaymentsRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
     '/_authenticated/app/loyalty': {
@@ -1108,6 +1148,7 @@ interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppGalleryRoute: typeof AuthenticatedAppGalleryRoute
   AuthenticatedAppLinkRoute: typeof AuthenticatedAppLinkRoute
   AuthenticatedAppLoyaltyRoute: typeof AuthenticatedAppLoyaltyRoute
+  AuthenticatedAppPaymentsRoute: typeof AuthenticatedAppPaymentsRoute
   AuthenticatedAppProductsRoute: typeof AuthenticatedAppProductsRoute
   AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
   AuthenticatedAppReviewsRoute: typeof AuthenticatedAppReviewsRoute
@@ -1134,6 +1175,7 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppGalleryRoute: AuthenticatedAppGalleryRoute,
   AuthenticatedAppLinkRoute: AuthenticatedAppLinkRoute,
   AuthenticatedAppLoyaltyRoute: AuthenticatedAppLoyaltyRoute,
+  AuthenticatedAppPaymentsRoute: AuthenticatedAppPaymentsRoute,
   AuthenticatedAppProductsRoute: AuthenticatedAppProductsRoute,
   AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
   AuthenticatedAppReviewsRoute: AuthenticatedAppReviewsRoute,
@@ -1181,6 +1223,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfirmarTokenRoute: ConfirmarTokenRoute,
   ApiPublicBookRoute: ApiPublicBookRoute,
   ApiPublicConfirmRoute: ApiPublicConfirmRoute,
+  ApiPublicDepositRoute: ApiPublicDepositRoute,
   ApiPublicReviewRoute: ApiPublicReviewRoute,
   ApiPublicStaffRoute: ApiPublicStaffRoute,
   BSlugEntrarRoute: BSlugEntrarRoute,
