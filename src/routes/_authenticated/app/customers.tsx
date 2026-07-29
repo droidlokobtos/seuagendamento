@@ -78,6 +78,21 @@ function Customers() {
     },
   });
 
+  // Observações do Perfil Inteligente — permitem pesquisar por "alergia", etc.
+  const { data: smartNotes = [] } = useQuery({
+    queryKey: ["company-smart-notes", companyId],
+    queryFn: async () =>
+      (await supabase.from("customer_notes").select("customer_id,content").eq("company_id", companyId)).data ?? [],
+  });
+
+  const notesByCustomer = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const n of smartNotes as any[]) {
+      m.set(n.customer_id, `${m.get(n.customer_id) ?? ""} ${n.content}`.toLowerCase());
+    }
+    return m;
+  }, [smartNotes]);
+
   const filtered = useMemo(() => {
     const fromT = from ? new Date(from + "T00:00:00").getTime() : null;
     const toT = to ? new Date(to + "T23:59:59").getTime() : null;
@@ -88,7 +103,9 @@ function Customers() {
           c.name.toLowerCase().includes(s) ||
           (c.phone ?? "").includes(q) ||
           (c.whatsapp ?? "").includes(q) ||
-          (c.email ?? "").toLowerCase().includes(s);
+          (c.email ?? "").toLowerCase().includes(s) ||
+          (c.notes ?? "").toLowerCase().includes(s) ||
+          (notesByCustomer.get(c.id) ?? "").includes(s);
         if (!ok) return false;
       }
       if (sourceFilter !== "all" && (c.source ?? "manual") !== sourceFilter) return false;
@@ -97,7 +114,8 @@ function Customers() {
       if (toT && t > toT) return false;
       return true;
     });
-  }, [data, q, sourceFilter, from, to]);
+  }, [data, q, sourceFilter, from, to, notesByCustomer]);
+
 
   const save = useMutation({
     mutationFn: async (v: Partial<C>) => {
