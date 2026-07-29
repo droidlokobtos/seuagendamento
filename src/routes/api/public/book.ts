@@ -157,6 +157,10 @@ export const Route = createFileRoute("/api/public/book")({
           customerId = created.id;
         }
 
+        // Regra financeira central: total devido e sinal exigido
+        const dueCents = Math.max(0, totalCents - discountCents);
+        const depositCents = computeDepositCents(dueCents, depositConfigFromCompany(company));
+
         const { data: appt, error: aErr } = await supabaseAdmin
           .from("appointments")
           .insert({
@@ -168,6 +172,7 @@ export const Route = createFileRoute("/api/public/book")({
             coupon_id: couponId,
             coupon_code: couponCode,
             discount_cents: discountCents,
+            deposit_required_cents: depositCents,
             notes: customer.notes || null,
           } as any).select("id").single();
         if (aErr) return Response.json({ error: aErr.message }, { status: 500 });
@@ -179,6 +184,17 @@ export const Route = createFileRoute("/api/public/book")({
         const { error: asErr } = await supabaseAdmin.from("appointment_services").insert(rows as any);
         if (asErr) return Response.json({ error: asErr.message }, { status: 500 });
 
+        let pixQr: string | null = null;
+        if (depositCents > 0 && (company as any).pix_qr_url) {
+          const raw = String((company as any).pix_qr_url);
+          if (/^https?:\/\//.test(raw)) pixQr = raw;
+          else {
+            const { data: signed } = await supabaseAdmin.storage
+              .from("company-assets").createSignedUrl(raw, 60 * 60);
+            pixQr = signed?.signedUrl ?? null;
+          }
+        }
+
         return Response.json({
           ok: true,
           appointment_id: appt.id,
@@ -186,7 +202,17 @@ export const Route = createFileRoute("/api/public/book")({
           ends_at: end.toISOString(),
           subtotal_cents: totalCents,
           discount_cents: discountCents,
-          total_cents: Math.max(0, totalCents - discountCents),
+          total_cents: dueCents,
+          deposit_required_cents: depositCents,
+          balance_cents: Math.max(0, dueCents - depositCents),
+          pix: depositCents > 0
+            ? {
+                key: (company as any).pix_key ?? null,
+                holder: (company as any).pix_holder ?? null,
+                bank: (company as any).pix_bank ?? null,
+                qr_url: pixQr,
+              }
+            : null,
         });
       },
     },
