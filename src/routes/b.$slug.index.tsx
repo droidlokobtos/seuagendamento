@@ -94,7 +94,9 @@ type Step = 1 | 2 | 3 | 4 | 5 | 6;
 function BookingPage() {
   const { company } = Route.useLoaderData();
   const companyId = company.id;
-  const showStaffStep = company.show_staff_on_portal !== false;
+  // A escolha do profissional faz parte do agendamento e é sempre exibida.
+  // "Mostrar equipe no portal" controla apenas a vitrine da empresa, não esta etapa.
+  const showStaffStep = true;
 
   const [step, setStep] = useState<Step>(1);
   const [selected, setSelected] = useState<Service[]>([]);
