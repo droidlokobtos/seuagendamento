@@ -34,7 +34,8 @@ export function SignaturePad({ value, onChange }: { value: string | null; onChan
   }, [value]);
 
   const pos = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const c = ref.current!;
+    const c = ref.current;
+    if (!c) return { x: 0, y: 0 };
     const r = c.getBoundingClientRect();
     return { x: ((e.clientX - r.left) / r.width) * c.width, y: ((e.clientY - r.top) / r.height) * c.height };
   };
@@ -47,8 +48,10 @@ export function SignaturePad({ value, onChange }: { value: string | null; onChan
         height={180}
         className="w-full touch-none rounded-md border bg-background"
         onPointerDown={(e) => {
+          const c = ref.current;
+          const ctx = c?.getContext("2d");
+          if (!c || !ctx) return;
           drawing.current = true;
-          const ctx = ref.current!.getContext("2d")!;
           const p = pos(e);
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
@@ -56,7 +59,8 @@ export function SignaturePad({ value, onChange }: { value: string | null; onChan
         }}
         onPointerMove={(e) => {
           if (!drawing.current) return;
-          const ctx = ref.current!.getContext("2d")!;
+          const ctx = ref.current?.getContext("2d");
+          if (!ctx) return;
           const p = pos(e);
           ctx.lineTo(p.x, p.y);
           ctx.stroke();
@@ -64,7 +68,8 @@ export function SignaturePad({ value, onChange }: { value: string | null; onChan
         onPointerUp={() => {
           if (!drawing.current) return;
           drawing.current = false;
-          onChange(ref.current!.toDataURL("image/png"));
+          const c = ref.current;
+          if (c) onChange(c.toDataURL("image/png"));
         }}
       />
       <Button
@@ -72,8 +77,9 @@ export function SignaturePad({ value, onChange }: { value: string | null; onChan
         variant="ghost"
         size="sm"
         onClick={() => {
-          const c = ref.current!;
-          c.getContext("2d")!.clearRect(0, 0, c.width, c.height);
+          const c = ref.current;
+          const ctx = c?.getContext("2d");
+          if (c && ctx) ctx.clearRect(0, 0, c.width, c.height);
           onChange(null);
         }}
       >

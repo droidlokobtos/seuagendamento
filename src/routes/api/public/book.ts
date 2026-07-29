@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { computeDepositCents, depositConfigFromCompany } from "@/lib/finance";
+import { isExpired, sectionsForServices } from "@/lib/anamnesis-core";
 
 const schema = z.object({
   slug: z.string().min(1),
@@ -15,6 +16,32 @@ const schema = z.object({
     notes: z.string().trim().max(500).optional(),
   }),
 });
+
+function phoneCandidates(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  const local = digits.startsWith("55") ? digits.slice(2) : digits;
+  const formatted = local.length === 11
+    ? `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`
+    : local.length === 10
+      ? `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`
+      : "";
+  return Array.from(new Set([
+    phone.trim(),
+    digits,
+    local,
+    formatted,
+    local.length === 11 ? `55${local}` : "",
+  ].filter(Boolean)));
+}
+
+async function findCustomerByPhone(admin: any, companyId: string, phone: string) {
+  const candidates = phoneCandidates(phone);
+  const [{ data: byPhone }, { data: byWhatsapp }] = await Promise.all([
+    admin.from("customers").select("id,user_id").eq("company_id", companyId).in("phone", candidates).limit(1),
+    admin.from("customers").select("id,user_id").eq("company_id", companyId).in("whatsapp", candidates).limit(1),
+  ]);
+  return byPhone?.[0] ?? byWhatsapp?.[0] ?? null;
+}
 
 export const Route = createFileRoute("/api/public/book")({
   server: {
@@ -42,7 +69,7 @@ export const Route = createFileRoute("/api/public/book")({
           return Response.json({ error: "Agendamento online desativado" }, { status: 403 });
 
         const { data: services } = await supabaseAdmin
-          .from("services").select("id,duration_min,price_cents,active,company_id")
+          .from("services").select("id,name,category,anamnesis_section,duration_min,price_cents,active,company_id")
           .in("id", service_ids);
         if (!services?.length || services.length !== service_ids.length)
           return Response.json({ error: "Serviço inválido" }, { status: 400 });
@@ -132,9 +159,7 @@ export const Route = createFileRoute("/api/public/book")({
           customerId = byUser?.id ?? null;
         }
         if (!customerId) {
-          const { data: byPhone } = await supabaseAdmin
-            .from("customers").select("id,user_id")
-            .eq("company_id", company.id).eq("phone", customer.phone).maybeSingle();
+          const byPhone = await findCustomerByPhone(supabaseAdmin, company.id, customer.phone);
           if (byPhone) {
             customerId = byPhone.id;
             if (authUserId && !byPhone.user_id) {
@@ -142,20 +167,30 @@ export const Route = createFileRoute("/api/public/book")({
             }
           }
         }
+        // Segurança do fluxo público: não permite criar a reserva quando a
+        // anamnese obrigatória ainda não foi preenchida ou está vencida.
+        const requiredSections = sectionsForServices(services ?? []);
         if (!customerId) {
-          const { data: created, error: cuErr } = await supabaseAdmin
-            .from("customers")
-            .insert({
-              company_id: company.id,
-              name: customer.name, phone: customer.phone,
-              email: customer.email || null,
-              user_id: authUserId,
-              source: "portal_publico",
-              notes: customer.notes ? `[Portal público] ${customer.notes}` : null,
-            } as any)
-            .select("id").single();
-          if (cuErr) return Response.json({ error: cuErr.message }, { status: 500 });
-          customerId = created.id;
+          return Response.json(
+            { error: "Preencha a ficha de anamnese antes de confirmar o agendamento.", anamnesis_required: true },
+            { status: 409 },
+          );
+        }
+        const { data: lastAnamnesis } = await supabaseAdmin
+          .from("anamnesis_records")
+          .select("id,filled_at,sections")
+          .eq("company_id", company.id)
+          .eq("customer_id", customerId)
+          .order("filled_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const previousSections = ((lastAnamnesis?.sections as string[] | null) ?? []);
+        const hasNewSection = requiredSections.some((section) => !previousSections.includes(section));
+        if (!lastAnamnesis || isExpired(lastAnamnesis.filled_at as string | null) || hasNewSection) {
+          return Response.json(
+            { error: "Preencha a ficha de anamnese antes de confirmar o agendamento.", anamnesis_required: true },
+            { status: 409 },
+          );
         }
 
         // Controle de comparecimento: bloqueio ou sinal obrigatório por histórico de faltas

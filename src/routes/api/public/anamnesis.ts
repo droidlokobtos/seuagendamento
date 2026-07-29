@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import {
   BASE_SECTION, SECTIONS, buildQuestionnaire, extractAlerts, isExpired, sectionsForServices,
-} from "@/lib/anamnesis";
+} from "@/lib/anamnesis-core";
 
 const postSchema = z.object({
   slug: z.string().min(1),
@@ -19,6 +19,32 @@ const postSchema = z.object({
 async function loadCompany(admin: any, slug: string) {
   const { data } = await admin.from("companies").select("id,name,status").eq("slug", slug).maybeSingle();
   return data;
+}
+
+function phoneCandidates(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  const local = digits.startsWith("55") ? digits.slice(2) : digits;
+  const formatted = local.length === 11
+    ? `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`
+    : local.length === 10
+      ? `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`
+      : "";
+  return Array.from(new Set([
+    phone.trim(),
+    digits,
+    local,
+    formatted,
+    local.length === 11 ? `55${local}` : "",
+  ].filter(Boolean)));
+}
+
+async function findCustomerByPhone(admin: any, companyId: string, phone: string) {
+  const candidates = phoneCandidates(phone);
+  const [{ data: byPhone }, { data: byWhatsapp }] = await Promise.all([
+    admin.from("customers").select("id").eq("company_id", companyId).in("phone", candidates).limit(1),
+    admin.from("customers").select("id").eq("company_id", companyId).in("whatsapp", candidates).limit(1),
+  ]);
+  return byPhone?.[0] ?? byWhatsapp?.[0] ?? null;
 }
 
 export const Route = createFileRoute("/api/public/anamnesis")({
@@ -45,8 +71,7 @@ export const Route = createFileRoute("/api/public/anamnesis")({
 
         let lastFilledAt: string | null = null;
         if (phone) {
-          const { data: cust } = await supabaseAdmin
-            .from("customers").select("id").eq("company_id", company.id).eq("phone", phone).maybeSingle();
+          const cust = await findCustomerByPhone(supabaseAdmin, company.id, phone);
           if (cust) {
             const { data: rec } = await supabaseAdmin
               .from("anamnesis_records").select("filled_at,sections")
@@ -98,8 +123,7 @@ export const Route = createFileRoute("/api/public/anamnesis")({
 
         // Cliente já existente por telefone, ou criado agora
         let customerId: string | null = null;
-        const { data: cust } = await supabaseAdmin
-          .from("customers").select("id").eq("company_id", company.id).eq("phone", d.phone).maybeSingle();
+        const cust = await findCustomerByPhone(supabaseAdmin, company.id, d.phone);
         customerId = cust?.id ?? null;
         if (!customerId) {
           const { data: created, error } = await supabaseAdmin

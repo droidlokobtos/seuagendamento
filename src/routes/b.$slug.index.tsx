@@ -107,25 +107,35 @@ function BookingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<any | null>(null);
   const [session, setSession] = useState<{ userId: string; email?: string | null } | null>(null);
+  const selectedServiceIdsKey = selected.map((s) => s.id).join(",");
+  const customerPhone = form.phone.trim();
 
   /* ---- Ficha de anamnese (obrigatória quando nunca preenchida ou vencida) ---- */
   const [anamDone, setAnamDone] = useState(false);
   const [anamSubmitting, setAnamSubmitting] = useState(false);
   const anamQuery = useQuery({
-    enabled: step === 6 && !!form.phone.trim() && !anamDone,
-    queryKey: ["anamnesis-check", company.slug, form.phone, selected.map((s) => s.id).join(",")],
+    enabled: step === 6 && !!customerPhone && selected.length > 0 && !anamDone,
+    queryKey: ["anamnesis-check", company.slug, customerPhone, selectedServiceIdsKey],
     queryFn: async () => {
       const p = new URLSearchParams({
         slug: String(company.slug ?? ""),
-        phone: form.phone.trim(),
-        service_ids: selected.map((s) => s.id).join(","),
+        phone: customerPhone,
+        service_ids: selectedServiceIdsKey,
       });
       const r = await fetch(`/api/public/anamnesis?${p.toString()}`);
-      if (!r.ok) return { required: false, questionnaire: [] };
-      return r.json();
+      const json = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(json.error || "Não foi possível verificar a ficha de anamnese");
+      return json;
     },
   });
-  const anamRequired = !anamDone && !!anamQuery.data?.required;
+  const anamCheckActive = step === 6 && !!customerPhone && selected.length > 0 && !anamDone;
+  const anamChecking = anamCheckActive && !anamQuery.isError && (anamQuery.isLoading || anamQuery.isFetching || anamQuery.data === undefined);
+  const anamRequired = !anamDone && anamQuery.data?.required === true;
+  const anamBlocked = anamChecking || anamRequired || (anamCheckActive && anamQuery.isError);
+
+  useEffect(() => {
+    setAnamDone(false);
+  }, [selectedServiceIdsKey, customerPhone]);
 
   const submitAnamnesis = async (d: any) => {
     setAnamSubmitting(true);
@@ -206,11 +216,10 @@ function BookingPage() {
 
   // Profissionais habilitados para os serviços escolhidos E livres no horário escolhido.
   // Todo o filtro (vínculo, jornada, bloqueios e agendamentos) é feito no backend.
-  const serviceIdsKey = selected.map((s) => s.id).join(",");
   const { data: staffData, isFetching: staffLoading } = useQuery({
-    queryKey: ["pub_staff", company.slug, serviceIdsKey, dateStr, timeStr],
+    queryKey: ["pub_staff", company.slug, selectedServiceIdsKey, dateStr, timeStr],
     queryFn: async () => {
-      const params = new URLSearchParams({ slug: company.slug, service_ids: serviceIdsKey });
+      const params = new URLSearchParams({ slug: company.slug, service_ids: selectedServiceIdsKey });
       params.set("date", dateStr);
       params.set("time", timeStr);
       params.set("starts_at", new Date(`${dateStr}T${timeStr}:00`).toISOString());
@@ -312,6 +321,10 @@ function BookingPage() {
   };
 
   const submit = async () => {
+    if (anamBlocked) {
+      toast.error(anamRequired ? "Preencha a ficha de anamnese antes de confirmar." : "Aguarde a verificação da ficha de anamnese.");
+      return;
+    }
     setSubmitting(true);
     try {
       const iso = `${dateStr}T${timeStr}:00`;
@@ -618,7 +631,32 @@ function BookingPage() {
           </Card>
         )}
 
-        {step === 6 && anamRequired && (
+        {step === 6 && anamChecking && (
+          <Card>
+            <CardContent className="p-4 space-y-2">
+              <h2 className="font-semibold text-lg">Verificando ficha de anamnese</h2>
+              <p className="text-sm text-muted-foreground">
+                Aguarde enquanto conferimos se a ficha está válida para os serviços escolhidos.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 6 && anamQuery.isError && !anamChecking && (
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <h2 className="font-semibold text-lg">Não foi possível verificar a anamnese</h2>
+              <p className="text-sm text-muted-foreground">
+                Tente novamente para continuar com o agendamento.
+              </p>
+              <Button type="button" variant="outline" onClick={() => anamQuery.refetch()}>
+                Tentar novamente
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 6 && anamRequired && !anamChecking && !anamQuery.isError && (
           <div className="space-y-3">
             <div className="rounded-xl border p-3 text-sm" style={{ borderColor: accent }}>
               <p className="font-semibold">🩺 Ficha de anamnese</p>
@@ -640,7 +678,7 @@ function BookingPage() {
           </div>
         )}
 
-        {step === 6 && !anamRequired && (
+        {step === 6 && !anamBlocked && !anamRequired && (
           <Card>
             <CardContent className="p-4 space-y-3">
               <h2 className="font-semibold text-lg">Confirme seu agendamento</h2>
@@ -698,9 +736,9 @@ function BookingPage() {
             </Button>
           ) : (
             <Button size="lg" style={{ background: primary }}
-              disabled={submitting || !form.name || !form.phone || !timeStr || anamRequired}
+              disabled={submitting || !form.name || !form.phone || !timeStr || anamBlocked}
               onClick={submit}>
-              {submitting ? "Enviando…" : anamRequired ? "Preencha a ficha" : "Confirmar"}
+              {submitting ? "Enviando…" : anamChecking ? "Verificando…" : anamRequired ? "Preencha a ficha" : anamQuery.isError ? "Verifique a ficha" : "Confirmar"}
             </Button>
           )}
         </div>
