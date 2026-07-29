@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -6,13 +6,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { AlertTriangle, FileText, Download, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { AlertTriangle, FileText, Download, ShieldCheck, Trash2 } from "lucide-react";
 import { dateBR } from "@/lib/format";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
-import { AnamnesisForm } from "@/components/app/AnamnesisForm";
 import {
-  BASE_SECTION, SECTION_OPTIONS, SECTIONS, buildQuestionnaire, daysUntilExpiry, extractAlerts,
+  BASE_SECTION, SECTIONS, buildQuestionnaire, daysUntilExpiry,
   isExpired, logAnamnesisAccess, useAnamnesisLog, useAnamnesisRecords, type AnamnesisRecord,
 } from "@/lib/anamnesis";
 
@@ -37,46 +36,13 @@ export function AnamnesisTab({
 }: { companyId: string; customerId: string; customerName: string }) {
   const qc = useQueryClient();
   const isAdmin = useIsCompanyAdmin(companyId);
-  const { user } = useAuth();
   const { data: records = [], isLoading } = useAnamnesisRecords(isAdmin ? customerId : null);
   const { data: logs = [] } = useAnamnesisLog(isAdmin ? customerId : null);
-  const [creating, setCreating] = useState(false);
-  const [picked, setPicked] = useState<string[]>([]);
   const [openRecord, setOpenRecord] = useState<string | null>(null);
 
   const last = records[0] ?? null;
   const expired = isExpired(last?.filled_at);
 
-  const sections = useMemo(() => buildQuestionnaire(picked), [picked]);
-
-  const save = useMutation({
-    mutationFn: async (payload: any) => {
-      const alerts = extractAlerts(sections, payload.answers);
-      const { data, error } = await supabase.from("anamnesis_records").insert({
-        company_id: companyId,
-        customer_id: customerId,
-        sections: picked,
-        answers: payload.answers,
-        alerts,
-        consent_truth: payload.consent_truth,
-        consent_procedure: payload.consent_procedure,
-        consent_lgpd: payload.consent_lgpd,
-        signature_data: payload.signature_data,
-        filled_by: "admin",
-        actor_user_id: user?.id ?? null,
-      } as any).select("id").single();
-      if (error) throw error;
-      await logAnamnesisAccess({ companyId, customerId, recordId: (data as any).id, action: "create", detail: "Ficha registrada pelo administrador" });
-    },
-    onSuccess: () => {
-      toast.success("Ficha de anamnese registrada.");
-      setCreating(false);
-      setPicked([]);
-      qc.invalidateQueries({ queryKey: ["anamnesis", customerId] });
-      qc.invalidateQueries({ queryKey: ["anamnesis-log", customerId] });
-    },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
-  });
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
@@ -140,36 +106,6 @@ export function AnamnesisTab({
     );
   }
 
-  if (creating) {
-    return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium">Nova ficha de anamnese</p>
-          <Button variant="ghost" size="sm" onClick={() => setCreating(false)}>Cancelar</Button>
-        </div>
-        <Card><CardContent className="space-y-2 p-4">
-          <p className="text-xs text-muted-foreground">Seções adicionais conforme o tipo de serviço:</p>
-          <div className="flex flex-wrap gap-2">
-            {SECTION_OPTIONS.map((s) => (
-              <Button
-                key={s.key} type="button" size="sm"
-                variant={picked.includes(s.key) ? "default" : "outline"}
-                onClick={() => setPicked((p) => p.includes(s.key) ? p.filter((x) => x !== s.key) : [...p, s.key])}
-              >
-                {s.emoji} {s.label}
-              </Button>
-            ))}
-          </div>
-        </CardContent></Card>
-        <AnamnesisForm
-          sections={sections}
-          submitLabel="Salvar ficha"
-          submitting={save.isPending}
-          onSubmit={(d) => save.mutate(d)}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
@@ -189,10 +125,12 @@ export function AnamnesisTab({
             <Badge variant="outline" className={expired ? "bg-destructive/10 text-destructive" : "bg-green-500/10 text-green-700"}>
               {expired ? "⚠️ Pendente" : "✅ Válida"}
             </Badge>
-            <Button size="sm" onClick={() => setCreating(true)}><Plus className="mr-1 h-4 w-4" /> Nova ficha</Button>
           </div>
         </CardContent>
       </Card>
+      <p className="text-xs text-muted-foreground">
+        A ficha é preenchida exclusivamente pelo cliente durante o agendamento no link público.
+      </p>
 
       {!!last?.alerts?.length && (
         <Card className="border-destructive/40 bg-destructive/5">

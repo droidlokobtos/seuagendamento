@@ -15,7 +15,7 @@ import {
 } from "@/lib/attendance";
 
 import { Phone, Mail, MessageCircle } from "lucide-react";
-import { AnamnesisTab } from "@/components/app/AnamnesisTab";
+import { AnamnesisTab, useIsCompanyAdmin } from "@/components/app/AnamnesisTab";
 
 
 
@@ -27,6 +27,7 @@ type Customer = {
 export function CustomerProfileDialog({
   customer, companyId, initialTab = "dados",
 }: { customer: Customer; companyId: string; initialTab?: string }) {
+  const canSeeAnamnesis = useIsCompanyAdmin(companyId);
   const { data: statsData, isLoading } = useSmartStats(customer.id);
   const appts = statsData?.appointments ?? [];
   const { data: history = [] } = useSmartHistory(customer.id);
@@ -80,7 +81,7 @@ export function CustomerProfileDialog({
           <TabsTrigger value="avaliacoes">Avaliações</TabsTrigger>
           <TabsTrigger value="comparecimento">Comparecimento</TabsTrigger>
           <TabsTrigger value="timeline">Linha do Tempo</TabsTrigger>
-          <TabsTrigger value="anamnese">Anamnese</TabsTrigger>
+          {canSeeAnamnesis && <TabsTrigger value="anamnese">Anamnese</TabsTrigger>}
           <TabsTrigger value="smart">Perfil Inteligente</TabsTrigger>
         </TabsList>
 
@@ -164,9 +165,11 @@ export function CustomerProfileDialog({
         </TabsContent>
 
 
-        <TabsContent value="anamnese" className="mt-4">
-          <AnamnesisTab companyId={companyId} customerId={customer.id} customerName={customer.name} />
-        </TabsContent>
+        {canSeeAnamnesis && (
+          <TabsContent value="anamnese" className="mt-4">
+            <AnamnesisTab companyId={companyId} customerId={customer.id} customerName={customer.name} />
+          </TabsContent>
+        )}
 
         <TabsContent value="smart" className="mt-4">
           <SmartProfilePanel companyId={companyId} customerId={customer.id} />
