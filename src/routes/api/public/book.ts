@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { computeDepositCents, depositConfigFromCompany } from "@/lib/finance";
 
 const schema = z.object({
   slug: z.string().min(1),
