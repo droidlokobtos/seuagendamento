@@ -25,6 +25,7 @@ import {
   Image as ImageIcon,
   BadgePercent,
   CalendarCheck,
+  Plug,
 
 
 
