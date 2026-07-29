@@ -16,8 +16,9 @@ export function NotificationsBell() {
     queryFn: async () => {
       if (!companyId) return [];
       const { data } = await supabase.from("notifications")
-        // só as colunas usadas na lista (evita trafegar metadata inteira)
-        .select("id,title,body,link,read_at,created_at,kind")
+        // só as colunas usadas na lista
+        .select("id,title,body,link,read_at,created_at,kind,metadata")
+
         .eq("company_id", companyId)
         .order("created_at", { ascending: false }).limit(20);
       return data ?? [];
