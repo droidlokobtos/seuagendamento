@@ -91,7 +91,29 @@ function Reviews() {
   });
   const staffMap = useMemo(() => Object.fromEntries(staff.map((s) => [s.id, s.name])), [staff]);
 
+  const [fFrom, setFFrom] = useState("");
+  const [fTo, setFTo] = useState("");
+  const [fStaff, setFStaff] = useState("");
+  const [fService, setFService] = useState("");
+  const [onlyBest, setOnlyBest] = useState(false);
+
+  const filtered = useMemo(
+    () =>
+      data.filter((r) => {
+        const d = r.created_at.slice(0, 10);
+        if (fFrom && d < fFrom) return false;
+        if (fTo && d > fTo) return false;
+        if (fStaff && r.staff_id !== fStaff) return false;
+        if (fService && !(r.service_names ?? "").toLowerCase().includes(fService.toLowerCase())) return false;
+        if (onlyBest && r.rating < 5) return false;
+        return true;
+      }),
+    [data, fFrom, fTo, fStaff, fService, onlyBest],
+  );
+  const filteredAvg = filtered.length ? filtered.reduce((a, r) => a + r.rating, 0) / filtered.length : 0;
+
   const avg = data.length ? data.reduce((a, r) => a + r.rating, 0) / data.length : 0;
+
   const dist = [5, 4, 3, 2, 1].map((n) => ({ n, count: data.filter((r) => r.rating === n).length }));
   const negatives = data.filter((r) => r.rating <= NEGATIVE_ALERT_MAX_RATING);
   const answered = invites.filter((i) => i.status === "answered").length;
