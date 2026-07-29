@@ -385,6 +385,10 @@ function BookingPage() {
               </div>
             </CardContent>
           </Card>
+
+          {depositCents > 0 && (
+            <DepositPanel booking={done} phone={form.phone} primary={primary} accent={accent} />
+          )}
         </div>
       </div>
     );
