@@ -13,24 +13,29 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import {
-  Star, Eye, EyeOff, Trash2, Copy, MessageCircle, RefreshCw, AlertTriangle, TrendingUp, Users, Link2,
+  Star, Eye, EyeOff, Trash2, Copy, MessageCircle, RefreshCw, AlertTriangle, TrendingUp, Users, Link2, QrCode, Download, Award,
 } from "lucide-react";
+import QRCode from "qrcode";
 import { toast } from "sonner";
 import {
   DEFAULT_REVIEW_TEMPLATE,
   REVIEW_INVITE_STATUS,
   NEGATIVE_ALERT_MAX_RATING,
   DEFAULT_REVIEW_EXPIRATION_DAYS,
+  reviewToken,
 } from "@/lib/reviews";
+
 
 export const Route = createFileRoute("/_authenticated/app/reviews")({ component: Reviews });
 
 type R = {
   id: string; rating: number; comment: string | null; published: boolean; created_at: string;
   customer_id: string | null; appointment_id: string | null; staff_id: string | null;
+  customer_name: string | null;
   staff_rating: number | null; would_return: boolean | null; would_recommend: boolean | null;
   service_names: string | null; source: string | null;
 };
+
 
 type Invite = {
   id: string; token: string; status: string; channel: string | null; message: string | null;
@@ -86,7 +91,29 @@ function Reviews() {
   });
   const staffMap = useMemo(() => Object.fromEntries(staff.map((s) => [s.id, s.name])), [staff]);
 
+  const [fFrom, setFFrom] = useState("");
+  const [fTo, setFTo] = useState("");
+  const [fStaff, setFStaff] = useState("");
+  const [fService, setFService] = useState("");
+  const [onlyBest, setOnlyBest] = useState(false);
+
+  const filtered = useMemo(
+    () =>
+      data.filter((r) => {
+        const d = r.created_at.slice(0, 10);
+        if (fFrom && d < fFrom) return false;
+        if (fTo && d > fTo) return false;
+        if (fStaff && r.staff_id !== fStaff) return false;
+        if (fService && !(r.service_names ?? "").toLowerCase().includes(fService.toLowerCase())) return false;
+        if (onlyBest && r.rating < 5) return false;
+        return true;
+      }),
+    [data, fFrom, fTo, fStaff, fService, onlyBest],
+  );
+  const filteredAvg = filtered.length ? filtered.reduce((a, r) => a + r.rating, 0) / filtered.length : 0;
+
   const avg = data.length ? data.reduce((a, r) => a + r.rating, 0) / data.length : 0;
+
   const dist = [5, 4, 3, 2, 1].map((n) => ({ n, count: data.filter((r) => r.rating === n).length }));
   const negatives = data.filter((r) => r.rating <= NEGATIVE_ALERT_MAX_RATING);
   const answered = invites.filter((i) => i.status === "answered").length;
@@ -167,7 +194,9 @@ function Reviews() {
         <TabsList>
           <TabsTrigger value="panel">Painel</TabsTrigger>
           <TabsTrigger value="list">Avaliações</TabsTrigger>
+          <TabsTrigger value="link">Link público</TabsTrigger>
           <TabsTrigger value="invites">Convites</TabsTrigger>
+
           <TabsTrigger value="settings">Configurações</TabsTrigger>
         </TabsList>
 
@@ -233,10 +262,59 @@ function Reviews() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="list" className="pt-4">
+        <TabsContent value="list" className="pt-4 space-y-4">
+          <Card>
+            <CardContent className="p-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5 items-end">
+              <div className="space-y-1">
+                <Label className="text-xs">De</Label>
+                <Input type="date" value={fFrom} onChange={(e) => setFFrom(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Até</Label>
+                <Input type="date" value={fTo} onChange={(e) => setFTo(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Profissional</Label>
+                <select
+                  className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                  value={fStaff}
+                  onChange={(e) => setFStaff(e.target.value)}
+                >
+                  <option value="">Todos</option>
+                  {staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Serviço</Label>
+                <Input placeholder="Buscar serviço" value={fService} onChange={(e) => setFService(e.target.value)} />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={onlyBest ? "default" : "outline"}
+                  className="flex-1"
+                  onClick={() => setOnlyBest((v) => !v)}
+                >
+                  <Award className="h-4 w-4 mr-1" /> Melhores
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => { setFFrom(""); setFTo(""); setFStaff(""); setFService(""); setOnlyBest(false); }}
+                >
+                  Limpar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="text-xs text-muted-foreground">
+            {filtered.length} avaliações · média {filteredAvg ? filteredAvg.toFixed(1) : "—"}★
+          </div>
+
           <div className="grid gap-3">
-            {data.map((r) => (
-              <Card key={r.id}>
+            {filtered.map((r) => (
+              <Card key={r.id} className={r.rating === 5 ? "border-primary/40" : undefined}>
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -245,12 +323,16 @@ function Reviews() {
                           <Star key={i} className={`h-4 w-4 ${i < r.rating ? "fill-primary text-primary" : "text-muted-foreground/40"}`} />
                         ))}
                         {!r.published && <Badge variant="secondary" className="ml-2">Oculta</Badge>}
+                        {r.rating === 5 && (
+                          <Badge className="ml-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30">Destaque</Badge>
+                        )}
+                        {r.source === "public_link" && <Badge variant="outline" className="ml-1">Link público</Badge>}
                         {r.rating <= NEGATIVE_ALERT_MAX_RATING && (
                           <Badge className="ml-1 bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30">Atenção</Badge>
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        {r.customer_id ? custMap[r.customer_id]?.name ?? "Cliente" : "Anônimo"} ·{" "}
+                        {r.customer_id ? custMap[r.customer_id]?.name ?? "Cliente" : r.customer_name || "Anônimo"} ·{" "}
                         {new Date(r.created_at).toLocaleDateString("pt-BR")}
                         {r.staff_id ? ` · ${staffMap[r.staff_id] ?? "Profissional"}` : ""}
                         {r.service_names ? ` · ${r.service_names}` : ""}
@@ -272,13 +354,18 @@ function Reviews() {
                 </CardContent>
               </Card>
             ))}
-            {data.length === 0 && (
+            {filtered.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                Nenhuma avaliação ainda. Os convites são gerados automaticamente ao concluir um atendimento.
+                Nenhuma avaliação encontrada com os filtros atuais.
               </p>
             )}
           </div>
         </TabsContent>
+
+        <TabsContent value="link" className="pt-4">
+          <PublicReviewLink companyId={companyId} companyName={activeCompany?.name ?? "nosso estabelecimento"} />
+        </TabsContent>
+
 
         <TabsContent value="invites" className="pt-4">
           <div className="grid gap-2">
@@ -334,7 +421,135 @@ function Reviews() {
   );
 }
 
+function PublicReviewLink({ companyId, companyName }: { companyId?: string; companyName: string }) {
+  const qc = useQueryClient();
+  const [qr, setQr] = useState<string>("");
+
+  const { data: settings } = useQuery({
+    queryKey: ["review-settings", companyId],
+    enabled: !!companyId,
+    queryFn: async () =>
+      (await supabase.from("review_settings").select("*").eq("company_id", companyId!).maybeSingle()).data,
+  });
+
+  const token = (settings as any)?.public_token as string | undefined;
+  const enabled = (settings as any)?.public_link_enabled !== false;
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const url = token ? `${origin}/avaliar/${token}` : "";
+
+  useEffect(() => {
+    if (!url) { setQr(""); return; }
+    QRCode.toDataURL(url, { width: 512, margin: 2 }).then(setQr).catch(() => setQr(""));
+  }, [url]);
+
+  const upsert = useMutation({
+    mutationFn: async (patch: Record<string, unknown>) => {
+      const { error } = await supabase
+        .from("review_settings")
+        .upsert({ company_id: companyId!, ...patch } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["review-settings"] }),
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
+  });
+
+  // Gera o token na primeira vez que a empresa abre a aba
+  useEffect(() => {
+    if (!companyId || !settings || token) return;
+    upsert.mutate({ public_token: reviewToken(10) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId, settings, token]);
+
+  const waText = encodeURIComponent(
+    `Olá! 👋\n\nObrigado por escolher a ${companyName} 💛\nSua opinião é muito importante para nós.\n\n⭐ Avalie seu atendimento: ${url}`,
+  );
+
+  return (
+    <div className="space-y-4 max-w-2xl">
+      <Card>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Link2 className="h-4 w-4" /> Link exclusivo de avaliação</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Endereço próprio da sua empresa. O cliente avalia sem login e tudo fica salvo aqui no sistema —
+            sem Google Forms ou plataformas de terceiros.
+          </p>
+
+          <div className="flex gap-2">
+            <Input readOnly value={url || "Gerando link…"} className="font-mono text-xs" />
+            <Button
+              variant="outline"
+              disabled={!url}
+              onClick={() => { void navigator.clipboard.writeText(url); toast.success("Link copiado"); }}
+            >
+              <Copy className="h-4 w-4 mr-1" /> Copiar
+            </Button>
+          </div>
+
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              disabled={!url}
+              onClick={() => window.open(`https://api.whatsapp.com/send?text=${waText}`, "_blank", "noopener")}
+            >
+              <MessageCircle className="h-4 w-4 mr-1" /> Compartilhar no WhatsApp
+            </Button>
+            <Button variant="outline" disabled={!url} onClick={() => window.open(url, "_blank", "noopener")}>
+              <ExternalLinkIcon /> Abrir página
+            </Button>
+            <Button
+              variant="outline"
+              disabled={upsert.isPending}
+              onClick={() => {
+                if (!confirm("Gerar um novo link? O endereço anterior deixará de funcionar.")) return;
+                upsert.mutate({ public_token: reviewToken(10) }, { onSuccess: () => toast.success("Novo link gerado") });
+              }}
+            >
+              <RefreshCw className="h-4 w-4 mr-1" /> Regenerar
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-between border-t pt-4">
+            <div>
+              <Label>Link público ativo</Label>
+              <p className="text-xs text-muted-foreground">Desative para bloquear novas avaliações por este link.</p>
+            </div>
+            <Switch checked={enabled} onCheckedChange={(v) => upsert.mutate({ public_link_enabled: v })} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><QrCode className="h-4 w-4" /> QR Code</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          {qr ? (
+            <>
+              <img src={qr} alt="QR Code de avaliação" className="h-48 w-48 rounded-lg border bg-white p-2" />
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const a = document.createElement("a");
+                  a.href = qr;
+                  a.download = "qrcode-avaliacao.png";
+                  a.click();
+                }}
+              >
+                <Download className="h-4 w-4 mr-1" /> Baixar QR Code
+              </Button>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">Gerando QR Code…</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function ExternalLinkIcon() {
+  return <Link2 className="h-4 w-4 mr-1" />;
+}
+
 function Kpi({ icon: Icon, label, value, hint }: { icon: any; label: string; value: string; hint?: string }) {
+
   return (
     <Card>
       <CardContent className="p-4">

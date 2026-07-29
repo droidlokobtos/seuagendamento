@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConfirmarTokenRouteImport } from './routes/confirmar.$token'
+import { Route as AvaliarTokenRouteImport } from './routes/avaliar.$token'
 import { Route as AvaliacaoTokenRouteImport } from './routes/avaliacao.$token'
 import { Route as AuthenticatedNoAccessRouteImport } from './routes/_authenticated/no-access'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
@@ -31,6 +32,7 @@ import { Route as ApiPublicStaffRouteImport } from './routes/api/public/staff'
 import { Route as ApiPublicReviewRouteImport } from './routes/api/public/review'
 import { Route as ApiPublicDepositRouteImport } from './routes/api/public/deposit'
 import { Route as ApiPublicConfirmRouteImport } from './routes/api/public/confirm'
+import { Route as ApiPublicCompanyReviewRouteImport } from './routes/api/public/company-review'
 import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
 import { Route as AuthenticatedAppWhatsappRouteImport } from './routes/_authenticated/app/whatsapp'
 import { Route as AuthenticatedAppUsersRouteImport } from './routes/_authenticated/app/users'
@@ -97,6 +99,11 @@ const IndexRoute = IndexRouteImport.update({
 const ConfirmarTokenRoute = ConfirmarTokenRouteImport.update({
   id: '/confirmar/$token',
   path: '/confirmar/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AvaliarTokenRoute = AvaliarTokenRouteImport.update({
+  id: '/avaliar/$token',
+  path: '/avaliar/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AvaliacaoTokenRoute = AvaliacaoTokenRouteImport.update({
@@ -173,6 +180,11 @@ const ApiPublicDepositRoute = ApiPublicDepositRouteImport.update({
 const ApiPublicConfirmRoute = ApiPublicConfirmRouteImport.update({
   id: '/api/public/confirm',
   path: '/api/public/confirm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCompanyReviewRoute = ApiPublicCompanyReviewRouteImport.update({
+  id: '/api/public/company-review',
+  path: '/api/public/company-review',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicBookRoute = ApiPublicBookRouteImport.update({
@@ -371,6 +383,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
   '/avaliacao/$token': typeof AvaliacaoTokenRoute
+  '/avaliar/$token': typeof AvaliarTokenRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
@@ -401,6 +414,7 @@ export interface FileRoutesByFullPath {
   '/app/users': typeof AuthenticatedAppUsersRoute
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
+  '/api/public/company-review': typeof ApiPublicCompanyReviewRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
   '/api/public/deposit': typeof ApiPublicDepositRoute
   '/api/public/review': typeof ApiPublicReviewRoute
@@ -425,6 +439,7 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
   '/avaliacao/$token': typeof AvaliacaoTokenRoute
+  '/avaliar/$token': typeof AvaliarTokenRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
@@ -455,6 +470,7 @@ export interface FileRoutesByTo {
   '/app/users': typeof AuthenticatedAppUsersRoute
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
+  '/api/public/company-review': typeof ApiPublicCompanyReviewRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
   '/api/public/deposit': typeof ApiPublicDepositRoute
   '/api/public/review': typeof ApiPublicReviewRoute
@@ -483,6 +499,7 @@ export interface FileRoutesById {
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/no-access': typeof AuthenticatedNoAccessRoute
   '/avaliacao/$token': typeof AvaliacaoTokenRoute
+  '/avaliar/$token': typeof AvaliarTokenRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/_authenticated/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
@@ -513,6 +530,7 @@ export interface FileRoutesById {
   '/_authenticated/app/users': typeof AuthenticatedAppUsersRoute
   '/_authenticated/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
   '/api/public/book': typeof ApiPublicBookRoute
+  '/api/public/company-review': typeof ApiPublicCompanyReviewRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
   '/api/public/deposit': typeof ApiPublicDepositRoute
   '/api/public/review': typeof ApiPublicReviewRoute
@@ -541,6 +559,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/no-access'
     | '/avaliacao/$token'
+    | '/avaliar/$token'
     | '/confirmar/$token'
     | '/admin/companies'
     | '/admin/logs'
@@ -571,6 +590,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app/whatsapp'
     | '/api/public/book'
+    | '/api/public/company-review'
     | '/api/public/confirm'
     | '/api/public/deposit'
     | '/api/public/review'
@@ -595,6 +615,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/no-access'
     | '/avaliacao/$token'
+    | '/avaliar/$token'
     | '/confirmar/$token'
     | '/admin/companies'
     | '/admin/logs'
@@ -625,6 +646,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app/whatsapp'
     | '/api/public/book'
+    | '/api/public/company-review'
     | '/api/public/confirm'
     | '/api/public/deposit'
     | '/api/public/review'
@@ -652,6 +674,7 @@ export interface FileRouteTypes {
     | '/_authenticated/home'
     | '/_authenticated/no-access'
     | '/avaliacao/$token'
+    | '/avaliar/$token'
     | '/confirmar/$token'
     | '/_authenticated/admin/companies'
     | '/_authenticated/admin/logs'
@@ -682,6 +705,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/users'
     | '/_authenticated/app/whatsapp'
     | '/api/public/book'
+    | '/api/public/company-review'
     | '/api/public/confirm'
     | '/api/public/deposit'
     | '/api/public/review'
@@ -705,8 +729,10 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
   AvaliacaoTokenRoute: typeof AvaliacaoTokenRoute
+  AvaliarTokenRoute: typeof AvaliarTokenRoute
   ConfirmarTokenRoute: typeof ConfirmarTokenRoute
   ApiPublicBookRoute: typeof ApiPublicBookRoute
+  ApiPublicCompanyReviewRoute: typeof ApiPublicCompanyReviewRoute
   ApiPublicConfirmRoute: typeof ApiPublicConfirmRoute
   ApiPublicDepositRoute: typeof ApiPublicDepositRoute
   ApiPublicReviewRoute: typeof ApiPublicReviewRoute
@@ -769,6 +795,13 @@ declare module '@tanstack/react-router' {
       path: '/confirmar/$token'
       fullPath: '/confirmar/$token'
       preLoaderRoute: typeof ConfirmarTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/avaliar/$token': {
+      id: '/avaliar/$token'
+      path: '/avaliar/$token'
+      fullPath: '/avaliar/$token'
+      preLoaderRoute: typeof AvaliarTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/avaliacao/$token': {
@@ -874,6 +907,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/confirm'
       fullPath: '/api/public/confirm'
       preLoaderRoute: typeof ApiPublicConfirmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/company-review': {
+      id: '/api/public/company-review'
+      path: '/api/public/company-review'
+      fullPath: '/api/public/company-review'
+      preLoaderRoute: typeof ApiPublicCompanyReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/book': {
@@ -1220,8 +1260,10 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
   AvaliacaoTokenRoute: AvaliacaoTokenRoute,
+  AvaliarTokenRoute: AvaliarTokenRoute,
   ConfirmarTokenRoute: ConfirmarTokenRoute,
   ApiPublicBookRoute: ApiPublicBookRoute,
+  ApiPublicCompanyReviewRoute: ApiPublicCompanyReviewRoute,
   ApiPublicConfirmRoute: ApiPublicConfirmRoute,
   ApiPublicDepositRoute: ApiPublicDepositRoute,
   ApiPublicReviewRoute: ApiPublicReviewRoute,

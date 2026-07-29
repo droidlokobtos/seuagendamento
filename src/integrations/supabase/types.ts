@@ -2176,6 +2176,8 @@ export type Database = {
           expiration_days: number
           google_review_url: string | null
           message_template: string | null
+          public_link_enabled: boolean
+          public_token: string | null
           updated_at: string
         }
         Insert: {
@@ -2186,6 +2188,8 @@ export type Database = {
           expiration_days?: number
           google_review_url?: string | null
           message_template?: string | null
+          public_link_enabled?: boolean
+          public_token?: string | null
           updated_at?: string
         }
         Update: {
@@ -2196,6 +2200,8 @@ export type Database = {
           expiration_days?: number
           google_review_url?: string | null
           message_template?: string | null
+          public_link_enabled?: boolean
+          public_token?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2215,6 +2221,7 @@ export type Database = {
           company_id: string
           created_at: string
           customer_id: string | null
+          customer_name: string | null
           id: string
           invite_id: string | null
           ip: string | null
@@ -2235,6 +2242,7 @@ export type Database = {
           company_id: string
           created_at?: string
           customer_id?: string | null
+          customer_name?: string | null
           id?: string
           invite_id?: string | null
           ip?: string | null
@@ -2255,6 +2263,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           customer_id?: string | null
+          customer_name?: string | null
           id?: string
           invite_id?: string | null
           ip?: string | null
