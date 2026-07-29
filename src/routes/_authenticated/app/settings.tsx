@@ -40,6 +40,8 @@ function SettingsPage() {
     instagram_url: "", facebook_url: "", tiktok_url: "", website_url: "",
     listed_in_marketplace: false, show_staff_on_portal: true, show_reviews_on_portal: true,
     amenities: [] as string[],
+    deposit_enabled: false, deposit_type: "percent", deposit_value: 50,
+    pix_key: "", pix_holder: "", pix_bank: "", pix_qr_url: "",
   });
 
 
