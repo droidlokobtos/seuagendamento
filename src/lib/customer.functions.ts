@@ -8,7 +8,9 @@ export const getMyBookings = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: company, error: cErr } = await supabase
+    // dados de vitrine sempre lidos pelo caminho público (colunas não sensíveis)
+    const { publicSupabase } = await import("./public-portal.server");
+    const { data: company, error: cErr } = await publicSupabase()
       .from("public_companies")
       .select("id,name,slug,primary_color,secondary_color,logo_url,banner_url,address,whatsapp,phone")
       .eq("slug", data.slug as string)
