@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useCompany } from "@/lib/company";
 import { Button } from "@/components/ui/button";
 import { Upload, X, Loader2, Crop } from "lucide-react";
 import { toast } from "sonner";
@@ -52,6 +53,7 @@ export function ImageUpload({
   /** Chave da configuração de dimensões (src/lib/image-presets.ts) */
   preset?: ImagePresetKey;
 }) {
+  const { activeCompany } = useCompany();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +64,10 @@ export function ImageUpload({
   const maxMB = cfg?.maxSizeMB ?? 5;
 
   const doUpload = async (blob: Blob) => {
-    const path = `${folder}/${crypto.randomUUID()}.jpg`;
+    // Os arquivos ficam sempre dentro da pasta da empresa: as regras de acesso
+    // do armazenamento liberam somente a pasta da própria empresa.
+    if (!activeCompany?.id) throw new Error("Selecione uma empresa antes de enviar imagens.");
+    const path = `${activeCompany.id}/${folder}/${crypto.randomUUID()}.jpg`;
     const { error: upErr } = await supabase.storage.from("company-assets").upload(path, blob, {
       cacheControl: "31536000",
       upsert: false,

@@ -9,17 +9,18 @@ export const getMyBookings = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
 
     const { data: company, error: cErr } = await supabase
-      .from("companies")
+      .from("public_companies")
       .select("id,name,slug,primary_color,secondary_color,logo_url,banner_url,address,whatsapp,phone")
-      .eq("slug", data.slug)
+      .eq("slug", data.slug as string)
       .maybeSingle();
     if (cErr) throw new Error(cErr.message);
-    if (!company) throw new Error("Empresa não encontrada");
+    if (!company?.id) throw new Error("Empresa não encontrada");
+    const companyId = company.id as string;
 
     const { data: customer } = await supabase
       .from("customers")
       .select("id,name,phone,email")
-      .eq("company_id", company.id)
+      .eq("company_id", companyId)
       .eq("user_id", userId)
       .maybeSingle();
 

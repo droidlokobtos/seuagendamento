@@ -33,13 +33,16 @@ function Marketplace() {
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["marketplace"],
     queryFn: async () =>
+      // view pública: expõe apenas colunas de vitrine (sem PIX/documento/e-mail)
       (await supabase
-        .from("companies")
-        .select("id, name, slug, logo_url, primary_color, short_description, city, state, niche_id, niches(name)")
+        .from("public_companies")
+        .select("id, name, slug, logo_url, primary_color, short_description, city, state, niche_id")
         .eq("listed_in_marketplace", true)
-        .neq("status", "suspended")
         .order("name")).data ?? [],
   });
+
+  const nicheName = (id: string | null) => niches.find((n: any) => n.id === id)?.name ?? "—";
+
 
   const filtered = companies.filter((c: any) => {
     const matchQ = !q ||
