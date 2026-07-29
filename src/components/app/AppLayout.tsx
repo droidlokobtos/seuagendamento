@@ -25,7 +25,6 @@ import {
   Image as ImageIcon,
   BadgePercent,
   CalendarCheck,
-  Plug,
 
 
 
@@ -63,7 +62,6 @@ const NAV = [
   { to: "/app/campaigns", label: "Campanhas", icon: Megaphone },
   { to: "/app/birthdays", label: "Aniversariantes", icon: Cake },
   { to: "/app/whatsapp", label: "WhatsApp", icon: MessageCircle },
-  { to: "/app/integrations", label: "Integrações", icon: Plug },
   { to: "/app/reviews", label: "Avaliações", icon: Star },
   { to: "/app/ai", label: "Assistente IA", icon: Sparkles },
   { to: "/app/users", label: "Usuários", icon: UserCog },
