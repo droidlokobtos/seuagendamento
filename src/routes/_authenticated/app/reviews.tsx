@@ -421,7 +421,135 @@ function Reviews() {
   );
 }
 
+function PublicReviewLink({ companyId, companyName }: { companyId?: string; companyName: string }) {
+  const qc = useQueryClient();
+  const [qr, setQr] = useState<string>("");
+
+  const { data: settings } = useQuery({
+    queryKey: ["review-settings", companyId],
+    enabled: !!companyId,
+    queryFn: async () =>
+      (await supabase.from("review_settings").select("*").eq("company_id", companyId!).maybeSingle()).data,
+  });
+
+  const token = (settings as any)?.public_token as string | undefined;
+  const enabled = (settings as any)?.public_link_enabled !== false;
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const url = token ? `${origin}/avaliar/${token}` : "";
+
+  useEffect(() => {
+    if (!url) { setQr(""); return; }
+    QRCode.toDataURL(url, { width: 512, margin: 2 }).then(setQr).catch(() => setQr(""));
+  }, [url]);
+
+  const upsert = useMutation({
+    mutationFn: async (patch: Record<string, unknown>) => {
+      const { error } = await supabase
+        .from("review_settings")
+        .upsert({ company_id: companyId!, ...patch } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["review-settings"] }),
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
+  });
+
+  // Gera o token na primeira vez que a empresa abre a aba
+  useEffect(() => {
+    if (!companyId || !settings || token) return;
+    upsert.mutate({ public_token: reviewToken(10) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId, settings, token]);
+
+  const waText = encodeURIComponent(
+    `Olá! 👋\n\nObrigado por escolher a ${companyName} 💛\nSua opinião é muito importante para nós.\n\n⭐ Avalie seu atendimento: ${url}`,
+  );
+
+  return (
+    <div className="space-y-4 max-w-2xl">
+      <Card>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Link2 className="h-4 w-4" /> Link exclusivo de avaliação</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Endereço próprio da sua empresa. O cliente avalia sem login e tudo fica salvo aqui no sistema —
+            sem Google Forms ou plataformas de terceiros.
+          </p>
+
+          <div className="flex gap-2">
+            <Input readOnly value={url || "Gerando link…"} className="font-mono text-xs" />
+            <Button
+              variant="outline"
+              disabled={!url}
+              onClick={() => { void navigator.clipboard.writeText(url); toast.success("Link copiado"); }}
+            >
+              <Copy className="h-4 w-4 mr-1" /> Copiar
+            </Button>
+          </div>
+
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              disabled={!url}
+              onClick={() => window.open(`https://api.whatsapp.com/send?text=${waText}`, "_blank", "noopener")}
+            >
+              <MessageCircle className="h-4 w-4 mr-1" /> Compartilhar no WhatsApp
+            </Button>
+            <Button variant="outline" disabled={!url} onClick={() => window.open(url, "_blank", "noopener")}>
+              <ExternalLinkIcon /> Abrir página
+            </Button>
+            <Button
+              variant="outline"
+              disabled={upsert.isPending}
+              onClick={() => {
+                if (!confirm("Gerar um novo link? O endereço anterior deixará de funcionar.")) return;
+                upsert.mutate({ public_token: reviewToken(10) }, { onSuccess: () => toast.success("Novo link gerado") });
+              }}
+            >
+              <RefreshCw className="h-4 w-4 mr-1" /> Regenerar
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-between border-t pt-4">
+            <div>
+              <Label>Link público ativo</Label>
+              <p className="text-xs text-muted-foreground">Desative para bloquear novas avaliações por este link.</p>
+            </div>
+            <Switch checked={enabled} onCheckedChange={(v) => upsert.mutate({ public_link_enabled: v })} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><QrCode className="h-4 w-4" /> QR Code</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          {qr ? (
+            <>
+              <img src={qr} alt="QR Code de avaliação" className="h-48 w-48 rounded-lg border bg-white p-2" />
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const a = document.createElement("a");
+                  a.href = qr;
+                  a.download = "qrcode-avaliacao.png";
+                  a.click();
+                }}
+              >
+                <Download className="h-4 w-4 mr-1" /> Baixar QR Code
+              </Button>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">Gerando QR Code…</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function ExternalLinkIcon() {
+  return <Link2 className="h-4 w-4 mr-1" />;
+}
+
 function Kpi({ icon: Icon, label, value, hint }: { icon: any; label: string; value: string; hint?: string }) {
+
   return (
     <Card>
       <CardContent className="p-4">
