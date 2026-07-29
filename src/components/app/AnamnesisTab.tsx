@@ -37,46 +37,13 @@ export function AnamnesisTab({
 }: { companyId: string; customerId: string; customerName: string }) {
   const qc = useQueryClient();
   const isAdmin = useIsCompanyAdmin(companyId);
-  const { user } = useAuth();
   const { data: records = [], isLoading } = useAnamnesisRecords(isAdmin ? customerId : null);
   const { data: logs = [] } = useAnamnesisLog(isAdmin ? customerId : null);
-  const [creating, setCreating] = useState(false);
-  const [picked, setPicked] = useState<string[]>([]);
   const [openRecord, setOpenRecord] = useState<string | null>(null);
 
   const last = records[0] ?? null;
   const expired = isExpired(last?.filled_at);
 
-  const sections = useMemo(() => buildQuestionnaire(picked), [picked]);
-
-  const save = useMutation({
-    mutationFn: async (payload: any) => {
-      const alerts = extractAlerts(sections, payload.answers);
-      const { data, error } = await supabase.from("anamnesis_records").insert({
-        company_id: companyId,
-        customer_id: customerId,
-        sections: picked,
-        answers: payload.answers,
-        alerts,
-        consent_truth: payload.consent_truth,
-        consent_procedure: payload.consent_procedure,
-        consent_lgpd: payload.consent_lgpd,
-        signature_data: payload.signature_data,
-        filled_by: "admin",
-        actor_user_id: user?.id ?? null,
-      } as any).select("id").single();
-      if (error) throw error;
-      await logAnamnesisAccess({ companyId, customerId, recordId: (data as any).id, action: "create", detail: "Ficha registrada pelo administrador" });
-    },
-    onSuccess: () => {
-      toast.success("Ficha de anamnese registrada.");
-      setCreating(false);
-      setPicked([]);
-      qc.invalidateQueries({ queryKey: ["anamnesis", customerId] });
-      qc.invalidateQueries({ queryKey: ["anamnesis-log", customerId] });
-    },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
-  });
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
