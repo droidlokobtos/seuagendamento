@@ -23,11 +23,18 @@ async function loadCompany(admin: any, slug: string) {
 
 function phoneCandidates(phone: string) {
   const digits = phone.replace(/\D/g, "");
+  const local = digits.startsWith("55") ? digits.slice(2) : digits;
+  const formatted = local.length === 11
+    ? `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`
+    : local.length === 10
+      ? `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`
+      : "";
   return Array.from(new Set([
     phone.trim(),
     digits,
-    digits.length === 11 ? `55${digits}` : "",
-    digits.startsWith("55") ? digits.slice(2) : "",
+    local,
+    formatted,
+    local.length === 11 ? `55${local}` : "",
   ].filter(Boolean)));
 }
 
