@@ -119,6 +119,7 @@ function ConnectionTab({ companyId }: { companyId: string }) {
   const connect = useServerFn(connectWhatsApp);
   const disconnect = useServerFn(disconnectWhatsApp);
   const processQueue = useServerFn(processWhatsAppQueue);
+  const syncSession = useServerFn(syncWhatsAppSession);
 
   const [busy, setBusy] = useState(false);
   const [qr, setQr] = useState<string | null>(null);
