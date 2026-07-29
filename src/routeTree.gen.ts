@@ -35,6 +35,7 @@ import { Route as ApiPublicCouponRouteImport } from './routes/api/public/coupon'
 import { Route as ApiPublicConfirmRouteImport } from './routes/api/public/confirm'
 import { Route as ApiPublicCompanyReviewRouteImport } from './routes/api/public/company-review'
 import { Route as ApiPublicBookRouteImport } from './routes/api/public/book'
+import { Route as ApiPublicAnamnesisRouteImport } from './routes/api/public/anamnesis'
 import { Route as AuthenticatedAppWhatsappRouteImport } from './routes/_authenticated/app/whatsapp'
 import { Route as AuthenticatedAppUsersRouteImport } from './routes/_authenticated/app/users'
 import { Route as AuthenticatedAppStaffRouteImport } from './routes/_authenticated/app/staff'
@@ -197,6 +198,11 @@ const ApiPublicCompanyReviewRoute = ApiPublicCompanyReviewRouteImport.update({
 const ApiPublicBookRoute = ApiPublicBookRouteImport.update({
   id: '/api/public/book',
   path: '/api/public/book',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAnamnesisRoute = ApiPublicAnamnesisRouteImport.update({
+  id: '/api/public/anamnesis',
+  path: '/api/public/anamnesis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppWhatsappRoute =
@@ -427,6 +433,7 @@ export interface FileRoutesByFullPath {
   '/app/staff': typeof AuthenticatedAppStaffRoute
   '/app/users': typeof AuthenticatedAppUsersRoute
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
+  '/api/public/anamnesis': typeof ApiPublicAnamnesisRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/api/public/company-review': typeof ApiPublicCompanyReviewRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
@@ -485,6 +492,7 @@ export interface FileRoutesByTo {
   '/app/staff': typeof AuthenticatedAppStaffRoute
   '/app/users': typeof AuthenticatedAppUsersRoute
   '/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
+  '/api/public/anamnesis': typeof ApiPublicAnamnesisRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/api/public/company-review': typeof ApiPublicCompanyReviewRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
@@ -547,6 +555,7 @@ export interface FileRoutesById {
   '/_authenticated/app/staff': typeof AuthenticatedAppStaffRoute
   '/_authenticated/app/users': typeof AuthenticatedAppUsersRoute
   '/_authenticated/app/whatsapp': typeof AuthenticatedAppWhatsappRoute
+  '/api/public/anamnesis': typeof ApiPublicAnamnesisRoute
   '/api/public/book': typeof ApiPublicBookRoute
   '/api/public/company-review': typeof ApiPublicCompanyReviewRoute
   '/api/public/confirm': typeof ApiPublicConfirmRoute
@@ -609,6 +618,7 @@ export interface FileRouteTypes {
     | '/app/staff'
     | '/app/users'
     | '/app/whatsapp'
+    | '/api/public/anamnesis'
     | '/api/public/book'
     | '/api/public/company-review'
     | '/api/public/confirm'
@@ -667,6 +677,7 @@ export interface FileRouteTypes {
     | '/app/staff'
     | '/app/users'
     | '/app/whatsapp'
+    | '/api/public/anamnesis'
     | '/api/public/book'
     | '/api/public/company-review'
     | '/api/public/confirm'
@@ -728,6 +739,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/staff'
     | '/_authenticated/app/users'
     | '/_authenticated/app/whatsapp'
+    | '/api/public/anamnesis'
     | '/api/public/book'
     | '/api/public/company-review'
     | '/api/public/confirm'
@@ -756,6 +768,7 @@ export interface RootRouteChildren {
   AvaliacaoTokenRoute: typeof AvaliacaoTokenRoute
   AvaliarTokenRoute: typeof AvaliarTokenRoute
   ConfirmarTokenRoute: typeof ConfirmarTokenRoute
+  ApiPublicAnamnesisRoute: typeof ApiPublicAnamnesisRoute
   ApiPublicBookRoute: typeof ApiPublicBookRoute
   ApiPublicCompanyReviewRoute: typeof ApiPublicCompanyReviewRoute
   ApiPublicConfirmRoute: typeof ApiPublicConfirmRoute
@@ -954,6 +967,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/book'
       fullPath: '/api/public/book'
       preLoaderRoute: typeof ApiPublicBookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/anamnesis': {
+      id: '/api/public/anamnesis'
+      path: '/api/public/anamnesis'
+      fullPath: '/api/public/anamnesis'
+      preLoaderRoute: typeof ApiPublicAnamnesisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/whatsapp': {
@@ -1304,6 +1324,7 @@ const rootRouteChildren: RootRouteChildren = {
   AvaliacaoTokenRoute: AvaliacaoTokenRoute,
   AvaliarTokenRoute: AvaliarTokenRoute,
   ConfirmarTokenRoute: ConfirmarTokenRoute,
+  ApiPublicAnamnesisRoute: ApiPublicAnamnesisRoute,
   ApiPublicBookRoute: ApiPublicBookRoute,
   ApiPublicCompanyReviewRoute: ApiPublicCompanyReviewRoute,
   ApiPublicConfirmRoute: ApiPublicConfirmRoute,
