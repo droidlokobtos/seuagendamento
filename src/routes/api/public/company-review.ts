@@ -128,7 +128,7 @@ export const Route = createFileRoute("/api/public/company-review")({
             rating,
             comment: comment || null,
             customer_name: customerName || null,
-            service_names: serviceName || null,
+            service_names: validServiceName,
             source: "public_link",
             ip,
             user_agent: userAgent,
