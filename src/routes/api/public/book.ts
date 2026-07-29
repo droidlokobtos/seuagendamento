@@ -17,6 +17,25 @@ const schema = z.object({
   }),
 });
 
+function phoneCandidates(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  return Array.from(new Set([
+    phone.trim(),
+    digits,
+    digits.length === 11 ? `55${digits}` : "",
+    digits.startsWith("55") ? digits.slice(2) : "",
+  ].filter(Boolean)));
+}
+
+async function findCustomerByPhone(admin: any, companyId: string, phone: string) {
+  const candidates = phoneCandidates(phone);
+  const [{ data: byPhone }, { data: byWhatsapp }] = await Promise.all([
+    admin.from("customers").select("id,user_id").eq("company_id", companyId).in("phone", candidates).limit(1),
+    admin.from("customers").select("id,user_id").eq("company_id", companyId).in("whatsapp", candidates).limit(1),
+  ]);
+  return byPhone?.[0] ?? byWhatsapp?.[0] ?? null;
+}
+
 export const Route = createFileRoute("/api/public/book")({
   server: {
     handlers: {
@@ -133,9 +152,7 @@ export const Route = createFileRoute("/api/public/book")({
           customerId = byUser?.id ?? null;
         }
         if (!customerId) {
-          const { data: byPhone } = await supabaseAdmin
-            .from("customers").select("id,user_id")
-            .eq("company_id", company.id).eq("phone", customer.phone).maybeSingle();
+          const byPhone = await findCustomerByPhone(supabaseAdmin, company.id, customer.phone);
           if (byPhone) {
             customerId = byPhone.id;
             if (authUserId && !byPhone.user_id) {
