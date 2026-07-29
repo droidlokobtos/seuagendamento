@@ -167,6 +167,36 @@ function ConnectionTab({ companyId }: { companyId: string }) {
   const badge = WA_STATUS[status] ?? WA_STATUS.disconnected;
   const providerMeta = WA_PROVIDERS.find((p) => p.id === form.provider);
 
+  // Polling da sessão enquanto o QR Code não é lido (bridge / Cloud API).
+  useEffect(() => {
+    if (status !== "pending_qr" || form.provider === "manual") return;
+    let alive = true;
+    const tick = async () => {
+      try {
+        const res: any = await syncSession({ data: { companyId } });
+        if (!alive) return;
+        if (res?.qr) setQr(res.qr);
+        if (res?.status === "connected") {
+          setQr(null);
+          toast.success("WhatsApp conectado");
+          qc.invalidateQueries({ queryKey: ["wa-integration", companyId] });
+        } else if (res?.status === "error") {
+          qc.invalidateQueries({ queryKey: ["wa-integration", companyId] });
+        }
+      } catch {
+        /* silencioso: tenta de novo no próximo ciclo */
+      }
+    };
+    const id = setInterval(tick, 5000);
+    void tick();
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, [status, form.provider, companyId, syncSession, qc]);
+
+
+
   const save = async () => {
     setBusy(true);
     const { error } = await supabase
