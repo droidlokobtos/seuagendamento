@@ -340,19 +340,27 @@ function BookingPage() {
       (coupon ? ` (cupom ${coupon.code})` : "") +
       `\n\n🙏 Aguardo a confirmação. Obrigado(a)!`
     );
+    const depositCents = Number(done.deposit_required_cents ?? 0);
     return (
       <div className="min-h-screen bg-background">
         <Hero company={company} primary={primary} accent={accent} slug={company.slug} loggedIn={!!session} />
-        <div className="max-w-lg mx-auto p-6">
+        <div className="max-w-lg mx-auto p-6 space-y-4">
           <Card>
             <CardContent className="p-8 text-center space-y-4">
               <div className="mx-auto grid h-14 w-14 place-items-center rounded-full" style={{ background: accent }}>
                 <Check className="h-7 w-7 text-white" />
               </div>
-              <h2 className="text-2xl font-semibold">Agendamento confirmado!</h2>
+              <h2 className="text-2xl font-semibold">
+                {depositCents > 0 ? "Agendamento registrado!" : "Agendamento confirmado!"}
+              </h2>
               <p className="text-muted-foreground">
                 {dateLabel} às {timeLabel}
               </p>
+              {depositCents > 0 && (
+                <p className="text-sm text-amber-700">
+                  Aguardando confirmação do pagamento antecipado.
+                </p>
+              )}
               <div className="flex flex-col gap-2 items-center pt-2">
                 {session ? (
                   <Link to="/b/$slug/minha-conta" params={{ slug: company.slug }}>
