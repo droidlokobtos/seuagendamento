@@ -601,7 +601,7 @@ function ReviewSettings({ companyId }: { companyId?: string }) {
         auto_send_enabled: auto,
         active_channels: channels.length ? channels : ["whatsapp"],
         message_template: template,
-      });
+      }, { onConflict: "company_id" });
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Configurações salvas"); qc.invalidateQueries({ queryKey: ["review-settings"] }); },
