@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { computeDepositCents, depositConfigFromCompany } from "@/lib/finance";
-import { isExpired, sectionsForServices } from "@/lib/anamnesis";
+import { isExpired, sectionsForServices } from "@/lib/anamnesis-core";
 
 const schema = z.object({
   slug: z.string().min(1),

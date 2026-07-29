@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import {
   BASE_SECTION, SECTIONS, buildQuestionnaire, extractAlerts, isExpired, sectionsForServices,
-} from "@/lib/anamnesis";
+} from "@/lib/anamnesis-core";
 
 const postSchema = z.object({
   slug: z.string().min(1),
