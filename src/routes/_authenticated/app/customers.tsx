@@ -26,8 +26,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { dateBR, brl } from "@/lib/format";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { CustomerProfileDialog } from "@/components/app/CustomerProfileDialog";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+
 
 export const Route = createFileRoute("/_authenticated/app/customers")({
   component: Customers,
