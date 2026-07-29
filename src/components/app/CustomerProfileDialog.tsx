@@ -80,7 +80,7 @@ export function CustomerProfileDialog({
           <TabsTrigger value="avaliacoes">Avaliações</TabsTrigger>
           <TabsTrigger value="comparecimento">Comparecimento</TabsTrigger>
           <TabsTrigger value="timeline">Linha do Tempo</TabsTrigger>
-          <TabsTrigger value="anamnese">Anamnese</TabsTrigger>
+          {canSeeAnamnesis && <TabsTrigger value="anamnese">Anamnese</TabsTrigger>}
           <TabsTrigger value="smart">Perfil Inteligente</TabsTrigger>
         </TabsList>
 
