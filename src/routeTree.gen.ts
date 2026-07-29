@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConfirmarTokenRouteImport } from './routes/confirmar.$token'
+import { Route as AvaliarTokenRouteImport } from './routes/avaliar.$token'
 import { Route as AvaliacaoTokenRouteImport } from './routes/avaliacao.$token'
 import { Route as AuthenticatedNoAccessRouteImport } from './routes/_authenticated/no-access'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
@@ -98,6 +99,11 @@ const IndexRoute = IndexRouteImport.update({
 const ConfirmarTokenRoute = ConfirmarTokenRouteImport.update({
   id: '/confirmar/$token',
   path: '/confirmar/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AvaliarTokenRoute = AvaliarTokenRouteImport.update({
+  id: '/avaliar/$token',
+  path: '/avaliar/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AvaliacaoTokenRoute = AvaliacaoTokenRouteImport.update({
@@ -377,6 +383,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
   '/avaliacao/$token': typeof AvaliacaoTokenRoute
+  '/avaliar/$token': typeof AvaliarTokenRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
@@ -432,6 +439,7 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
   '/avaliacao/$token': typeof AvaliacaoTokenRoute
+  '/avaliar/$token': typeof AvaliarTokenRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
@@ -491,6 +499,7 @@ export interface FileRoutesById {
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/no-access': typeof AuthenticatedNoAccessRoute
   '/avaliacao/$token': typeof AvaliacaoTokenRoute
+  '/avaliar/$token': typeof AvaliarTokenRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/_authenticated/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
@@ -550,6 +559,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/no-access'
     | '/avaliacao/$token'
+    | '/avaliar/$token'
     | '/confirmar/$token'
     | '/admin/companies'
     | '/admin/logs'
@@ -605,6 +615,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/no-access'
     | '/avaliacao/$token'
+    | '/avaliar/$token'
     | '/confirmar/$token'
     | '/admin/companies'
     | '/admin/logs'
@@ -663,6 +674,7 @@ export interface FileRouteTypes {
     | '/_authenticated/home'
     | '/_authenticated/no-access'
     | '/avaliacao/$token'
+    | '/avaliar/$token'
     | '/confirmar/$token'
     | '/_authenticated/admin/companies'
     | '/_authenticated/admin/logs'
@@ -717,6 +729,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
   AvaliacaoTokenRoute: typeof AvaliacaoTokenRoute
+  AvaliarTokenRoute: typeof AvaliarTokenRoute
   ConfirmarTokenRoute: typeof ConfirmarTokenRoute
   ApiPublicBookRoute: typeof ApiPublicBookRoute
   ApiPublicCompanyReviewRoute: typeof ApiPublicCompanyReviewRoute
@@ -782,6 +795,13 @@ declare module '@tanstack/react-router' {
       path: '/confirmar/$token'
       fullPath: '/confirmar/$token'
       preLoaderRoute: typeof ConfirmarTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/avaliar/$token': {
+      id: '/avaliar/$token'
+      path: '/avaliar/$token'
+      fullPath: '/avaliar/$token'
+      preLoaderRoute: typeof AvaliarTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/avaliacao/$token': {
@@ -1240,6 +1260,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
   AvaliacaoTokenRoute: AvaliacaoTokenRoute,
+  AvaliarTokenRoute: AvaliarTokenRoute,
   ConfirmarTokenRoute: ConfirmarTokenRoute,
   ApiPublicBookRoute: ApiPublicBookRoute,
   ApiPublicCompanyReviewRoute: ApiPublicCompanyReviewRoute,
