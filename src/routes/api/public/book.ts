@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { computeDepositCents, depositConfigFromCompany } from "@/lib/finance";
+import { isExpired, sectionsForServices } from "@/lib/anamnesis";
 
 const schema = z.object({
   slug: z.string().min(1),
@@ -42,7 +43,7 @@ export const Route = createFileRoute("/api/public/book")({
           return Response.json({ error: "Agendamento online desativado" }, { status: 403 });
 
         const { data: services } = await supabaseAdmin
-          .from("services").select("id,duration_min,price_cents,active,company_id")
+          .from("services").select("id,name,category,anamnesis_section,duration_min,price_cents,active,company_id")
           .in("id", service_ids);
         if (!services?.length || services.length !== service_ids.length)
           return Response.json({ error: "Serviço inválido" }, { status: 400 });
@@ -156,6 +157,26 @@ export const Route = createFileRoute("/api/public/book")({
             .select("id").single();
           if (cuErr) return Response.json({ error: cuErr.message }, { status: 500 });
           customerId = created.id;
+        }
+
+        // Segurança do fluxo público: não permite criar a reserva quando a
+        // anamnese obrigatória ainda não foi preenchida ou está vencida.
+        const requiredSections = sectionsForServices(services ?? []);
+        const { data: lastAnamnesis } = await supabaseAdmin
+          .from("anamnesis_records")
+          .select("id,filled_at,sections")
+          .eq("company_id", company.id)
+          .eq("customer_id", customerId)
+          .order("filled_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const previousSections = ((lastAnamnesis?.sections as string[] | null) ?? []);
+        const hasNewSection = requiredSections.some((section) => !previousSections.includes(section));
+        if (!lastAnamnesis || isExpired(lastAnamnesis.filled_at as string | null) || hasNewSection) {
+          return Response.json(
+            { error: "Preencha a ficha de anamnese antes de confirmar o agendamento.", anamnesis_required: true },
+            { status: 409 },
+          );
         }
 
         // Controle de comparecimento: bloqueio ou sinal obrigatório por histórico de faltas
