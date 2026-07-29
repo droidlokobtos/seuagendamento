@@ -10,14 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, ChevronLeft, Calendar, Clock, LogOut, Plus, XCircle } from "lucide-react";
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
+import { getPublicCompany } from "@/lib/public-portal.functions";
 
 export const Route = createFileRoute("/b/$slug/minha-conta")({
   loader: async ({ params }) => {
-    const { data: company } = await supabase
-      .from("public_companies")
-      .select("id,name,slug,logo_url,primary_color,secondary_color,status")
-      .eq("slug", params.slug)
-      .maybeSingle();
+    const company = await getPublicCompany({ data: { slug: params.slug } });
     if (!company || company.status === "suspended") throw notFound();
     return { company };
   },
