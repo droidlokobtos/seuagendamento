@@ -165,9 +165,11 @@ export function CustomerProfileDialog({
         </TabsContent>
 
 
-        <TabsContent value="anamnese" className="mt-4">
-          <AnamnesisTab companyId={companyId} customerId={customer.id} customerName={customer.name} />
-        </TabsContent>
+        {canSeeAnamnesis && (
+          <TabsContent value="anamnese" className="mt-4">
+            <AnamnesisTab companyId={companyId} customerId={customer.id} customerName={customer.name} />
+          </TabsContent>
+        )}
 
         <TabsContent value="smart" className="mt-4">
           <SmartProfilePanel companyId={companyId} customerId={customer.id} />
