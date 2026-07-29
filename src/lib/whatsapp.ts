@@ -86,8 +86,8 @@ export const WA_PROVIDERS: { id: string; label: string; hint: string; available:
   {
     id: "web_bridge",
     label: "Bridge WhatsApp Web (sessão por QR Code)",
-    hint: "Requer um serviço bridge próprio rodando 24/7 (whatsapp-web.js/Baileys). Informe URL e token.",
-    available: false,
+    hint: "Sessão autenticada por QR Code em um bridge Node 24/7 (whatsapp-web.js/Baileys). Informe URL e token do bridge.",
+    available: true,
   },
   {
     id: "cloud_api",
