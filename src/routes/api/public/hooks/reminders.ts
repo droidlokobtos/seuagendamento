@@ -111,12 +111,29 @@ export const Route = createFileRoute("/api/public/hooks/reminders")({
             ? `https://wa.me/${phoneDigits.startsWith("55") ? phoneDigits : "55" + phoneDigits}?text=${encodeURIComponent(message)}`
             : null;
 
+          // Fila oficial (link wa.me) usando o modelo da empresa
+          const { queueWaEvent } = await import("@/lib/whatsapp.server");
+          await queueWaEvent({
+            companyId: r.company_id,
+            event: r.kind === "review" ? "review_request" : "reminder",
+            appointmentId: appt.id,
+            customerId: appt.customer_id,
+            phone: cust?.phone ?? null,
+            vars: {
+              nome_cliente: cust?.name ?? "cliente",
+              nome_empresa: companyName,
+              data: whenDate.toLocaleDateString("pt-BR"),
+              horario: whenDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+              link_avaliacao: portalUrl,
+            },
+          });
+
           await supabaseAdmin.from("notifications").insert({
             company_id: r.company_id,
             kind: `reminder_${r.kind}`,
             title,
             body: `${cust?.name ?? "Cliente"}${cust?.phone ? ` · ${cust.phone}` : ""} · ${shortWhen}`,
-            link: r.kind === "review" ? "/app/reviews" : "/app/agenda",
+            link: r.kind === "review" ? "/app/reviews" : "/app/whatsapp",
             metadata: {
               appointment_id: appt.id,
               customer_name: cust?.name,
@@ -126,6 +143,7 @@ export const Route = createFileRoute("/api/public/hooks/reminders")({
               kind: r.kind,
             },
           } as any);
+
 
           await supabaseAdmin.from("appointment_reminders").update({ sent_at: now }).eq("id", r.id);
           processed++;

@@ -35,11 +35,10 @@ export const waNumber = (phone: string | null | undefined) => {
   return d;
 };
 
-/** Monta o link do WhatsApp com número normalizado e texto codificado. */
+/** Monta o link oficial do WhatsApp (wa.me) com número normalizado e texto codificado. */
 export const waLink = (phone: string | null | undefined, message: string) => {
   const num = waNumber(phone);
   const text = encodeURIComponent(message);
-  return num
-    ? `https://api.whatsapp.com/send?phone=${num}&text=${text}`
-    : `https://api.whatsapp.com/send?text=${text}`;
+  return num ? `https://wa.me/${num}?text=${text}` : `https://wa.me/?text=${text}`;
 };
+
