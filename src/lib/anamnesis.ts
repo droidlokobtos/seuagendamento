@@ -27,10 +27,11 @@ export function useAnamnesisRecords(customerId: string | null) {
     enabled: !!customerId,
     queryKey: ["anamnesis", customerId],
     queryFn: async () => {
+      if (!customerId) return [];
       const { data, error } = await supabase
         .from("anamnesis_records")
         .select("*")
-        .eq("customer_id", customerId!)
+        .eq("customer_id", customerId)
         .order("filled_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as AnamnesisRecord[];
@@ -43,10 +44,11 @@ export function useAnamnesisLog(customerId: string | null) {
     enabled: !!customerId,
     queryKey: ["anamnesis-log", customerId],
     queryFn: async () => {
+      if (!customerId) return [];
       const { data } = await supabase
         .from("anamnesis_access_log")
         .select("*")
-        .eq("customer_id", customerId!)
+        .eq("customer_id", customerId)
         .order("created_at", { ascending: false })
         .limit(100);
       return data ?? [];
