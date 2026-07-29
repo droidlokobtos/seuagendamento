@@ -1,0 +1,21 @@
+
+CREATE INDEX IF NOT EXISTS appt_customer_idx ON public.appointments (customer_id, starts_at DESC);
+CREATE INDEX IF NOT EXISTS appt_company_status_idx ON public.appointments (company_id, status);
+CREATE INDEX IF NOT EXISTS appt_services_appt_idx ON public.appointment_services (appointment_id);
+CREATE INDEX IF NOT EXISTS appt_services_service_idx ON public.appointment_services (service_id);
+CREATE INDEX IF NOT EXISTS staff_company_idx ON public.staff (company_id, active);
+CREATE INDEX IF NOT EXISTS staff_user_idx ON public.staff (user_id);
+CREATE INDEX IF NOT EXISTS staff_schedules_staff_idx ON public.staff_schedules (staff_id, weekday);
+CREATE INDEX IF NOT EXISTS reviews_customer_idx ON public.reviews (customer_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS reviews_staff_idx ON public.reviews (staff_id);
+CREATE INDEX IF NOT EXISTS reviews_company_published_idx ON public.reviews (company_id, published, created_at DESC);
+CREATE INDEX IF NOT EXISTS commissions_customer_idx ON public.commissions (customer_id, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS wa_messages_customer_idx ON public.whatsapp_messages (customer_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS inventory_movements_appt_idx ON public.inventory_movements (appointment_id);
+CREATE INDEX IF NOT EXISTS financial_tx_appt_idx ON public.financial_transactions (appointment_id);
+CREATE INDEX IF NOT EXISTS financial_tx_staff_idx ON public.financial_transactions (staff_id);
+CREATE INDEX IF NOT EXISTS payments_company_idx ON public.payments (company_id, paid_at DESC);
+CREATE INDEX IF NOT EXISTS customer_notes_company_idx ON public.customer_notes (company_id, customer_id);
+CREATE INDEX IF NOT EXISTS notifications_unread_idx ON public.notifications (company_id, created_at DESC) WHERE read_at IS NULL;
+CREATE INDEX IF NOT EXISTS loyalty_tx_customer_idx ON public.loyalty_transactions (customer_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS admin_logs_created_idx ON public.admin_access_logs (created_at DESC);
