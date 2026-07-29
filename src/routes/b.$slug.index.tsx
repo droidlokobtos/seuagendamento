@@ -14,6 +14,7 @@ import { computeDepositCents, depositConfigFromCompany } from "@/lib/finance";
 import { getAmenities } from "@/lib/amenities";
 import { toast } from "sonner";
 import { getPublicCompany, getPublicTimeBlocks } from "@/lib/public-portal.functions";
+import { AnamnesisForm } from "@/components/app/AnamnesisForm";
 
 export const Route = createFileRoute("/b/$slug/")({
   loader: async ({ params }) => {
@@ -106,6 +107,51 @@ function BookingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<any | null>(null);
   const [session, setSession] = useState<{ userId: string; email?: string | null } | null>(null);
+
+  /* ---- Ficha de anamnese (obrigatória quando nunca preenchida ou vencida) ---- */
+  const [anamDone, setAnamDone] = useState(false);
+  const [anamSubmitting, setAnamSubmitting] = useState(false);
+  const anamQuery = useQuery({
+    enabled: step === 6 && !!form.phone.trim() && !anamDone,
+    queryKey: ["anamnesis-check", company.slug, form.phone, selected.map((s) => s.id).join(",")],
+    queryFn: async () => {
+      const p = new URLSearchParams({
+        slug: String(company.slug ?? ""),
+        phone: form.phone.trim(),
+        service_ids: selected.map((s) => s.id).join(","),
+      });
+      const r = await fetch(`/api/public/anamnesis?${p.toString()}`);
+      if (!r.ok) return { required: false, questionnaire: [] };
+      return r.json();
+    },
+  });
+  const anamRequired = !anamDone && !!anamQuery.data?.required;
+
+  const submitAnamnesis = async (d: any) => {
+    setAnamSubmitting(true);
+    try {
+      const r = await fetch("/api/public/anamnesis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: company.slug,
+          phone: form.phone.trim(),
+          name: form.name.trim(),
+          service_ids: selected.map((s) => s.id),
+          ...d,
+        }),
+      });
+      const json = await r.json();
+      if (!r.ok) throw new Error(json.error || "Falha ao enviar a ficha");
+      setAnamDone(true);
+      toast.success("Ficha de anamnese registrada. Obrigado!");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setAnamSubmitting(false);
+    }
+  };
+
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -603,7 +649,30 @@ function BookingPage() {
             </CardContent>
           </Card>
         )}
+
+        {step === 6 && anamRequired && (
+          <div className="mt-4 space-y-3">
+            <div className="rounded-xl border p-3 text-sm" style={{ borderColor: accent }}>
+              <p className="font-semibold">🩺 Ficha de anamnese</p>
+              <p className="text-xs text-muted-foreground">
+                {anamQuery.data?.last_filled_at
+                  ? "Sua ficha está vencida (mais de 6 meses) ou o serviço escolhido exige novas informações."
+                  : "Para sua segurança, precisamos de algumas informações de saúde antes do atendimento."}
+              </p>
+            </div>
+            <AnamnesisForm
+              sections={(anamQuery.data?.questionnaire ?? []) as any}
+              submitLabel="Enviar ficha"
+              submitting={anamSubmitting}
+              onSubmit={submitAnamnesis}
+            />
+          </div>
+        )}
+        {step === 6 && anamDone && (
+          <p className="mt-3 text-center text-xs text-green-700">✅ Ficha de anamnese recebida.</p>
+        )}
       </div>
+
 
       <div className="fixed bottom-0 inset-x-0 border-t bg-card/90 backdrop-blur p-3">
         <div className="max-w-lg mx-auto flex items-center gap-2">
@@ -628,9 +697,9 @@ function BookingPage() {
             </Button>
           ) : (
             <Button size="lg" style={{ background: primary }}
-              disabled={submitting || !form.name || !form.phone || !timeStr}
+              disabled={submitting || !form.name || !form.phone || !timeStr || anamRequired}
               onClick={submit}>
-              {submitting ? "Enviando…" : "Confirmar"}
+              {submitting ? "Enviando…" : anamRequired ? "Preencha a ficha" : "Confirmar"}
             </Button>
           )}
         </div>

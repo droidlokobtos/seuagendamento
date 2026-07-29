@@ -15,6 +15,8 @@ import {
 } from "@/lib/attendance";
 
 import { Phone, Mail, MessageCircle } from "lucide-react";
+import { AnamnesisTab } from "@/components/app/AnamnesisTab";
+
 
 
 type Customer = {
@@ -78,6 +80,7 @@ export function CustomerProfileDialog({
           <TabsTrigger value="avaliacoes">Avaliações</TabsTrigger>
           <TabsTrigger value="comparecimento">Comparecimento</TabsTrigger>
           <TabsTrigger value="timeline">Linha do Tempo</TabsTrigger>
+          <TabsTrigger value="anamnese">Anamnese</TabsTrigger>
           <TabsTrigger value="smart">Perfil Inteligente</TabsTrigger>
         </TabsList>
 
@@ -160,6 +163,10 @@ export function CustomerProfileDialog({
           <CustomerTimeline customerId={customer.id} customer={{ name: customer.name, created_at: customer.created_at }} />
         </TabsContent>
 
+
+        <TabsContent value="anamnese" className="mt-4">
+          <AnamnesisTab companyId={companyId} customerId={customer.id} customerName={customer.name} />
+        </TabsContent>
 
         <TabsContent value="smart" className="mt-4">
           <SmartProfilePanel companyId={companyId} customerId={customer.id} />

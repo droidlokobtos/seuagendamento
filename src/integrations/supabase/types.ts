@@ -47,6 +47,147 @@ export type Database = {
         }
         Relationships: []
       }
+      anamnesis_access_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          company_id: string
+          created_at: string
+          customer_id: string | null
+          detail: string | null
+          id: string
+          record_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          company_id: string
+          created_at?: string
+          customer_id?: string | null
+          detail?: string | null
+          id?: string
+          record_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          company_id?: string
+          created_at?: string
+          customer_id?: string | null
+          detail?: string | null
+          id?: string
+          record_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anamnesis_access_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamnesis_access_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      anamnesis_records: {
+        Row: {
+          actor_user_id: string | null
+          alerts: string[]
+          answers: Json
+          appointment_id: string | null
+          company_id: string
+          consent_lgpd: boolean
+          consent_procedure: boolean
+          consent_truth: boolean
+          created_at: string
+          customer_id: string
+          filled_at: string
+          filled_by: string
+          id: string
+          sections: string[]
+          signature_data: string | null
+          updated_at: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          alerts?: string[]
+          answers?: Json
+          appointment_id?: string | null
+          company_id: string
+          consent_lgpd?: boolean
+          consent_procedure?: boolean
+          consent_truth?: boolean
+          created_at?: string
+          customer_id: string
+          filled_at?: string
+          filled_by?: string
+          id?: string
+          sections?: string[]
+          signature_data?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          alerts?: string[]
+          answers?: Json
+          appointment_id?: string | null
+          company_id?: string
+          consent_lgpd?: boolean
+          consent_procedure?: boolean
+          consent_truth?: boolean
+          created_at?: string
+          customer_id?: string
+          filled_at?: string
+          filled_by?: string
+          id?: string
+          sections?: string[]
+          signature_data?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anamnesis_records_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamnesis_records_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamnesis_records_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamnesis_records_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamnesis_records_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_confirmations: {
         Row: {
           appointment_id: string
@@ -2697,6 +2838,7 @@ export type Database = {
       services: {
         Row: {
           active: boolean
+          anamnesis_section: string | null
           category: string | null
           color: string | null
           commission_type: string
@@ -2716,6 +2858,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          anamnesis_section?: string | null
           category?: string | null
           color?: string | null
           commission_type?: string
@@ -2735,6 +2878,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          anamnesis_section?: string | null
           category?: string | null
           color?: string | null
           commission_type?: string
