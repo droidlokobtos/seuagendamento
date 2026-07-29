@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/public/book")({
 
         const { data: company } = await supabaseAdmin
           .from("companies")
-          .select("id,name,status,online_booking_enabled,min_advance_min,max_advance_days,deposit_enabled,deposit_type,deposit_value,pix_key,pix_holder,pix_bank,pix_qr_url")
+          .select("id,name,status,online_booking_enabled,min_advance_min,max_advance_days,deposit_enabled,deposit_type,deposit_value,pix_key,pix_holder,pix_bank,pix_qr_url,address,phone,whatsapp")
           .eq("slug", slug).maybeSingle();
         if (!company) return Response.json({ error: "Empresa não encontrada" }, { status: 404 });
         if (company.status === "suspended")
