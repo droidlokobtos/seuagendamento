@@ -389,64 +389,6 @@ function CustomerDialog({
   );
 }
 
-function HistoryDialog({ customer }: { customer: C }) {
-  const { data = [], isLoading } = useQuery({
-    queryKey: ["customer-history", customer.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("appointments")
-        .select("id, starts_at, status, total_cents, discount_cents, staff:staff_id(name), appointment_services(services(name))")
-        .eq("customer_id", customer.id)
-        .order("starts_at", { ascending: false })
-        .limit(100);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
-  return (
-    <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-3">
-          <Avatar className="h-9 w-9">
-            {customer.photo_url && <AvatarImage src={customer.photo_url} alt="" />}
-            <AvatarFallback>{customer.name.slice(0, 1).toUpperCase()}</AvatarFallback>
-          </Avatar>
-          Histórico — {customer.name}
-        </DialogTitle>
-      </DialogHeader>
-      {customer.notes && (
-        <div className="rounded-md bg-muted/40 p-3 text-xs">
-          <span className="font-medium">Observações:</span> {customer.notes}
-        </div>
-      )}
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground text-center py-8">Carregando…</p>
-      ) : !data.length ? (
-        <p className="text-sm text-muted-foreground text-center py-8">Nenhum agendamento ainda.</p>
-      ) : (
-        <div className="space-y-2">
-          {data.map((a: any) => {
-            const svc = (a.appointment_services ?? []).map((x: any) => x.services?.name).filter(Boolean).join(", ");
-            const total = (a.total_cents ?? 0) - (a.discount_cents ?? 0);
-            return (
-              <div key={a.id} className="flex items-center justify-between rounded-md border p-3 text-sm">
-                <div>
-                  <p className="font-medium">{dateBR(a.starts_at)}</p>
-                  <p className="text-xs text-muted-foreground">{svc || "—"}{a.staff?.name ? ` • ${a.staff.name}` : ""}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium">{brl(total)}</p>
-                  <p className="text-xs text-muted-foreground capitalize">{a.status}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </DialogContent>
-  );
-}
 
 type ImportRow = {
   name: string;
