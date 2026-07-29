@@ -56,9 +56,11 @@ export function CustomerProfileDialog({
           <TabsTrigger value="dados">Dados</TabsTrigger>
           <TabsTrigger value="agendamentos">Agendamentos</TabsTrigger>
           <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+          <TabsTrigger value="avaliacoes">Avaliações</TabsTrigger>
           <TabsTrigger value="timeline">Linha do Tempo</TabsTrigger>
           <TabsTrigger value="smart">Perfil Inteligente</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="dados" className="mt-4 space-y-3">
           <Card><CardContent className="p-4 space-y-2 text-sm">
