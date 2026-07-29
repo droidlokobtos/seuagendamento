@@ -9,8 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { SmartProfilePanel } from "@/components/app/SmartProfile";
 import { CustomerTimeline } from "@/components/app/CustomerTimeline";
 import { useSmartHistory, useSmartStats, COMMUNICATION_PREFS, NOTE_KINDS } from "@/lib/smart-profile";
+import { Progress } from "@/components/ui/progress";
+import {
+  ATTENDANCE_EVENTS, CLASSIFICATION, useAttendanceSettings, useCustomerAttendance, summarize,
+} from "@/lib/attendance";
 
 import { Phone, Mail, MessageCircle } from "lucide-react";
+
 
 type Customer = {
   id: string; name: string; phone: string | null; whatsapp: string | null; email: string | null;
