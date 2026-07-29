@@ -125,7 +125,7 @@ function BookingPage() {
       const r = await fetch(`/api/public/anamnesis?${p.toString()}`);
       const json = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(json.error || "Não foi possível verificar a ficha de anamnese");
-      return r.json();
+      return json;
     },
   });
   const anamCheckActive = step === 6 && !!customerPhone && selected.length > 0 && !anamDone;
@@ -631,7 +631,32 @@ function BookingPage() {
           </Card>
         )}
 
-        {step === 6 && anamRequired && (
+        {step === 6 && anamChecking && (
+          <Card>
+            <CardContent className="p-4 space-y-2">
+              <h2 className="font-semibold text-lg">Verificando ficha de anamnese</h2>
+              <p className="text-sm text-muted-foreground">
+                Aguarde enquanto conferimos se a ficha está válida para os serviços escolhidos.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 6 && anamQuery.isError && !anamChecking && (
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <h2 className="font-semibold text-lg">Não foi possível verificar a anamnese</h2>
+              <p className="text-sm text-muted-foreground">
+                Tente novamente para continuar com o agendamento.
+              </p>
+              <Button type="button" variant="outline" onClick={() => anamQuery.refetch()}>
+                Tentar novamente
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 6 && anamRequired && !anamChecking && !anamQuery.isError && (
           <div className="space-y-3">
             <div className="rounded-xl border p-3 text-sm" style={{ borderColor: accent }}>
               <p className="font-semibold">🩺 Ficha de anamnese</p>
@@ -653,7 +678,7 @@ function BookingPage() {
           </div>
         )}
 
-        {step === 6 && !anamRequired && (
+        {step === 6 && !anamBlocked && !anamRequired && (
           <Card>
             <CardContent className="p-4 space-y-3">
               <h2 className="font-semibold text-lg">Confirme seu agendamento</h2>
@@ -711,9 +736,9 @@ function BookingPage() {
             </Button>
           ) : (
             <Button size="lg" style={{ background: primary }}
-              disabled={submitting || !form.name || !form.phone || !timeStr || anamRequired}
+              disabled={submitting || !form.name || !form.phone || !timeStr || anamBlocked}
               onClick={submit}>
-              {submitting ? "Enviando…" : anamRequired ? "Preencha a ficha" : "Confirmar"}
+              {submitting ? "Enviando…" : anamChecking ? "Verificando…" : anamRequired ? "Preencha a ficha" : anamQuery.isError ? "Verifique a ficha" : "Confirmar"}
             </Button>
           )}
         </div>
