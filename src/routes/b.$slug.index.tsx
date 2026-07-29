@@ -152,11 +152,9 @@ function BookingPage() {
   const { data: blocks = [] } = useQuery({
     queryKey: ["pub_blocks", companyId, dateStr],
     queryFn: async () => {
-      const from = `${dateStr}T00:00:00`;
-      const to = `${dateStr}T23:59:59`;
-      const { data } = await supabase.from("public_time_blocks").select("starts_at,ends_at,staff_id")
-        .eq("company_id", companyId)
-        .lt("starts_at", to).gt("ends_at", from);
+      const data = await getPublicTimeBlocks({
+        data: { companyId, from: `${dateStr}T00:00:00`, to: `${dateStr}T23:59:59` },
+      });
       // Somente bloqueios da empresa toda afetam a lista de horários;
       // bloqueios por profissional são avaliados no passo "Profissional".
       return ((data ?? []) as TimeBlock[]).filter((b) => !b.staff_id);
