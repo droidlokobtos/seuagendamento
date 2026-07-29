@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -6,11 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { AlertTriangle, FileText, Download, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { AlertTriangle, FileText, Download, ShieldCheck, Trash2 } from "lucide-react";
 import { dateBR } from "@/lib/format";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
-import { AnamnesisForm } from "@/components/app/AnamnesisForm";
 import {
   BASE_SECTION, SECTION_OPTIONS, SECTIONS, buildQuestionnaire, daysUntilExpiry, extractAlerts,
   isExpired, logAnamnesisAccess, useAnamnesisLog, useAnamnesisRecords, type AnamnesisRecord,
