@@ -117,7 +117,8 @@ function Reviews() {
   const dist = [5, 4, 3, 2, 1].map((n) => ({ n, count: data.filter((r) => r.rating === n).length }));
   const negatives = data.filter((r) => r.rating <= NEGATIVE_ALERT_MAX_RATING);
   const answered = invites.filter((i) => i.status === "answered").length;
-  const sent = invites.filter((i) => i.status !== "pending").length;
+  // Só conta como "enviado" o que realmente saiu (pending/failed não foram entregues)
+  const sent = invites.filter((i) => ["sent", "answered", "expired"].includes(i.status)).length;
   const responseRate = sent ? Math.round((answered / sent) * 100) : 0;
   const recommend = data.filter((r) => r.would_recommend !== null);
   const recommendRate = recommend.length
