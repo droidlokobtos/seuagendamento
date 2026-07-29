@@ -7,7 +7,9 @@ import { brl, dateBR } from "@/lib/format";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SmartProfilePanel } from "@/components/app/SmartProfile";
+import { CustomerTimeline } from "@/components/app/CustomerTimeline";
 import { useSmartHistory, useSmartStats, COMMUNICATION_PREFS, NOTE_KINDS } from "@/lib/smart-profile";
+
 import { Phone, Mail, MessageCircle } from "lucide-react";
 
 type Customer = {
@@ -34,6 +36,18 @@ export function CustomerProfileDialog({
       return data ?? [];
     },
   });
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["customer-reviews", customer.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("reviews")
+        .select("id,rating,comment,service_names,created_at")
+        .eq("customer_id", customer.id)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
 
   const totalPaid = (payments as any[])
     .filter((p) => p.status === "approved")
@@ -56,9 +70,11 @@ export function CustomerProfileDialog({
           <TabsTrigger value="dados">Dados</TabsTrigger>
           <TabsTrigger value="agendamentos">Agendamentos</TabsTrigger>
           <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+          <TabsTrigger value="avaliacoes">Avaliações</TabsTrigger>
           <TabsTrigger value="timeline">Linha do Tempo</TabsTrigger>
           <TabsTrigger value="smart">Perfil Inteligente</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="dados" className="mt-4 space-y-3">
           <Card><CardContent className="p-4 space-y-2 text-sm">
@@ -113,23 +129,25 @@ export function CustomerProfileDialog({
           {!payments.length && <p className="py-6 text-center text-sm text-muted-foreground">Nenhum pagamento registrado.</p>}
         </TabsContent>
 
-        <TabsContent value="timeline" className="mt-4 space-y-2">
-          {!history.length && <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma alteração registrada.</p>}
-          {(history as any[]).map((h) => (
-            <div key={h.id} className="rounded-md border p-3 text-sm">
-              <p className="font-medium">
-                {h.entity === "note" ? "Observação" : h.entity === "date" ? "Data importante" : "Perfil"} ·{" "}
-                {h.action === "created" ? "criada" : h.action === "updated" ? "alterada" : "removida"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {new Date(h.created_at).toLocaleString("pt-BR")}
-                {h.field ? ` · ${NOTE_KINDS[h.field] ?? COMMUNICATION_PREFS[h.field] ?? h.field}` : ""}
-              </p>
-              {h.old_value && <p className="mt-1 text-xs text-muted-foreground line-through">{h.old_value}</p>}
-              {h.new_value && <p className="text-xs">{h.new_value}</p>}
+        <TabsContent value="avaliacoes" className="mt-4 space-y-2">
+
+          {!reviews.length && <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma avaliação ainda.</p>}
+          {(reviews as any[]).map((r) => (
+            <div key={r.id} className="rounded-md border p-3 text-sm">
+              <div className="flex items-center justify-between">
+                <p className="font-medium">{"⭐".repeat(Math.max(1, Math.min(5, r.rating)))}</p>
+                <span className="text-xs text-muted-foreground">{dateBR(r.created_at)}</span>
+              </div>
+              {r.service_names && <p className="text-xs text-muted-foreground">{r.service_names}</p>}
+              {r.comment && <p className="mt-1 rounded bg-muted/40 p-2 text-xs italic">"{r.comment}"</p>}
             </div>
           ))}
         </TabsContent>
+
+        <TabsContent value="timeline" className="mt-4">
+          <CustomerTimeline customerId={customer.id} customer={{ name: customer.name, created_at: customer.created_at }} />
+        </TabsContent>
+
 
         <TabsContent value="smart" className="mt-4">
           <SmartProfilePanel companyId={companyId} customerId={customer.id} />
