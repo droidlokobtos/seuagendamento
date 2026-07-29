@@ -11,7 +11,7 @@ import { dateBR } from "@/lib/format";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import {
-  BASE_SECTION, SECTION_OPTIONS, SECTIONS, buildQuestionnaire, daysUntilExpiry, extractAlerts,
+  BASE_SECTION, SECTIONS, buildQuestionnaire, daysUntilExpiry,
   isExpired, logAnamnesisAccess, useAnamnesisLog, useAnamnesisRecords, type AnamnesisRecord,
 } from "@/lib/anamnesis";
 
