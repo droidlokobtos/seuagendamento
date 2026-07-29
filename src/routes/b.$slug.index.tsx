@@ -579,6 +579,21 @@ function BookingPage() {
                 <p className="text-xs text-muted-foreground">{form.name} · {form.phone}{form.email ? ` · ${form.email}` : ""}</p>
                 {form.notes && <p className="text-xs text-muted-foreground italic">"{form.notes}"</p>}
               </div>
+              {(() => {
+                const dueCents = Math.max(0, Math.round(totalPrice * 100) - (coupon?.discount_cents ?? 0));
+                const dep = computeDepositCents(dueCents, depositConfigFromCompany(company));
+                if (dep <= 0) return null;
+                return (
+                  <div className="rounded-xl border p-3 text-sm space-y-1" style={{ borderColor: accent }}>
+                    <p className="font-semibold">Garantia da reserva</p>
+                    <p className="text-xs text-muted-foreground">
+                      Este horário exige um pagamento antecipado de <strong>{brl(dep / 100)}</strong>.
+                      O saldo restante de {brl((dueCents - dep) / 100)} é pago no atendimento.
+                      Os dados do PIX aparecem na próxima tela.
+                    </p>
+                  </div>
+                );
+              })()}
               <p className="text-xs text-muted-foreground">
                 Ao confirmar você aceita as condições de agendamento desta empresa.
               </p>
