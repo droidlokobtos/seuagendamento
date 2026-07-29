@@ -9,13 +9,15 @@ import { toast } from "sonner";
 import { waLink } from "@/lib/format";
 
 export function WhatsAppShareDialog({
-  open, onOpenChange, title = "Mensagem WhatsApp", message, phone: initialPhone = "",
+  open, onOpenChange, title = "Mensagem WhatsApp", message, phone: initialPhone = "", onSend,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   title?: string;
   message: string;
   phone?: string;
+  /** Registro opcional na fila antes de abrir o link oficial. */
+  onSend?: (phone: string, message: string) => void | Promise<void>;
 }) {
   const [msg, setMsg] = useState(message);
   const [phone, setPhone] = useState(initialPhone);
@@ -40,8 +42,13 @@ export function WhatsAppShareDialog({
     copy();
   };
 
-  const sendWhats = () => {
-    window.open(waLink(phone, msg), "_blank");
+  const sendWhats = async () => {
+    if (onSend) {
+      try { await onSend(phone, msg); } catch { /* segue com o link mesmo assim */ }
+      onOpenChange(false);
+      return;
+    }
+    window.open(waLink(phone, msg), "_blank", "noopener");
   };
 
   return (
