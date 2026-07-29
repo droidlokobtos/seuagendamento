@@ -321,8 +321,9 @@ function Customers() {
       )}
 
       <Dialog open={!!historyOf} onOpenChange={(o) => !o && setHistoryOf(null)}>
-        {historyOf && <HistoryDialog customer={historyOf} />}
+        {historyOf && <CustomerProfileDialog customer={historyOf as any} companyId={companyId} initialTab="smart" />}
       </Dialog>
+
 
       <Dialog open={importOpen} onOpenChange={setImportOpen}>
         {importOpen && (
