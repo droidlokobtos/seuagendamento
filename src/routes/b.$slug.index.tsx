@@ -107,6 +107,51 @@ function BookingPage() {
   const [done, setDone] = useState<any | null>(null);
   const [session, setSession] = useState<{ userId: string; email?: string | null } | null>(null);
 
+  /* ---- Ficha de anamnese (obrigatória quando nunca preenchida ou vencida) ---- */
+  const [anamDone, setAnamDone] = useState(false);
+  const [anamSubmitting, setAnamSubmitting] = useState(false);
+  const anamQuery = useQuery({
+    enabled: step === 6 && !!form.phone.trim() && !anamDone,
+    queryKey: ["anamnesis-check", company.slug, form.phone, selected.map((s) => s.id).join(",")],
+    queryFn: async () => {
+      const p = new URLSearchParams({
+        slug: String(company.slug ?? ""),
+        phone: form.phone.trim(),
+        service_ids: selected.map((s) => s.id).join(","),
+      });
+      const r = await fetch(`/api/public/anamnesis?${p.toString()}`);
+      if (!r.ok) return { required: false, questionnaire: [] };
+      return r.json();
+    },
+  });
+  const anamRequired = !anamDone && !!anamQuery.data?.required;
+
+  const submitAnamnesis = async (d: any) => {
+    setAnamSubmitting(true);
+    try {
+      const r = await fetch("/api/public/anamnesis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: company.slug,
+          phone: form.phone.trim(),
+          name: form.name.trim(),
+          service_ids: selected.map((s) => s.id),
+          ...d,
+        }),
+      });
+      const json = await r.json();
+      if (!r.ok) throw new Error(json.error || "Falha ao enviar a ficha");
+      setAnamDone(true);
+      toast.success("Ficha de anamnese registrada. Obrigado!");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setAnamSubmitting(false);
+    }
+  };
+
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
