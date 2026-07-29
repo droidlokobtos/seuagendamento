@@ -97,6 +97,23 @@ export const Route = createFileRoute("/api/public/confirm")({
           return Response.json({ error: "Link expirado" }, { status: 410 });
         }
 
+        // Não deixa confirmar/cancelar agendamento já finalizado ou encerrado pela empresa
+        const { data: current } = await supabaseAdmin
+          .from("appointments")
+          .select("status")
+          .eq("id", conf.appointment_id)
+          .maybeSingle();
+        const closed = ["completed", "cancelled", "cancelled_by_company", "cancelled_by_customer", "no_show"];
+        if (current && closed.includes(current.status)) {
+          await supabaseAdmin.from("appointment_confirmations").update({ status: "expired" }).eq("id", conf.id);
+          return Response.json(
+            { error: "Este agendamento não está mais disponível para confirmação." },
+            { status: 409 },
+          );
+        }
+
+
+
         const ip =
           request.headers.get("cf-connecting-ip") ??
           request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
