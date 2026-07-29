@@ -41,18 +41,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+    let loadedFor: string | null = null;
+
+    const load = (uid: string | undefined) => {
+      const key = uid ?? null;
+      if (loadedFor === key) return; // já carregado para este usuário
+      loadedFor = key;
+      void loadRoles(uid);
+    };
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
-      setTimeout(() => void loadRoles(s?.user.id), 0);
+      // TOKEN_REFRESHED (a cada ~1h e ao focar a aba) e INITIAL_SESSION
+      // disparavam 3 consultas cada; só recarregamos em troca de identidade.
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      setTimeout(() => load(s?.user.id), 0);
     });
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      void loadRoles(data.session?.user.id).finally(() => setLoading(false));
+      const uid = data.session?.user.id;
+      loadedFor = uid ?? null;
+      void loadRoles(uid).finally(() => setLoading(false));
     });
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const value: AuthState = {
+  const value: AuthState = useMemo(() => ({
     user: session?.user ?? null,
     session,
     loading,
@@ -62,7 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mustChangePassword,
     refresh: async () => loadRoles(session?.user.id),
     signOut: async () => { await supabase.auth.signOut(); },
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [session, loading, roles, companyIds, mustChangePassword]);
+
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
