@@ -885,6 +885,240 @@ export type Database = {
           },
         ]
       }
+      customer_dates: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          date: string
+          id: string
+          kind: string
+          notes: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          date: string
+          id?: string
+          kind?: string
+          notes?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          date?: string
+          id?: string
+          kind?: string
+          notes?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_dates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_dates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_dates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_notes: {
+        Row: {
+          company_id: string
+          content: string
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          kind: string
+          pinned: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          company_id: string
+          content: string
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          kind?: string
+          pinned?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          kind?: string
+          pinned?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_notes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_profile_history: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          company_id: string
+          created_at: string
+          customer_id: string
+          entity: string
+          field: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          company_id: string
+          created_at?: string
+          customer_id: string
+          entity: string
+          field?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          company_id?: string
+          created_at?: string
+          customer_id?: string
+          entity?: string
+          field?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_profile_history_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_profiles: {
+        Row: {
+          communication_pref: string
+          company_id: string
+          created_at: string
+          customer_id: string
+          general_notes: string | null
+          preferred_staff_id: string | null
+          restrictions: string[]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          communication_pref?: string
+          company_id: string
+          created_at?: string
+          customer_id: string
+          general_notes?: string | null
+          preferred_staff_id?: string | null
+          restrictions?: string[]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          communication_pref?: string
+          company_id?: string
+          created_at?: string
+          customer_id?: string
+          general_notes?: string | null
+          preferred_staff_id?: string | null
+          restrictions?: string[]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_profiles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_profiles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_profiles_preferred_staff_id_fkey"
+            columns: ["preferred_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           birthdate: string | null
@@ -2369,6 +2603,183 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      whatsapp_integrations: {
+        Row: {
+          api_token: string | null
+          api_url: string | null
+          auto_send_enabled: boolean
+          company_id: string
+          connected_at: string | null
+          created_at: string
+          device_name: string | null
+          last_activity_at: string | null
+          last_error: string | null
+          last_sync_at: string | null
+          max_attempts: number
+          phone_number: string | null
+          provider: string
+          reminder_offsets_hours: number[]
+          session_ref: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          api_token?: string | null
+          api_url?: string | null
+          auto_send_enabled?: boolean
+          company_id: string
+          connected_at?: string | null
+          created_at?: string
+          device_name?: string | null
+          last_activity_at?: string | null
+          last_error?: string | null
+          last_sync_at?: string | null
+          max_attempts?: number
+          phone_number?: string | null
+          provider?: string
+          reminder_offsets_hours?: number[]
+          session_ref?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          api_token?: string | null
+          api_url?: string | null
+          auto_send_enabled?: boolean
+          company_id?: string
+          connected_at?: string | null
+          created_at?: string
+          device_name?: string | null
+          last_activity_at?: string | null
+          last_error?: string | null
+          last_sync_at?: string | null
+          max_attempts?: number
+          phone_number?: string | null
+          provider?: string
+          reminder_offsets_hours?: number[]
+          session_ref?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_integrations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_messages: {
+        Row: {
+          appointment_id: string | null
+          attempts: number
+          company_id: string
+          content: string
+          created_at: string
+          customer_id: string | null
+          delivered_at: string | null
+          error: string | null
+          event: string
+          id: string
+          max_attempts: number
+          provider: string
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          to_phone: string | null
+          updated_at: string
+          wa_url: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          attempts?: number
+          company_id: string
+          content: string
+          created_at?: string
+          customer_id?: string | null
+          delivered_at?: string | null
+          error?: string | null
+          event: string
+          id?: string
+          max_attempts?: number
+          provider?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          to_phone?: string | null
+          updated_at?: string
+          wa_url?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          attempts?: number
+          company_id?: string
+          content?: string
+          created_at?: string
+          customer_id?: string | null
+          delivered_at?: string | null
+          error?: string | null
+          event?: string
+          id?: string
+          max_attempts?: number
+          provider?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          to_phone?: string | null
+          updated_at?: string
+          wa_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_templates: {
+        Row: {
+          body: string
+          company_id: string
+          created_at: string
+          enabled: boolean
+          event: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          company_id: string
+          created_at?: string
+          enabled?: boolean
+          event: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          company_id?: string
+          created_at?: string
+          enabled?: boolean
+          event?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

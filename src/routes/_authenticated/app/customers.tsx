@@ -26,8 +26,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { dateBR, brl } from "@/lib/format";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { CustomerProfileDialog } from "@/components/app/CustomerProfileDialog";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+
 
 export const Route = createFileRoute("/_authenticated/app/customers")({
   component: Customers,
@@ -76,6 +78,21 @@ function Customers() {
     },
   });
 
+  // Observações do Perfil Inteligente — permitem pesquisar por "alergia", etc.
+  const { data: smartNotes = [] } = useQuery({
+    queryKey: ["company-smart-notes", companyId],
+    queryFn: async () =>
+      (await supabase.from("customer_notes").select("customer_id,content").eq("company_id", companyId)).data ?? [],
+  });
+
+  const notesByCustomer = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const n of smartNotes as any[]) {
+      m.set(n.customer_id, `${m.get(n.customer_id) ?? ""} ${n.content}`.toLowerCase());
+    }
+    return m;
+  }, [smartNotes]);
+
   const filtered = useMemo(() => {
     const fromT = from ? new Date(from + "T00:00:00").getTime() : null;
     const toT = to ? new Date(to + "T23:59:59").getTime() : null;
@@ -86,7 +103,9 @@ function Customers() {
           c.name.toLowerCase().includes(s) ||
           (c.phone ?? "").includes(q) ||
           (c.whatsapp ?? "").includes(q) ||
-          (c.email ?? "").toLowerCase().includes(s);
+          (c.email ?? "").toLowerCase().includes(s) ||
+          (c.notes ?? "").toLowerCase().includes(s) ||
+          (notesByCustomer.get(c.id) ?? "").includes(s);
         if (!ok) return false;
       }
       if (sourceFilter !== "all" && (c.source ?? "manual") !== sourceFilter) return false;
@@ -95,7 +114,8 @@ function Customers() {
       if (toT && t > toT) return false;
       return true;
     });
-  }, [data, q, sourceFilter, from, to]);
+  }, [data, q, sourceFilter, from, to, notesByCustomer]);
+
 
   const save = useMutation({
     mutationFn: async (v: Partial<C>) => {
@@ -247,7 +267,7 @@ function Customers() {
         <CardContent className="p-4 grid gap-3 md:grid-cols-4">
           <div className="relative md:col-span-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar por nome, telefone, WhatsApp ou e-mail…" className="pl-9"
+            <Input placeholder="Buscar por nome, contato ou observações (ex.: alergia)…" className="pl-9"
               value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
           <Select value={sourceFilter} onValueChange={setSourceFilter}>
@@ -303,7 +323,7 @@ function Customers() {
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <Button size="icon" variant="ghost" title="Histórico" onClick={() => setHistoryOf(c)}>
+                    <Button size="icon" variant="ghost" title="Perfil inteligente" onClick={() => setHistoryOf(c)}>
                       <History className="h-4 w-4" />
                     </Button>
                     <Button size="icon" variant="ghost" onClick={() => { setEdit(c); setOpen(true); }}>
@@ -321,8 +341,9 @@ function Customers() {
       )}
 
       <Dialog open={!!historyOf} onOpenChange={(o) => !o && setHistoryOf(null)}>
-        {historyOf && <HistoryDialog customer={historyOf} />}
+        {historyOf && <CustomerProfileDialog customer={historyOf as any} companyId={companyId} initialTab="smart" />}
       </Dialog>
+
 
       <Dialog open={importOpen} onOpenChange={setImportOpen}>
         {importOpen && (
@@ -386,64 +407,6 @@ function CustomerDialog({
   );
 }
 
-function HistoryDialog({ customer }: { customer: C }) {
-  const { data = [], isLoading } = useQuery({
-    queryKey: ["customer-history", customer.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("appointments")
-        .select("id, starts_at, status, total_cents, discount_cents, staff:staff_id(name), appointment_services(services(name))")
-        .eq("customer_id", customer.id)
-        .order("starts_at", { ascending: false })
-        .limit(100);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
-  return (
-    <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-3">
-          <Avatar className="h-9 w-9">
-            {customer.photo_url && <AvatarImage src={customer.photo_url} alt="" />}
-            <AvatarFallback>{customer.name.slice(0, 1).toUpperCase()}</AvatarFallback>
-          </Avatar>
-          Histórico — {customer.name}
-        </DialogTitle>
-      </DialogHeader>
-      {customer.notes && (
-        <div className="rounded-md bg-muted/40 p-3 text-xs">
-          <span className="font-medium">Observações:</span> {customer.notes}
-        </div>
-      )}
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground text-center py-8">Carregando…</p>
-      ) : !data.length ? (
-        <p className="text-sm text-muted-foreground text-center py-8">Nenhum agendamento ainda.</p>
-      ) : (
-        <div className="space-y-2">
-          {data.map((a: any) => {
-            const svc = (a.appointment_services ?? []).map((x: any) => x.services?.name).filter(Boolean).join(", ");
-            const total = (a.total_cents ?? 0) - (a.discount_cents ?? 0);
-            return (
-              <div key={a.id} className="flex items-center justify-between rounded-md border p-3 text-sm">
-                <div>
-                  <p className="font-medium">{dateBR(a.starts_at)}</p>
-                  <p className="text-xs text-muted-foreground">{svc || "—"}{a.staff?.name ? ` • ${a.staff.name}` : ""}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium">{brl(total)}</p>
-                  <p className="text-xs text-muted-foreground capitalize">{a.status}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </DialogContent>
-  );
-}
 
 type ImportRow = {
   name: string;
