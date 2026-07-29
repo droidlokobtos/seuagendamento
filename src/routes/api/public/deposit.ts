@@ -47,9 +47,12 @@ export const Route = createFileRoute("/api/public/deposit")({
         if (amount <= 0) return Response.json({ error: "Este agendamento não exige sinal" }, { status: 400 });
 
         // Evita comprovantes duplicados aguardando análise
-        const { data: existing } = await supabaseAdmin
+        // (limit(1) porque podem existir várias tentativas pendentes)
+        const { data: existingRows } = await supabaseAdmin
           .from("appointment_payments").select("id")
-          .eq("appointment_id", appointment_id).eq("kind", "deposit").eq("status", "pending").maybeSingle();
+          .eq("appointment_id", appointment_id).eq("kind", "deposit").eq("status", "pending")
+          .order("created_at", { ascending: false }).limit(1);
+        const existing = existingRows?.[0] ?? null;
 
         let proofUrl: string | null = null;
         if (file_base64) {
@@ -73,8 +76,12 @@ export const Route = createFileRoute("/api/public/deposit")({
           return Response.json({ error: "Anexe o comprovante ou informe o identificador" }, { status: 400 });
 
         if (existing) {
+          // Não apaga o comprovante já enviado quando o cliente reenvia só o identificador
+          const patch: Record<string, unknown> = { status: "pending" };
+          if (proofUrl) patch.proof_url = proofUrl;
+          if (transaction_ref) patch.transaction_ref = transaction_ref;
           await supabaseAdmin.from("appointment_payments")
-            .update({ proof_url: proofUrl, transaction_ref: transaction_ref || null, status: "pending" } as any)
+            .update(patch as any)
             .eq("id", existing.id);
         } else {
           const { error } = await supabaseAdmin.from("appointment_payments").insert({

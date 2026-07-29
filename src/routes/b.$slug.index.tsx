@@ -822,7 +822,7 @@ function ReviewsSection({ companyId, accent }: { companyId: string; accent: stri
     queryKey: ["pub_reviews", companyId],
     queryFn: async () => {
       const { data } = await supabase.from("reviews")
-        .select("id,rating,comment,created_at,customers(name)")
+        .select("id,rating,comment,created_at,customer_name,customers(name)")
         .eq("company_id", companyId).eq("published", true)
         .order("created_at", { ascending: false }).limit(10);
       return data ?? [];
@@ -851,7 +851,7 @@ function ReviewsSection({ companyId, accent }: { companyId: string; accent: stri
                     style={{ color: i < r.rating ? accent : "#ccc" }} />
                 ))}
                 <span className="text-xs text-muted-foreground ml-1">
-                  {r.customers?.name ?? "Cliente"}
+                  {r.customers?.name ?? r.customer_name ?? "Cliente"}
                 </span>
               </div>
               {r.comment && <p className="text-xs text-muted-foreground">{r.comment}</p>}

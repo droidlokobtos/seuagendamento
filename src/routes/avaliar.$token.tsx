@@ -72,10 +72,9 @@ function PublicCompanyReview() {
       return json as { rating: number; googleReviewUrl: string | null };
     },
     onSuccess: (json) => {
+      // Sem window.open automático: navegadores bloqueiam popup fora de clique.
+      // O convite para o Google aparece como botão na tela de agradecimento.
       setDone({ rating: json.rating, googleReviewUrl: json.googleReviewUrl });
-      if (json.googleReviewUrl) {
-        setTimeout(() => window.open(json.googleReviewUrl!, "_blank", "noopener"), 1200);
-      }
     },
     onError: (e: any) => toast.error(e.message),
   });
