@@ -14,6 +14,7 @@ import { computeDepositCents, depositConfigFromCompany } from "@/lib/finance";
 import { getAmenities } from "@/lib/amenities";
 import { toast } from "sonner";
 import { getPublicCompany, getPublicTimeBlocks } from "@/lib/public-portal.functions";
+import { AnamnesisForm } from "@/components/app/AnamnesisForm";
 
 export const Route = createFileRoute("/b/$slug/")({
   loader: async ({ params }) => {
