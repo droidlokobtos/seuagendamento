@@ -13,15 +13,18 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import {
-  Star, Eye, EyeOff, Trash2, Copy, MessageCircle, RefreshCw, AlertTriangle, TrendingUp, Users, Link2,
+  Star, Eye, EyeOff, Trash2, Copy, MessageCircle, RefreshCw, AlertTriangle, TrendingUp, Users, Link2, QrCode, Download, Award,
 } from "lucide-react";
+import QRCode from "qrcode";
 import { toast } from "sonner";
 import {
   DEFAULT_REVIEW_TEMPLATE,
   REVIEW_INVITE_STATUS,
   NEGATIVE_ALERT_MAX_RATING,
   DEFAULT_REVIEW_EXPIRATION_DAYS,
+  reviewToken,
 } from "@/lib/reviews";
+
 
 export const Route = createFileRoute("/_authenticated/app/reviews")({ component: Reviews });
 
