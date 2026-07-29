@@ -105,7 +105,7 @@ function BookingPage() {
   const [coupon, setCoupon] = useState<{ code: string; discount_cents: number; message: string } | null>(null);
   const [validating, setValidating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState<{ starts_at: string } | null>(null);
+  const [done, setDone] = useState<any | null>(null);
   const [session, setSession] = useState<{ userId: string; email?: string | null } | null>(null);
 
   useEffect(() => {
@@ -283,7 +283,7 @@ function BookingPage() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Falha ao agendar");
-      setDone({ starts_at: json.starts_at });
+      setDone(json);
     } catch (e: any) {
       toast.error(e.message);
     } finally {
