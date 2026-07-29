@@ -67,6 +67,11 @@ function SettingsPage() {
         show_staff_on_portal: c.show_staff_on_portal !== false,
         show_reviews_on_portal: c.show_reviews_on_portal !== false,
         amenities: Array.isArray(c.amenities) ? (c.amenities as string[]) : [],
+        deposit_enabled: !!c.deposit_enabled,
+        deposit_type: c.deposit_type === "fixed" ? "fixed" : "percent",
+        deposit_value: Number(c.deposit_value ?? 50),
+        pix_key: c.pix_key ?? "", pix_holder: c.pix_holder ?? "",
+        pix_bank: c.pix_bank ?? "", pix_qr_url: c.pix_qr_url ?? "",
       });
     }
   }, [company]);
