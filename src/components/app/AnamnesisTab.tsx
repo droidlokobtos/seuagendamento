@@ -140,36 +140,6 @@ export function AnamnesisTab({
     );
   }
 
-  if (creating) {
-    return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium">Nova ficha de anamnese</p>
-          <Button variant="ghost" size="sm" onClick={() => setCreating(false)}>Cancelar</Button>
-        </div>
-        <Card><CardContent className="space-y-2 p-4">
-          <p className="text-xs text-muted-foreground">Seções adicionais conforme o tipo de serviço:</p>
-          <div className="flex flex-wrap gap-2">
-            {SECTION_OPTIONS.map((s) => (
-              <Button
-                key={s.key} type="button" size="sm"
-                variant={picked.includes(s.key) ? "default" : "outline"}
-                onClick={() => setPicked((p) => p.includes(s.key) ? p.filter((x) => x !== s.key) : [...p, s.key])}
-              >
-                {s.emoji} {s.label}
-              </Button>
-            ))}
-          </div>
-        </CardContent></Card>
-        <AnamnesisForm
-          sections={sections}
-          submitLabel="Salvar ficha"
-          submitting={save.isPending}
-          onSubmit={(d) => save.mutate(d)}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
