@@ -107,6 +107,19 @@ export const Route = createFileRoute("/api/public/company-review")({
           validStaffId = stf?.id ?? null;
         }
 
+        // Serviço precisa existir na empresa (evita texto arbitrário vindo do cliente)
+        let validServiceName: string | null = null;
+        if (serviceName) {
+          const { data: svc } = await supabaseAdmin
+            .from("services")
+            .select("name")
+            .eq("company_id", settings.company_id)
+            .eq("name", serviceName)
+            .maybeSingle();
+          validServiceName = svc?.name ?? null;
+        }
+
+
         const { data: review, error: reviewError } = await supabaseAdmin
           .from("reviews")
           .insert({
