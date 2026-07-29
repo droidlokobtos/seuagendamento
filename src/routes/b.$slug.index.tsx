@@ -13,6 +13,7 @@ import { brl } from "@/lib/format";
 import { computeDepositCents, depositConfigFromCompany } from "@/lib/finance";
 import { getAmenities } from "@/lib/amenities";
 import { toast } from "sonner";
+import { getPublicCompany, getPublicTimeBlocks } from "@/lib/public-portal.functions";
 
 export const Route = createFileRoute("/b/$slug/")({
   loader: async ({ params }) => {
