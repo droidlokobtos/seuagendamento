@@ -626,7 +626,12 @@ function ApptDialog({
   const [f, setF] = useState<any>(initial);
 
   return (
-    <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
+    <DialogContent
+      className="sm:max-w-md max-h-[85vh] overflow-y-auto"
+      // O formulário não pode fechar sozinho: só sai por Cancelar / X / Esc.
+      onInteractOutside={(e) => e.preventDefault()}
+      onPointerDownOutside={(e) => e.preventDefault()}
+    >
       <DialogHeader><DialogTitle>{edit ? "Editar agendamento" : "Novo agendamento"}</DialogTitle></DialogHeader>
       <div className="space-y-3">
         <div>
@@ -637,16 +642,25 @@ function ApptDialog({
           </Select>
         </div>
         {f.customer_id && (
-          <SmartProfileSummary customerId={f.customer_id} selectedStaffId={f.staff_id || null} />
+          <SafeBoundary label="as observações do cliente">
+            <SmartProfileSummary customerId={f.customer_id} selectedStaffId={f.staff_id || null} />
+          </SafeBoundary>
         )}
 
         <div>
           <Label>Funcionário</Label>
-          <Select value={f.staff_id} onValueChange={(v) => setF({ ...f, staff_id: v })}>
-            <SelectTrigger><SelectValue placeholder="Selecionar…" /></SelectTrigger>
-            <SelectContent>{staff.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-          </Select>
+          {staff.length === 0 ? (
+            <p className="rounded-md border border-dashed p-2 text-sm text-muted-foreground">
+              Nenhum profissional cadastrado.
+            </p>
+          ) : (
+            <Select value={f.staff_id} onValueChange={(v) => setF({ ...f, staff_id: v })}>
+              <SelectTrigger><SelectValue placeholder="Selecionar…" /></SelectTrigger>
+              <SelectContent>{staff.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+            </Select>
+          )}
         </div>
+
         {!edit && (
           <div>
             <Label>Serviço</Label>
