@@ -423,6 +423,11 @@ function BookingPage() {
               <p className="text-muted-foreground">
                 {dateLabel} às {timeLabel}
               </p>
+              {(done as any).plan_waiver && (
+                <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                  {(done as any).plan_waiver.message}
+                </p>
+              )}
               {depositCents > 0 && (
                 <p className="text-sm text-amber-700">
                   Aguardando confirmação do pagamento antecipado.

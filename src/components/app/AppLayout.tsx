@@ -25,6 +25,7 @@ import {
   Image as ImageIcon,
   BadgePercent,
   CalendarCheck,
+  Layers,
 
 
 
@@ -49,6 +50,7 @@ const NAV = [
   { to: "/app/customers", label: "Clientes", icon: Users },
   { to: "/app/staff", label: "Funcionários", icon: UserCog },
   { to: "/app/services", label: "Serviços", icon: Scissors },
+  { to: "/app/plans", label: "Planos e Pacotes", icon: Layers },
   { to: "/app/gallery", label: "Galeria", icon: ImageIcon },
   { to: "/app/finances", label: "Financeiro", icon: Wallet },
   { to: "/app/payments", label: "Pagamentos", icon: Wallet },

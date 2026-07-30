@@ -1379,6 +1379,183 @@ export type Database = {
           },
         ]
       }
+      customer_plan_services: {
+        Row: {
+          company_id: string
+          created_at: string
+          customer_plan_id: string
+          id: string
+          notes: string | null
+          service_id: string
+          service_name: string | null
+          sessions_total: number
+          sessions_used: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          customer_plan_id: string
+          id?: string
+          notes?: string | null
+          service_id: string
+          service_name?: string | null
+          sessions_total?: number
+          sessions_used?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          customer_plan_id?: string
+          id?: string
+          notes?: string | null
+          service_id?: string
+          service_name?: string | null
+          sessions_total?: number
+          sessions_used?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_plan_services_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_plan_services_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_plan_services_customer_plan_id_fkey"
+            columns: ["customer_plan_id"]
+            isOneToOne: false
+            referencedRelation: "customer_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_plan_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_plans: {
+        Row: {
+          amount_cents: number
+          cancel_reason: string | null
+          cancelled_at: string | null
+          company_id: string
+          created_at: string
+          customer_id: string
+          expires_at: string | null
+          id: string
+          kind: string
+          notes: string | null
+          payment_method: string | null
+          plan_id: string | null
+          plan_name: string
+          renewed_from_id: string | null
+          sold_at: string
+          sold_by: string | null
+          status: string
+          updated_at: string
+          waive_deposit: boolean
+        }
+        Insert: {
+          amount_cents?: number
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          company_id: string
+          created_at?: string
+          customer_id: string
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          payment_method?: string | null
+          plan_id?: string | null
+          plan_name: string
+          renewed_from_id?: string | null
+          sold_at?: string
+          sold_by?: string | null
+          status?: string
+          updated_at?: string
+          waive_deposit?: boolean
+        }
+        Update: {
+          amount_cents?: number
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          company_id?: string
+          created_at?: string
+          customer_id?: string
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          payment_method?: string | null
+          plan_id?: string | null
+          plan_name?: string
+          renewed_from_id?: string | null
+          sold_at?: string
+          sold_by?: string | null
+          status?: string
+          updated_at?: string
+          waive_deposit?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_plans_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_plans_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_plans_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_plans_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_plans_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_plans_renewed_from_id_fkey"
+            columns: ["renewed_from_id"]
+            isOneToOne: false
+            referencedRelation: "customer_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_profile_history: {
         Row: {
           action: string
@@ -2327,6 +2504,264 @@ export type Database = {
           },
           {
             foreignKeyName: "payments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          company_id: string
+          created_at: string
+          description: string | null
+          entity: string
+          entity_id: string | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          company_id: string
+          created_at?: string
+          description?: string | null
+          entity: string
+          entity_id?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_audit_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_audit_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_services: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          plan_id: string
+          service_id: string
+          sessions: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_id: string
+          service_id: string
+          sessions?: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_id?: string
+          service_id?: string
+          sessions?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_services_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_services_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_services_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_session_usage: {
+        Row: {
+          actor_user_id: string | null
+          appointment_id: string | null
+          company_id: string
+          created_at: string
+          customer_id: string | null
+          customer_plan_id: string
+          id: string
+          notes: string | null
+          quantity: number
+          service_id: string | null
+          service_name: string | null
+          staff_id: string | null
+          staff_name: string | null
+          used_at: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          appointment_id?: string | null
+          company_id: string
+          created_at?: string
+          customer_id?: string | null
+          customer_plan_id: string
+          id?: string
+          notes?: string | null
+          quantity?: number
+          service_id?: string | null
+          service_name?: string | null
+          staff_id?: string | null
+          staff_name?: string | null
+          used_at?: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          appointment_id?: string | null
+          company_id?: string
+          created_at?: string
+          customer_id?: string | null
+          customer_plan_id?: string
+          id?: string
+          notes?: string | null
+          quantity?: number
+          service_id?: string | null
+          service_name?: string | null
+          staff_id?: string | null
+          staff_name?: string | null
+          used_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_session_usage_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_session_usage_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_session_usage_customer_plan_id_fkey"
+            columns: ["customer_plan_id"]
+            isOneToOne: false
+            referencedRelation: "customer_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          active: boolean
+          company_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration_days: number | null
+          id: string
+          image_url: string | null
+          kind: string
+          name: string
+          price_cents: number
+          promo_price_cents: number | null
+          sessions_total: number | null
+          updated_at: string
+          valid_until: string | null
+          waive_deposit: boolean
+        }
+        Insert: {
+          active?: boolean
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_days?: number | null
+          id?: string
+          image_url?: string | null
+          kind?: string
+          name: string
+          price_cents?: number
+          promo_price_cents?: number | null
+          sessions_total?: number | null
+          updated_at?: string
+          valid_until?: string | null
+          waive_deposit?: boolean
+        }
+        Update: {
+          active?: boolean
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_days?: number | null
+          id?: string
+          image_url?: string | null
+          kind?: string
+          name?: string
+          price_cents?: number
+          promo_price_cents?: number | null
+          sessions_total?: number | null
+          updated_at?: string
+          valid_until?: string | null
+          waive_deposit?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plans_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plans_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "public_companies"
@@ -3718,6 +4153,7 @@ export type Database = {
       is_company_admin: { Args: { _company: string }; Returns: boolean }
       is_company_member: { Args: { _company: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      plan_mark_expired: { Args: never; Returns: undefined }
       recalc_appointment_finance: {
         Args: { _appt: string }
         Returns: undefined
