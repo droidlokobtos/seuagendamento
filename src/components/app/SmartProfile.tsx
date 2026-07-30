@@ -396,9 +396,10 @@ export function SmartProfileSummary({
 
   if (!customerId) return null;
 
-  const pinned = notes.filter((n) => n.pinned);
-  const restrictions = profile?.restrictions ?? [];
-  const hasInfo = !!(notes.length || restrictions.length || profile?.general_notes);
+  const noteList = Array.isArray(notes) ? notes : [];
+  const pinned = noteList.filter((n) => n?.pinned);
+  const restrictions = Array.isArray(profile?.restrictions) ? profile!.restrictions : [];
+  const hasInfo = !!(noteList.length || restrictions.length || profile?.general_notes);
 
   const preferredId = profile?.preferred_staff_id ?? stats?.favoriteStaff?.id ?? null;
   const preferredName = profile?.preferred_staff_id
