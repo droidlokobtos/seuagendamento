@@ -694,7 +694,19 @@ function ApptDialog({
         </div>
       </div>
       <DialogFooter>
-        <Button onClick={() => onSave(f)} disabled={loading}>Salvar</Button>
+        <Button
+          onClick={() => {
+            try {
+              onSave(f);
+            } catch (err) {
+              console.error("[agenda] erro ao salvar agendamento:", err);
+              toast.error("Não foi possível salvar. Tente novamente.");
+            }
+          }}
+          disabled={loading}
+        >
+          Salvar
+        </Button>
       </DialogFooter>
     </DialogContent>
   );
