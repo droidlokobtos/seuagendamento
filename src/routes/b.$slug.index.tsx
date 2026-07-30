@@ -694,6 +694,12 @@ function BookingPage() {
                 <p className="text-xs text-muted-foreground">{form.name} · {form.phone}{form.email ? ` · ${form.email}` : ""}</p>
                 {form.notes && <p className="text-xs text-muted-foreground italic">"{form.notes}"</p>}
               </div>
+              {showStaffStep && (
+                <Button variant="outline" size="sm" className="w-full" onClick={() => setStep(4)}>
+                  Alterar profissional
+                </Button>
+              )}
+
               {(() => {
                 const dueCents = Math.max(0, Math.round(totalPrice * 100) - (coupon?.discount_cents ?? 0));
                 const dep = computeDepositCents(dueCents, depositConfigFromCompany(company));
