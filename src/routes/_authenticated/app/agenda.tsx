@@ -299,16 +299,20 @@ function Agenda() {
             <DialogTrigger asChild>
               <Button onClick={() => openNew()}><Plus className="h-4 w-4 mr-2" /> Novo</Button>
             </DialogTrigger>
-            <ApptDialog
-              edit={edit && edit.id ? edit : null}
-              seedDate={edit && !edit.id ? new Date(edit.starts_at) : anchor}
-              customers={customers as any}
-              staff={staff as any}
-              services={services as any}
-              defaultStaff={staffFilter || ""}
-              onSave={(v) => save.mutate(v)}
-              loading={save.isPending}
-            />
+            {open && (
+              <ApptDialog
+                key={edit?.id ?? "new"}
+                edit={edit && edit.id ? edit : null}
+                seedDate={edit && !edit.id ? new Date(edit.starts_at) : anchor}
+                customers={customers as any}
+                staff={staff as any}
+                services={services as any}
+                defaultStaff={staffFilter || ""}
+                onSave={(v) => save.mutate(v)}
+                loading={save.isPending}
+              />
+            )}
+
           </Dialog>
         </div>
       </div>
