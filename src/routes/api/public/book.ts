@@ -217,6 +217,28 @@ export const Route = createFileRoute("/api/public/book")({
         }
 
 
+        // Isenção automática de sinal: cliente com plano/pacote ativo cobrindo o serviço
+        let planWaived: { plan: string; service: string } | null = null;
+        if (depositCents > 0) {
+          const { data: covered } = await supabaseAdmin
+            .from("customer_plan_services")
+            .select("service_id,sessions_total,sessions_used,service_name,customer_plans!inner(id,plan_name,status,expires_at,waive_deposit,customer_id,company_id)")
+            .in("service_id", services.map((s) => s.id))
+            .eq("customer_plans.customer_id", customerId)
+            .eq("customer_plans.company_id", company.id)
+            .eq("customer_plans.status", "active")
+            .eq("customer_plans.waive_deposit", true);
+          const hit = ((covered ?? []) as any[]).find((row) => {
+            const cp = row.customer_plans;
+            const validDate = !cp?.expires_at || new Date(cp.expires_at) >= new Date(new Date().toDateString());
+            return validDate && row.sessions_used < row.sessions_total;
+          });
+          if (hit) {
+            depositCents = 0;
+            planWaived = { plan: hit.customer_plans.plan_name, service: hit.service_name ?? "" };
+          }
+        }
+
         const { data: appt, error: aErr } = await supabaseAdmin
           .from("appointments")
           .insert({
@@ -240,6 +262,23 @@ export const Route = createFileRoute("/api/public/book")({
         const { error: asErr } = await supabaseAdmin.from("appointment_services").insert(rows as any);
         if (asErr) return Response.json({ error: asErr.message }, { status: 500 });
 
+        if (planWaived) {
+          await supabaseAdmin.from("plan_audit_log").insert({
+            company_id: company.id,
+            entity: "deposit_waiver",
+            entity_id: appt.id,
+            action: "deposit_waived",
+            description: "Isenção automática de sinal por plano/pacote ativo.",
+            new_data: {
+              customer_id: customerId,
+              appointment_id: appt.id,
+              plan: planWaived.plan,
+              service: planWaived.service,
+              at: new Date().toISOString(),
+            },
+          } as any);
+        }
+
         let pixQr: string | null = null;
         if (depositCents > 0 && (company as any).pix_qr_url) {
           const raw = String((company as any).pix_qr_url);
@@ -260,6 +299,13 @@ export const Route = createFileRoute("/api/public/book")({
           discount_cents: discountCents,
           total_cents: dueCents,
           deposit_required_cents: depositCents,
+          plan_waiver: planWaived
+            ? {
+                plan: planWaived.plan,
+                message:
+                  "Este atendimento faz parte do seu plano/pacote ativo. Não é necessário realizar o pagamento do sinal antecipado.",
+              }
+            : null,
           balance_cents: Math.max(0, dueCents - depositCents),
           pix: depositCents > 0
             ? {

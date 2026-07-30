@@ -16,6 +16,7 @@ import {
 
 import { Phone, Mail, MessageCircle } from "lucide-react";
 import { AnamnesisTab, useIsCompanyAdmin } from "@/components/app/AnamnesisTab";
+import { CustomerPlansTab } from "@/components/app/CustomerPlansTab";
 
 
 
@@ -82,6 +83,7 @@ export function CustomerProfileDialog({
           <TabsTrigger value="comparecimento">Comparecimento</TabsTrigger>
           <TabsTrigger value="timeline">Linha do Tempo</TabsTrigger>
           {canSeeAnamnesis && <TabsTrigger value="anamnese">Anamnese</TabsTrigger>}
+          <TabsTrigger value="planos">Planos e Pacotes</TabsTrigger>
           <TabsTrigger value="smart">Perfil Inteligente</TabsTrigger>
         </TabsList>
 
@@ -170,6 +172,10 @@ export function CustomerProfileDialog({
             <AnamnesisTab companyId={companyId} customerId={customer.id} customerName={customer.name} />
           </TabsContent>
         )}
+
+        <TabsContent value="planos" className="mt-4">
+          <CustomerPlansTab customerId={customer.id} />
+        </TabsContent>
 
         <TabsContent value="smart" className="mt-4">
           <SmartProfilePanel companyId={companyId} customerId={customer.id} />
