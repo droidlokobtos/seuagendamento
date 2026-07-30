@@ -216,7 +216,7 @@ function BookingPage() {
 
   // Profissionais habilitados para os serviços escolhidos E livres no horário escolhido.
   // Todo o filtro (vínculo, jornada, bloqueios e agendamentos) é feito no backend.
-  const { data: staffData, isFetching: staffLoading } = useQuery({
+  const { data: staffData, isLoading: staffLoading } = useQuery({
     queryKey: ["pub_staff", company.slug, selectedServiceIdsKey, dateStr, timeStr],
     queryFn: async () => {
       const params = new URLSearchParams({ slug: company.slug, service_ids: selectedServiceIdsKey });
@@ -229,9 +229,14 @@ function BookingPage() {
       return json as { staff: Staff[]; reason: string | null };
     },
     enabled: selected.length > 0 && !!dateStr && !!timeStr,
+    // mantém a lista visível durante revalidações (ex.: ao voltar do passo de
+    // observações), para nunca travar a troca de profissional
+    placeholderData: (prev) => prev,
+    refetchOnWindowFocus: false,
   });
   const staffList = staffData?.staff ?? [];
   const staffReason = staffData?.reason ?? null;
+
 
   const totalMin = selected.reduce((s, x) => s + x.duration_min, 0);
   const totalPrice = selected.reduce((s, x) => s + x.price_cents, 0) / 100;
