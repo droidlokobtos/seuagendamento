@@ -111,7 +111,21 @@ function Agenda() {
   });
   const { data: staff = [] } = useQuery({
     queryKey: ["staff-lite", companyId],
-    queryFn: async () => (await supabase.from("staff").select("id,name,color").eq("company_id", companyId).eq("active", true).order("sort_order", { ascending: true }).order("name")).data ?? [],
+    queryFn: async () => {
+      // `staff` não possui coluna sort_order — ordenar por ela quebrava a
+      // consulta e a lista de profissionais vinha vazia.
+      const { data, error } = await supabase
+        .from("staff")
+        .select("id,name,color")
+        .eq("company_id", companyId)
+        .eq("active", true)
+        .order("name");
+      if (error) {
+        console.error("[agenda] falha ao carregar profissionais:", error);
+        throw error;
+      }
+      return data ?? [];
+    },
   });
   const { data: services = [] } = useQuery({
     queryKey: ["services-lite", companyId],
