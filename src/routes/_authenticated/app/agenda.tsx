@@ -1,4 +1,5 @@
 import { SmartProfileSummary } from "@/components/app/SmartProfile";
+import { SafeBoundary } from "@/components/app/SafeBoundary";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -111,7 +112,21 @@ function Agenda() {
   });
   const { data: staff = [] } = useQuery({
     queryKey: ["staff-lite", companyId],
-    queryFn: async () => (await supabase.from("staff").select("id,name,color").eq("company_id", companyId).eq("active", true).order("sort_order", { ascending: true }).order("name")).data ?? [],
+    queryFn: async () => {
+      // `staff` não possui coluna sort_order — ordenar por ela quebrava a
+      // consulta e a lista de profissionais vinha vazia.
+      const { data, error } = await supabase
+        .from("staff")
+        .select("id,name,color")
+        .eq("company_id", companyId)
+        .eq("active", true)
+        .order("name");
+      if (error) {
+        console.error("[agenda] falha ao carregar profissionais:", error);
+        throw error;
+      }
+      return data ?? [];
+    },
   });
   const { data: services = [] } = useQuery({
     queryKey: ["services-lite", companyId],
@@ -612,7 +627,12 @@ function ApptDialog({
   const [f, setF] = useState<any>(initial);
 
   return (
-    <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
+    <DialogContent
+      className="sm:max-w-md max-h-[85vh] overflow-y-auto"
+      // O formulário não pode fechar sozinho: só sai por Cancelar / X / Esc.
+      onInteractOutside={(e) => e.preventDefault()}
+      onPointerDownOutside={(e) => e.preventDefault()}
+    >
       <DialogHeader><DialogTitle>{edit ? "Editar agendamento" : "Novo agendamento"}</DialogTitle></DialogHeader>
       <div className="space-y-3">
         <div>
@@ -623,16 +643,25 @@ function ApptDialog({
           </Select>
         </div>
         {f.customer_id && (
-          <SmartProfileSummary customerId={f.customer_id} selectedStaffId={f.staff_id || null} />
+          <SafeBoundary label="as observações do cliente">
+            <SmartProfileSummary customerId={f.customer_id} selectedStaffId={f.staff_id || null} />
+          </SafeBoundary>
         )}
 
         <div>
           <Label>Funcionário</Label>
-          <Select value={f.staff_id} onValueChange={(v) => setF({ ...f, staff_id: v })}>
-            <SelectTrigger><SelectValue placeholder="Selecionar…" /></SelectTrigger>
-            <SelectContent>{staff.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-          </Select>
+          {staff.length === 0 ? (
+            <p className="rounded-md border border-dashed p-2 text-sm text-muted-foreground">
+              Nenhum profissional cadastrado.
+            </p>
+          ) : (
+            <Select value={f.staff_id} onValueChange={(v) => setF({ ...f, staff_id: v })}>
+              <SelectTrigger><SelectValue placeholder="Selecionar…" /></SelectTrigger>
+              <SelectContent>{staff.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+            </Select>
+          )}
         </div>
+
         {!edit && (
           <div>
             <Label>Serviço</Label>
@@ -665,7 +694,19 @@ function ApptDialog({
         </div>
       </div>
       <DialogFooter>
-        <Button onClick={() => onSave(f)} disabled={loading}>Salvar</Button>
+        <Button
+          onClick={() => {
+            try {
+              onSave(f);
+            } catch (err) {
+              console.error("[agenda] erro ao salvar agendamento:", err);
+              toast.error("Não foi possível salvar. Tente novamente.");
+            }
+          }}
+          disabled={loading}
+        >
+          Salvar
+        </Button>
       </DialogFooter>
     </DialogContent>
   );
