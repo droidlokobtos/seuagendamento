@@ -2799,6 +2799,259 @@ export type Database = {
         }
         Relationships: []
       }
+      procedure_audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          company_id: string
+          created_at: string
+          description: string | null
+          entity: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          procedure_id: string | null
+          procedure_name: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          company_id: string
+          created_at?: string
+          description?: string | null
+          entity: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          procedure_id?: string | null
+          procedure_name?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          entity?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          procedure_id?: string | null
+          procedure_name?: string | null
+        }
+        Relationships: []
+      }
+      procedure_costs: {
+        Row: {
+          amount_cents: number
+          company_id: string
+          created_at: string
+          id: string
+          label: string
+          procedure_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number
+          company_id: string
+          created_at?: string
+          id?: string
+          label: string
+          procedure_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          company_id?: string
+          created_at?: string
+          id?: string
+          label?: string
+          procedure_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procedure_costs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedure_costs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedure_costs_procedure_id_fkey"
+            columns: ["procedure_id"]
+            isOneToOne: false
+            referencedRelation: "procedures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procedure_items: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          procedure_id: string
+          product_id: string | null
+          product_name: string | null
+          quantity: number
+          unit: string
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          procedure_id: string
+          product_id?: string | null
+          product_name?: string | null
+          quantity?: number
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          procedure_id?: string
+          product_id?: string | null
+          product_name?: string | null
+          quantity?: number
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procedure_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedure_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedure_items_procedure_id_fkey"
+            columns: ["procedure_id"]
+            isOneToOne: false
+            referencedRelation: "procedures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedure_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procedures: {
+        Row: {
+          active: boolean
+          category: string | null
+          commission_type: string
+          commission_value: number
+          company_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration_min: number
+          id: string
+          ideal_price_cents: number
+          labor_hour_rate_cents: number
+          min_price_cents: number
+          name: string
+          other_costs_cents: number
+          practiced_price_cents: number | null
+          service_id: string | null
+          suggested_price_cents: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string | null
+          commission_type?: string
+          commission_value?: number
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_min?: number
+          id?: string
+          ideal_price_cents?: number
+          labor_hour_rate_cents?: number
+          min_price_cents?: number
+          name: string
+          other_costs_cents?: number
+          practiced_price_cents?: number | null
+          service_id?: string | null
+          suggested_price_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string | null
+          commission_type?: string
+          commission_value?: number
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_min?: number
+          id?: string
+          ideal_price_cents?: number
+          labor_hour_rate_cents?: number
+          min_price_cents?: number
+          name?: string
+          other_costs_cents?: number
+          practiced_price_cents?: number | null
+          service_id?: string | null
+          suggested_price_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procedures_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedures_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedures_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           active: boolean

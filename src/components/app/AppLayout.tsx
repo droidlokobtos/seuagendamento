@@ -26,6 +26,7 @@ import {
   BadgePercent,
   CalendarCheck,
   Layers,
+  Calculator,
 
 
 
@@ -59,6 +60,7 @@ const NAV = [
   { to: "/app/attendance", label: "Comparecimento", icon: ShieldAlert },
 
   { to: "/app/products", label: "Estoque", icon: Package },
+  { to: "/app/procedures", label: "Calculadora de Procedimentos", icon: Calculator },
   { to: "/app/reports", label: "Relatórios", icon: BarChart3 },
   { to: "/app/coupons", label: "Cupons", icon: Ticket },
   { to: "/app/loyalty", label: "Fidelidade", icon: Award },
