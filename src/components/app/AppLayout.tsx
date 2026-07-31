@@ -26,6 +26,7 @@ import {
   BadgePercent,
   CalendarCheck,
   Layers,
+  Calculator,
 
 
 
