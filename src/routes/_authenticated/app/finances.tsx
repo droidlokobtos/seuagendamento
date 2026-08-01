@@ -159,7 +159,7 @@ function Finances() {
               <Button><Plus className="h-4 w-4 mr-2" /> Novo lançamento</Button>
             </DialogTrigger>
             {open && (
-              <TxDialog options={options} expenseCats={expenseCats}
+              <TxDialog expenseCats={expenseCats}
                 onSave={(v) => save.mutate(v)} loading={save.isPending} />
             )}
           </Dialog>
@@ -345,8 +345,8 @@ function StatCard({ label, value, icon, tone }: { label: string; value: number; 
   );
 }
 
-function TxDialog({ options, expenseCats, onSave, loading }: {
-  options: Option[]; expenseCats: ExpenseCat[];
+function TxDialog({ expenseCats, onSave, loading }: {
+  expenseCats: ExpenseCat[];
   onSave: (v: Partial<Tx>) => void; loading: boolean;
 }) {
   const [f, setF] = useState<Partial<Tx>>({
@@ -396,17 +396,6 @@ function TxDialog({ options, expenseCats, onSave, loading }: {
           <Input type="number" step="0.01" value={f.amount ?? 0}
             onChange={(e) => setF({ ...f, amount: parseFloat(e.target.value || "0") })} />
         </div>
-        {options.length > 0 && (
-          <div>
-            <Label>Forma de pagamento</Label>
-            <Select onValueChange={() => undefined}>
-              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-              <SelectContent>
-                {options.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
         <div>
           <Label>Descrição</Label>
           <Textarea value={f.description ?? ""} onChange={(e) => setF({ ...f, description: e.target.value })} />
