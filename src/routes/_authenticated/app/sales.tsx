@@ -79,7 +79,7 @@ function SalesPage() {
     queryKey: ["services-simple", companyId],
     queryFn: async () => {
       const { data, error } = await supabase.from("services")
-        .select("id,name,price").eq("company_id", companyId).eq("active", true).order("name");
+        .select("id,name,price_cents").eq("company_id", companyId).eq("active", true).order("name");
       if (error) throw error;
       return data ?? [];
     },
@@ -305,7 +305,7 @@ function SaleDialog({ products, services, customers, options, onSave, loading }:
         .some((v) => (v ?? "").toLowerCase().includes(t))).slice(0, 6)
         .map((p) => ({ kind: "product" as const, id: p.id, name: p.name, cents: effectivePriceCents(p), cost: Number(p.avg_cost || p.cost_price) })),
       ...services.filter((s) => (s.name ?? "").toLowerCase().includes(t)).slice(0, 6)
-        .map((s) => ({ kind: "service" as const, id: s.id, name: s.name, cents: toCents(s.price), cost: 0 })),
+        .map((s) => ({ kind: "service" as const, id: s.id, name: s.name, cents: Number(s.price_cents ?? 0), cost: 0 })),
     ];
   }, [q, sellable, services]);
 
