@@ -8,18 +8,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, Download } from "lucide-react";
 import { brl, dateBR } from "@/lib/format";
+import { DEFAULT_EXPENSE_CATEGORIES, downloadCSV } from "@/lib/commerce";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/finances")({
   component: Finances,
+  head: () => ({
+    meta: [
+      { title: "Financeiro · Receitas, despesas e fluxo de caixa" },
+      { name: "description", content: "Controle receitas, despesas por categoria, formas de pagamento e fluxo de caixa do seu negócio em um só lugar." },
+      { property: "og:title", content: "Financeiro do negócio" },
+      { property: "og:description", content: "Receitas, despesas, formas de pagamento e fluxo de caixa integrados." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
 });
 
 type Tx = {
@@ -30,9 +42,12 @@ type Tx = {
   amount: number;
   occurred_on: string;
   payment_method_id: string | null;
+  sale_id: string | null;
+  appointment_id: string | null;
 };
 
-type PM = { id: string; method: string };
+type Option = { id: string; name: string; active: boolean; sort_order: number };
+type ExpenseCat = { id: string; name: string; active: boolean };
 
 function Finances() {
   const qc = useQueryClient();
@@ -53,17 +68,27 @@ function Finances() {
         .gte("occurred_on", from).lt("occurred_on", to)
         .order("occurred_on", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as Tx[];
+      return (data ?? []) as unknown as Tx[];
     },
   });
 
-  const { data: methods = [] } = useQuery({
-    queryKey: ["payment_methods", companyId],
+  const { data: options = [] } = useQuery({
+    queryKey: ["payment_options", companyId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("payment_methods")
-        .select("id,method").eq("company_id", companyId);
+      const { data, error } = await supabase.from("payment_options")
+        .select("*").eq("company_id", companyId).order("sort_order");
       if (error) throw error;
-      return (data ?? []) as PM[];
+      return (data ?? []) as unknown as Option[];
+    },
+  });
+
+  const { data: expenseCats = [] } = useQuery({
+    queryKey: ["expense_categories", companyId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("expense_categories")
+        .select("*").eq("company_id", companyId).order("name");
+      if (error) throw error;
+      return (data ?? []) as unknown as ExpenseCat[];
     },
   });
 
@@ -71,6 +96,14 @@ function Finances() {
     const income = txs.filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount), 0);
     const expense = txs.filter((t) => t.type === "expense").reduce((s, t) => s + Number(t.amount), 0);
     return { income, expense, balance: income - expense };
+  }, [txs]);
+
+  const byCategory = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const t of txs.filter((x) => x.type === "expense")) {
+      map.set(t.category, (map.get(t.category) ?? 0) + Number(t.amount));
+    }
+    return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
   }, [txs]);
 
   const save = useMutation({
@@ -96,22 +129,39 @@ function Finances() {
       toast.success("Removido");
       qc.invalidateQueries({ queryKey: ["finances", companyId] });
     },
+    onError: (e: any) => toast.error(e.message),
   });
+
+  const exportCSV = () => {
+    downloadCSV(`financeiro-${month}.csv`, [
+      ["Data", "Tipo", "Categoria", "Descrição", "Valor"],
+      ...txs.map((t) => [
+        dateBR(t.occurred_on), t.type === "income" ? "Entrada" : "Saída",
+        t.category, t.description ?? "", Number(t.amount).toFixed(2),
+      ]),
+    ]);
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold">Financeiro</h1>
-          <p className="text-sm text-muted-foreground">Controle de entradas e saídas.</p>
+          <p className="text-sm text-muted-foreground">
+            Receitas de atendimentos e vendas, despesas por categoria e fluxo de caixa.
+          </p>
         </div>
         <div className="flex gap-2 items-center">
-          <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="w-44" />
+          <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="w-40" />
+          <Button variant="outline" onClick={exportCSV}><Download className="h-4 w-4 mr-2" /> Exportar</Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-2" /> Novo lançamento</Button>
             </DialogTrigger>
-            <TxDialog methods={methods} onSave={(v) => save.mutate(v)} loading={save.isPending} />
+            {open && (
+              <TxDialog expenseCats={expenseCats}
+                onSave={(v) => save.mutate(v)} loading={save.isPending} />
+            )}
           </Dialog>
         </div>
       </div>
@@ -119,40 +169,165 @@ function Finances() {
       <div className="grid gap-3 md:grid-cols-3">
         <StatCard label="Entradas" value={totals.income} icon={<TrendingUp className="h-5 w-5" />} tone="text-emerald-600" />
         <StatCard label="Saídas" value={totals.expense} icon={<TrendingDown className="h-5 w-5" />} tone="text-rose-600" />
-        <StatCard label="Saldo" value={totals.balance} icon={<Wallet className="h-5 w-5" />} tone={totals.balance >= 0 ? "text-primary" : "text-rose-600"} />
+        <StatCard label="Saldo do mês" value={totals.balance} icon={<Wallet className="h-5 w-5" />} tone={totals.balance >= 0 ? "text-primary" : "text-rose-600"} />
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-12 text-center text-muted-foreground">Carregando…</div>
-          ) : !txs.length ? (
-            <div className="p-12 text-center text-muted-foreground">Sem lançamentos neste mês.</div>
-          ) : (
-            <div className="divide-y">
-              {txs.map((t) => (
-                <div key={t.id} className="flex items-center justify-between px-4 py-3 gap-3">
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{t.category}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {dateBR(t.occurred_on)}{t.description ? ` · ${t.description}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className={`font-semibold ${t.type === "income" ? "text-emerald-600" : "text-rose-600"}`}>
-                      {t.type === "income" ? "+" : "-"} {brl(Number(t.amount))}
-                    </span>
-                    <Button size="icon" variant="ghost" onClick={() => confirm("Remover?") && del.mutate(t.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+      <Tabs defaultValue="entries">
+        <TabsList>
+          <TabsTrigger value="entries">Lançamentos</TabsTrigger>
+          <TabsTrigger value="analysis">Análise</TabsTrigger>
+          <TabsTrigger value="config">Configurações</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="entries" className="mt-4">
+          <Card>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="p-12 text-center text-muted-foreground">Carregando…</div>
+              ) : !txs.length ? (
+                <div className="p-12 text-center text-muted-foreground">Sem lançamentos neste mês.</div>
+              ) : (
+                <div className="divide-y">
+                  {txs.map((t) => (
+                    <div key={t.id} className="flex items-center justify-between px-4 py-3 gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{t.category}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {dateBR(t.occurred_on)}{t.description ? ` · ${t.description}` : ""}
+                          {t.sale_id ? " · venda" : t.appointment_id ? " · atendimento" : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`font-semibold ${t.type === "income" ? "text-emerald-600" : "text-rose-600"}`}>
+                          {t.type === "income" ? "+" : "-"} {brl(Number(t.amount))}
+                        </span>
+                        <Button size="icon" variant="ghost" onClick={() => confirm("Remover?") && del.mutate(t.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analysis" className="mt-4">
+          <Card>
+            <CardContent className="p-5 space-y-3">
+              <p className="text-sm font-medium">Despesas por categoria</p>
+              {!byCategory.length ? (
+                <p className="text-sm text-muted-foreground">Sem despesas neste mês.</p>
+              ) : (
+                byCategory.map(([cat, val]) => {
+                  const pct = totals.expense ? Math.round((val / totals.expense) * 100) : 0;
+                  return (
+                    <div key={cat} className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="truncate">{cat}</span>
+                        <span className="font-medium">{brl(val)} · {pct}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full bg-rose-500" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="config" className="mt-4 grid gap-4 md:grid-cols-2">
+          <SimpleList
+            title="Formas de pagamento"
+            hint="Usadas nas vendas e nos recebimentos."
+            table="payment_options"
+            companyId={companyId}
+            queryKey={["payment_options", companyId]}
+            rows={options.map((o) => ({ id: o.id, name: o.name }))}
+            suggestions={["Dinheiro", "PIX", "Cartão de crédito", "Cartão de débito", "Transferência"]}
+          />
+          <SimpleList
+            title="Categorias de despesa"
+            hint="Organizam as saídas no fluxo de caixa."
+            table="expense_categories"
+            companyId={companyId}
+            queryKey={["expense_categories", companyId]}
+            rows={expenseCats.map((c) => ({ id: c.id, name: c.name }))}
+            suggestions={DEFAULT_EXPENSE_CATEGORIES}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
+  );
+}
+
+function SimpleList({ title, hint, table, companyId, queryKey, rows, suggestions }: {
+  title: string; hint: string; table: "payment_options" | "expense_categories";
+  companyId: string; queryKey: unknown[]; rows: { id: string; name: string }[];
+  suggestions: string[];
+}) {
+  const qc = useQueryClient();
+  const [name, setName] = useState("");
+
+  const add = useMutation({
+    mutationFn: async (value: string) => {
+      const { error } = await supabase.from(table)
+        .insert({ company_id: companyId, name: value } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => { setName(""); qc.invalidateQueries({ queryKey }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from(table).delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey }),
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const missing = suggestions.filter((s) => !rows.some((r) => r.name.toLowerCase() === s.toLowerCase()));
+
+  return (
+    <Card>
+      <CardContent className="p-5 space-y-3">
+        <div>
+          <p className="font-medium">{title}</p>
+          <p className="text-xs text-muted-foreground">{hint}</p>
+        </div>
+        <div className="flex gap-2">
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Adicionar…" />
+          <Button onClick={() => name.trim() && add.mutate(name.trim())} disabled={add.isPending}>
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        {missing.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {missing.map((s) => (
+              <Button key={s} size="sm" variant="outline" className="h-7 text-xs"
+                onClick={() => add.mutate(s)}>+ {s}</Button>
+            ))}
+          </div>
+        )}
+        {rows.length > 0 && (
+          <div className="divide-y rounded-md border">
+            {rows.map((r) => (
+              <div key={r.id} className="flex items-center justify-between px-3 py-2">
+                <span className="text-sm truncate">{r.name}</span>
+                <Button size="icon" variant="ghost" onClick={() => remove.mutate(r.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -170,15 +345,20 @@ function StatCard({ label, value, icon, tone }: { label: string; value: number; 
   );
 }
 
-function TxDialog({ methods, onSave, loading }: {
-  methods: PM[]; onSave: (v: Partial<Tx>) => void; loading: boolean;
+function TxDialog({ expenseCats, onSave, loading }: {
+  expenseCats: ExpenseCat[];
+  onSave: (v: Partial<Tx>) => void; loading: boolean;
 }) {
   const [f, setF] = useState<Partial<Tx>>({
-    type: "income",
+    type: "expense",
     category: "",
     amount: 0,
     occurred_on: new Date().toISOString().slice(0, 10),
   });
+
+  const cats = f.type === "expense"
+    ? (expenseCats.length ? expenseCats.map((c) => c.name) : DEFAULT_EXPENSE_CATEGORIES)
+    : ["Serviços", "Vendas", "Outros"];
 
   return (
     <DialogContent className="sm:max-w-md">
@@ -189,7 +369,7 @@ function TxDialog({ methods, onSave, loading }: {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Tipo</Label>
-            <Select value={f.type} onValueChange={(v) => setF({ ...f, type: v as any })}>
+            <Select value={f.type} onValueChange={(v) => setF({ ...f, type: v as any, category: "" })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="income">Entrada</SelectItem>
@@ -204,25 +384,18 @@ function TxDialog({ methods, onSave, loading }: {
         </div>
         <div>
           <Label>Categoria</Label>
-          <Input value={f.category ?? ""} onChange={(e) => setF({ ...f, category: e.target.value })}
-            placeholder="Ex: Serviço, Aluguel, Produtos" />
+          <Select value={f.category ?? ""} onValueChange={(v) => setF({ ...f, category: v })}>
+            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+            <SelectContent>
+              {cats.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label>Valor (R$)</Label>
           <Input type="number" step="0.01" value={f.amount ?? 0}
             onChange={(e) => setF({ ...f, amount: parseFloat(e.target.value || "0") })} />
         </div>
-        {methods.length > 0 && (
-          <div>
-            <Label>Forma de pagamento</Label>
-            <Select value={f.payment_method_id ?? ""} onValueChange={(v) => setF({ ...f, payment_method_id: v || null })}>
-              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-              <SelectContent>
-                {methods.map((m) => <SelectItem key={m.id} value={m.id}>{m.method}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
         <div>
           <Label>Descrição</Label>
           <Textarea value={f.description ?? ""} onChange={(e) => setF({ ...f, description: e.target.value })} />

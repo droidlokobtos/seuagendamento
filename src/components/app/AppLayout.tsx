@@ -27,6 +27,8 @@ import {
   CalendarCheck,
   Layers,
   Calculator,
+  ShoppingCart,
+
 
 
 
@@ -60,6 +62,7 @@ const NAV = [
   { to: "/app/attendance", label: "Comparecimento", icon: ShieldAlert },
 
   { to: "/app/products", label: "Estoque", icon: Package },
+  { to: "/app/sales", label: "Vendas", icon: ShoppingCart },
   { to: "/app/procedures", label: "Calculadora de Procedimentos", icon: Calculator },
   { to: "/app/reports", label: "Relatórios", icon: BarChart3 },
   { to: "/app/coupons", label: "Cupons", icon: Ticket },
