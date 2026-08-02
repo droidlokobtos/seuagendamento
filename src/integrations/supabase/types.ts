@@ -1293,6 +1293,57 @@ export type Database = {
           },
         ]
       }
+      costing_settings: {
+        Row: {
+          allocation_basis: string
+          block_below_cost: boolean
+          company_id: string
+          created_at: string
+          default_margin_pct: number
+          min_margin_pct: number
+          monthly_appointments: number
+          monthly_hours: number
+          updated_at: string
+        }
+        Insert: {
+          allocation_basis?: string
+          block_below_cost?: boolean
+          company_id: string
+          created_at?: string
+          default_margin_pct?: number
+          min_margin_pct?: number
+          monthly_appointments?: number
+          monthly_hours?: number
+          updated_at?: string
+        }
+        Update: {
+          allocation_basis?: string
+          block_below_cost?: boolean
+          company_id?: string
+          created_at?: string
+          default_margin_pct?: number
+          min_margin_pct?: number
+          monthly_appointments?: number
+          monthly_hours?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "costing_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "costing_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupons: {
         Row: {
           active: boolean
@@ -2607,6 +2658,51 @@ export type Database = {
           },
         ]
       }
+      overhead_costs: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          include_in_costing: boolean
+          label: string
+          monthly_cents: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          include_in_costing?: boolean
+          label: string
+          monthly_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          include_in_costing?: boolean
+          label?: string
+          monthly_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "overhead_costs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "overhead_costs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_methods: {
         Row: {
           company_id: string
@@ -3117,39 +3213,54 @@ export type Database = {
       }
       procedure_items: {
         Row: {
+          category: string | null
           company_id: string
+          consumption_unit: string | null
+          conversion_factor: number
+          converted_qty: number
           created_at: string
           id: string
           notes: string | null
           procedure_id: string
           product_id: string | null
           product_name: string | null
+          purchase_unit: string | null
           quantity: number
           unit: string
           unit_cost: number
           updated_at: string
         }
         Insert: {
+          category?: string | null
           company_id: string
+          consumption_unit?: string | null
+          conversion_factor?: number
+          converted_qty?: number
           created_at?: string
           id?: string
           notes?: string | null
           procedure_id: string
           product_id?: string | null
           product_name?: string | null
+          purchase_unit?: string | null
           quantity?: number
           unit?: string
           unit_cost?: number
           updated_at?: string
         }
         Update: {
+          category?: string | null
           company_id?: string
+          consumption_unit?: string | null
+          conversion_factor?: number
+          converted_qty?: number
           created_at?: string
           id?: string
           notes?: string | null
           procedure_id?: string
           product_id?: string | null
           product_name?: string | null
+          purchase_unit?: string | null
           quantity?: number
           unit?: string
           unit_cost?: number
@@ -3186,9 +3297,128 @@ export type Database = {
           },
         ]
       }
+      procedure_staff_prices: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          price_cents: number
+          procedure_id: string
+          staff_id: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          price_cents?: number
+          procedure_id: string
+          staff_id: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          price_cents?: number
+          procedure_id?: string
+          staff_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procedure_staff_prices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedure_staff_prices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedure_staff_prices_procedure_id_fkey"
+            columns: ["procedure_id"]
+            isOneToOne: false
+            referencedRelation: "procedures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedure_staff_prices_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procedure_versions: {
+        Row: {
+          actor_user_id: string | null
+          company_id: string
+          created_at: string
+          id: string
+          note: string | null
+          procedure_id: string
+          snapshot: Json
+          totals: Json | null
+          version: number
+        }
+        Insert: {
+          actor_user_id?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          procedure_id: string
+          snapshot: Json
+          totals?: Json | null
+          version?: number
+        }
+        Update: {
+          actor_user_id?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          procedure_id?: string
+          snapshot?: Json
+          totals?: Json | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procedure_versions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedure_versions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedure_versions_procedure_id_fkey"
+            columns: ["procedure_id"]
+            isOneToOne: false
+            referencedRelation: "procedures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       procedures: {
         Row: {
           active: boolean
+          apply_overhead: boolean
+          block_below_cost: boolean
           category: string | null
           commission_type: string
           commission_value: number
@@ -3196,20 +3426,28 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          duration_max_min: number | null
           duration_min: number
+          duration_min_min: number | null
           id: string
           ideal_price_cents: number
+          image_url: string | null
           labor_hour_rate_cents: number
           min_price_cents: number
           name: string
           other_costs_cents: number
           practiced_price_cents: number | null
+          promo_price_cents: number | null
           service_id: string | null
+          subcategory: string | null
           suggested_price_cents: number
+          target_margin_pct: number
           updated_at: string
         }
         Insert: {
           active?: boolean
+          apply_overhead?: boolean
+          block_below_cost?: boolean
           category?: string | null
           commission_type?: string
           commission_value?: number
@@ -3217,20 +3455,28 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          duration_max_min?: number | null
           duration_min?: number
+          duration_min_min?: number | null
           id?: string
           ideal_price_cents?: number
+          image_url?: string | null
           labor_hour_rate_cents?: number
           min_price_cents?: number
           name: string
           other_costs_cents?: number
           practiced_price_cents?: number | null
+          promo_price_cents?: number | null
           service_id?: string | null
+          subcategory?: string | null
           suggested_price_cents?: number
+          target_margin_pct?: number
           updated_at?: string
         }
         Update: {
           active?: boolean
+          apply_overhead?: boolean
+          block_below_cost?: boolean
           category?: string | null
           commission_type?: string
           commission_value?: number
@@ -3238,16 +3484,22 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          duration_max_min?: number | null
           duration_min?: number
+          duration_min_min?: number | null
           id?: string
           ideal_price_cents?: number
+          image_url?: string | null
           labor_hour_rate_cents?: number
           min_price_cents?: number
           name?: string
           other_costs_cents?: number
           practiced_price_cents?: number | null
+          promo_price_cents?: number | null
           service_id?: string | null
+          subcategory?: string | null
           suggested_price_cents?: number
+          target_margin_pct?: number
           updated_at?: string
         }
         Relationships: [
@@ -4319,6 +4571,54 @@ export type Database = {
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unit_conversions: {
+        Row: {
+          company_id: string
+          created_at: string
+          factor: number
+          from_unit: string
+          id: string
+          notes: string | null
+          to_unit: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          factor: number
+          from_unit: string
+          id?: string
+          notes?: string | null
+          to_unit: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          factor?: number
+          from_unit?: string
+          id?: string
+          notes?: string | null
+          to_unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_conversions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_conversions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
             referencedColumns: ["id"]
           },
         ]
