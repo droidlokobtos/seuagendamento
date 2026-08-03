@@ -14,6 +14,7 @@ import { computeDepositCents, depositConfigFromCompany } from "@/lib/finance";
 import { getAmenities } from "@/lib/amenities";
 import { toast } from "sonner";
 import { getPublicCompany, getPublicTimeBlocks } from "@/lib/public-portal.functions";
+import { portalTheme, heroBackground, heroImageOpacity, heroTextClass } from "@/lib/portal-theme";
 import { AnamnesisForm } from "@/components/app/AnamnesisForm";
 
 export const Route = createFileRoute("/b/$slug/")({
@@ -358,8 +359,9 @@ function BookingPage() {
     }
   };
 
-  const primary = company.primary_color || "#0f172a";
-  const accent = company.secondary_color || "#c9a86a";
+  const theme = portalTheme(company);
+  const primary = theme.button;
+  const accent = theme.accent;
 
   // Fluxo: 1 Serviços · 2 Data · 3 Horário · 4 Profissional · 5 Dados · 6 Confirmar
   // (o passo "Profissional" é pulado quando desativado no portal)
@@ -764,12 +766,18 @@ function BookingPage() {
 }
 
 function Hero({ company, primary, accent, slug, loggedIn }: { company: any; primary: string; accent: string; slug: string; loggedIn: boolean }) {
+  const theme = portalTheme(company);
   return (
-    <div className="relative" style={{ background: `linear-gradient(135deg, ${primary}, ${accent})` }}>
-      {company.banner_url && (
-        <img src={company.banner_url} className="absolute inset-0 h-full w-full object-cover opacity-40" alt="" />
+    <div className="relative" style={heroBackground(theme)}>
+      {theme.bgUrl && (
+        <img
+          src={theme.bgUrl}
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ opacity: heroImageOpacity(theme) }}
+          alt=""
+        />
       )}
-      <div className="relative max-w-lg mx-auto px-6 py-10 text-white">
+      <div className={`relative max-w-lg mx-auto px-6 py-10 ${heroTextClass(theme)}`}>
         <div className="flex items-start gap-3">
           {company.logo_url ? (
             <img src={company.logo_url} className="h-14 w-14 rounded-2xl object-cover ring-2 ring-white/40" alt="" />
@@ -780,8 +788,9 @@ function Hero({ company, primary, accent, slug, loggedIn }: { company: any; prim
           )}
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-semibold leading-tight truncate">{company.name}</h1>
+            {theme.slogan && <p className="text-xs opacity-85 truncate">{theme.slogan}</p>}
             {company.address && (
-              <p className="text-xs text-white/80 flex items-center gap-1 mt-0.5">
+              <p className="text-xs opacity-80 flex items-center gap-1 mt-0.5">
                 <MapPin className="h-3 w-3" /> {company.address}
               </p>
             )}
