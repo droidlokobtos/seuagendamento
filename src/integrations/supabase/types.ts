@@ -1051,6 +1051,13 @@ export type Database = {
           pix_holder: string | null
           pix_key: string | null
           pix_qr_url: string | null
+          portal_bg_style: string
+          portal_bg_url: string | null
+          portal_button_color: string | null
+          portal_card_style: string
+          portal_highlight: string
+          portal_slogan: string | null
+          portal_text_color: string | null
           primary_color: string
           responsible_name: string | null
           secondary_color: string
@@ -1107,6 +1114,13 @@ export type Database = {
           pix_holder?: string | null
           pix_key?: string | null
           pix_qr_url?: string | null
+          portal_bg_style?: string
+          portal_bg_url?: string | null
+          portal_button_color?: string | null
+          portal_card_style?: string
+          portal_highlight?: string
+          portal_slogan?: string | null
+          portal_text_color?: string | null
           primary_color?: string
           responsible_name?: string | null
           secondary_color?: string
@@ -1163,6 +1177,13 @@ export type Database = {
           pix_holder?: string | null
           pix_key?: string | null
           pix_qr_url?: string | null
+          portal_bg_style?: string
+          portal_bg_url?: string | null
+          portal_button_color?: string | null
+          portal_card_style?: string
+          portal_highlight?: string
+          portal_slogan?: string | null
+          portal_text_color?: string | null
           primary_color?: string
           responsible_name?: string | null
           secondary_color?: string
@@ -5021,6 +5042,13 @@ export type Database = {
           niche_id: string | null
           online_booking_enabled: boolean | null
           phone: string | null
+          portal_bg_style: string | null
+          portal_bg_url: string | null
+          portal_button_color: string | null
+          portal_card_style: string | null
+          portal_highlight: string | null
+          portal_slogan: string | null
+          portal_text_color: string | null
           primary_color: string | null
           secondary_color: string | null
           short_description: string | null
@@ -5060,6 +5088,13 @@ export type Database = {
           niche_id?: string | null
           online_booking_enabled?: boolean | null
           phone?: string | null
+          portal_bg_style?: string | null
+          portal_bg_url?: string | null
+          portal_button_color?: string | null
+          portal_card_style?: string | null
+          portal_highlight?: string | null
+          portal_slogan?: string | null
+          portal_text_color?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           short_description?: string | null
@@ -5099,6 +5134,13 @@ export type Database = {
           niche_id?: string | null
           online_booking_enabled?: boolean | null
           phone?: string | null
+          portal_bg_style?: string | null
+          portal_bg_url?: string | null
+          portal_button_color?: string | null
+          portal_card_style?: string | null
+          portal_highlight?: string | null
+          portal_slogan?: string | null
+          portal_text_color?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           short_description?: string | null

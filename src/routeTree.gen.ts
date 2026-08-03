@@ -47,6 +47,7 @@ import { Route as AuthenticatedAppReviewsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app/reports'
 import { Route as AuthenticatedAppProductsRouteImport } from './routes/_authenticated/app/products'
 import { Route as AuthenticatedAppProceduresRouteImport } from './routes/_authenticated/app/procedures'
+import { Route as AuthenticatedAppPortalRouteImport } from './routes/_authenticated/app/portal'
 import { Route as AuthenticatedAppPlansRouteImport } from './routes/_authenticated/app/plans'
 import { Route as AuthenticatedAppPaymentsRouteImport } from './routes/_authenticated/app/payments'
 import { Route as AuthenticatedAppLoyaltyRouteImport } from './routes/_authenticated/app/loyalty'
@@ -268,6 +269,11 @@ const AuthenticatedAppProceduresRoute =
     path: '/procedures',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
+const AuthenticatedAppPortalRoute = AuthenticatedAppPortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any)
 const AuthenticatedAppPlansRoute = AuthenticatedAppPlansRouteImport.update({
   id: '/plans',
   path: '/plans',
@@ -444,6 +450,7 @@ export interface FileRoutesByFullPath {
   '/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
   '/app/payments': typeof AuthenticatedAppPaymentsRoute
   '/app/plans': typeof AuthenticatedAppPlansRoute
+  '/app/portal': typeof AuthenticatedAppPortalRoute
   '/app/procedures': typeof AuthenticatedAppProceduresRoute
   '/app/products': typeof AuthenticatedAppProductsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
@@ -506,6 +513,7 @@ export interface FileRoutesByTo {
   '/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
   '/app/payments': typeof AuthenticatedAppPaymentsRoute
   '/app/plans': typeof AuthenticatedAppPlansRoute
+  '/app/portal': typeof AuthenticatedAppPortalRoute
   '/app/procedures': typeof AuthenticatedAppProceduresRoute
   '/app/products': typeof AuthenticatedAppProductsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
@@ -572,6 +580,7 @@ export interface FileRoutesById {
   '/_authenticated/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
   '/_authenticated/app/payments': typeof AuthenticatedAppPaymentsRoute
   '/_authenticated/app/plans': typeof AuthenticatedAppPlansRoute
+  '/_authenticated/app/portal': typeof AuthenticatedAppPortalRoute
   '/_authenticated/app/procedures': typeof AuthenticatedAppProceduresRoute
   '/_authenticated/app/products': typeof AuthenticatedAppProductsRoute
   '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
@@ -638,6 +647,7 @@ export interface FileRouteTypes {
     | '/app/loyalty'
     | '/app/payments'
     | '/app/plans'
+    | '/app/portal'
     | '/app/procedures'
     | '/app/products'
     | '/app/reports'
@@ -700,6 +710,7 @@ export interface FileRouteTypes {
     | '/app/loyalty'
     | '/app/payments'
     | '/app/plans'
+    | '/app/portal'
     | '/app/procedures'
     | '/app/products'
     | '/app/reports'
@@ -765,6 +776,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/loyalty'
     | '/_authenticated/app/payments'
     | '/_authenticated/app/plans'
+    | '/_authenticated/app/portal'
     | '/_authenticated/app/procedures'
     | '/_authenticated/app/products'
     | '/_authenticated/app/reports'
@@ -1090,6 +1102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppProceduresRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/portal': {
+      id: '/_authenticated/app/portal'
+      path: '/portal'
+      fullPath: '/app/portal'
+      preLoaderRoute: typeof AuthenticatedAppPortalRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/plans': {
       id: '/_authenticated/app/plans'
       path: '/plans'
@@ -1309,6 +1328,7 @@ interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppLoyaltyRoute: typeof AuthenticatedAppLoyaltyRoute
   AuthenticatedAppPaymentsRoute: typeof AuthenticatedAppPaymentsRoute
   AuthenticatedAppPlansRoute: typeof AuthenticatedAppPlansRoute
+  AuthenticatedAppPortalRoute: typeof AuthenticatedAppPortalRoute
   AuthenticatedAppProceduresRoute: typeof AuthenticatedAppProceduresRoute
   AuthenticatedAppProductsRoute: typeof AuthenticatedAppProductsRoute
   AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
@@ -1340,6 +1360,7 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppLoyaltyRoute: AuthenticatedAppLoyaltyRoute,
   AuthenticatedAppPaymentsRoute: AuthenticatedAppPaymentsRoute,
   AuthenticatedAppPlansRoute: AuthenticatedAppPlansRoute,
+  AuthenticatedAppPortalRoute: AuthenticatedAppPortalRoute,
   AuthenticatedAppProceduresRoute: AuthenticatedAppProceduresRoute,
   AuthenticatedAppProductsRoute: AuthenticatedAppProductsRoute,
   AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
