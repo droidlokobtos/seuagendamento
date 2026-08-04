@@ -21,9 +21,20 @@ import { brl } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { useMemo } from "react";
 
+import { usePermissions } from "@/lib/use-permissions";
+import { ProfessionalDashboard } from "@/components/app/ProfessionalDashboard";
+import { ReceptionDashboard } from "@/components/app/ReceptionDashboard";
+
 export const Route = createFileRoute("/_authenticated/app/")({
-  component: Dashboard,
+  component: RoleDashboard,
 });
+
+function RoleDashboard() {
+  const { isProfessional, isReceptionist } = usePermissions();
+  if (isProfessional) return <ProfessionalDashboard />;
+  if (isReceptionist) return <ReceptionDashboard />;
+  return <Dashboard />;
+}
 
 function Dashboard() {
   const { activeCompany } = useCompany();

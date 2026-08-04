@@ -113,3 +113,41 @@ export function hasPermission(
   if (role === "super_admin" || role === "company_admin") return true;
   return permissions?.[key] === true;
 }
+
+export const ROUTE_PERMISSIONS: { prefix: string; key: PermissionKey }[] = [
+  { prefix: "/app/agenda", key: "agenda" },
+  { prefix: "/app/blocks", key: "agenda" },
+  { prefix: "/app/confirmations", key: "agendamentos" },
+  { prefix: "/app/attendance", key: "agendamentos" },
+  { prefix: "/app/customers", key: "clientes" },
+  { prefix: "/app/loyalty", key: "clientes" },
+  { prefix: "/app/rewards", key: "clientes" },
+  { prefix: "/app/reviews", key: "clientes" },
+  { prefix: "/app/birthdays", key: "clientes" },
+  { prefix: "/app/campaigns", key: "clientes" },
+  { prefix: "/app/services", key: "servicos" },
+  { prefix: "/app/gallery", key: "servicos" },
+  { prefix: "/app/plans", key: "servicos" },
+  { prefix: "/app/procedures", key: "servicos" },
+  { prefix: "/app/finances", key: "financeiro" },
+  { prefix: "/app/payments", key: "financeiro" },
+  { prefix: "/app/coupons", key: "financeiro" },
+  { prefix: "/app/commissions", key: "comissoes" },
+  { prefix: "/app/sales", key: "caixa" },
+  { prefix: "/app/products", key: "estoque" },
+  { prefix: "/app/reports", key: "relatorios" },
+  { prefix: "/app/ai", key: "relatorios" },
+  { prefix: "/app/users", key: "usuarios" },
+  { prefix: "/app/staff", key: "configuracoes" },
+  { prefix: "/app/settings", key: "configuracoes" },
+  { prefix: "/app/whatsapp", key: "configuracoes" },
+  { prefix: "/app/portal", key: "configuracoes" },
+  { prefix: "/app/link", key: "configuracoes" },
+];
+
+export function routePermission(pathname: string): PermissionKey | null {
+  const match = ROUTE_PERMISSIONS.filter((r) => pathname.startsWith(r.prefix)).sort(
+    (a, b) => b.prefix.length - a.prefix.length,
+  )[0];
+  return match?.key ?? null;
+}
