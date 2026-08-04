@@ -4,6 +4,9 @@ import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { CompanyProvider, useCompany } from "@/lib/company";
 import { AppLayout } from "@/components/app/AppLayout";
+import { useRouterState } from "@tanstack/react-router";
+import { usePermissions } from "@/lib/use-permissions";
+import { routePermission } from "@/lib/permissions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Building2 } from "lucide-react";
 
@@ -67,7 +70,27 @@ function AppShell() {
 
   return (
     <AppLayout>
-      <Outlet />
+      <PermissionGate />
     </AppLayout>
   );
+}
+
+function PermissionGate() {
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const { can, loading } = usePermissions();
+  const key = routePermission(path);
+  if (loading) return null;
+  if (key && !can(key)) {
+    return (
+      <Card className="max-w-lg mx-auto">
+        <CardContent className="p-8 text-center">
+          <h1 className="text-lg font-semibold">Acesso não autorizado</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Seu perfil não tem permissão para acessar esta área. Fale com o administrador da empresa.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+  return <Outlet />;
 }

@@ -1277,24 +1277,39 @@ export type Database = {
       }
       company_users: {
         Row: {
+          active: boolean
           company_id: string
           created_at: string
           id: string
+          job_title: string | null
+          permissions: Json
           role: Database["public"]["Enums"]["app_role"]
+          staff_id: string | null
+          updated_at: string
           user_id: string
         }
         Insert: {
+          active?: boolean
           company_id: string
           created_at?: string
           id?: string
+          job_title?: string | null
+          permissions?: Json
           role?: Database["public"]["Enums"]["app_role"]
+          staff_id?: string | null
+          updated_at?: string
           user_id: string
         }
         Update: {
+          active?: boolean
           company_id?: string
           created_at?: string
           id?: string
+          job_title?: string | null
+          permissions?: Json
           role?: Database["public"]["Enums"]["app_role"]
+          staff_id?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -1310,6 +1325,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_users_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
         ]
@@ -4644,6 +4666,57 @@ export type Database = {
           },
         ]
       }
+      user_audit_log: {
+        Row: {
+          action: string
+          actor_email: string | null
+          company_id: string | null
+          created_at: string
+          entity: string | null
+          entity_id: string | null
+          id: string
+          metadata: Json
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          company_id?: string | null
+          created_at?: string
+          entity?: string | null
+          entity_id?: string | null
+          id?: string
+          metadata?: Json
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          company_id?: string | null
+          created_at?: string
+          entity?: string | null
+          entity_id?: string | null
+          id?: string
+          metadata?: Json
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_audit_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_audit_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -5244,6 +5317,10 @@ export type Database = {
           score: number
           total: number
         }[]
+      }
+      has_permission: {
+        Args: { _company: string; _key: string }
+        Returns: boolean
       }
       has_role: {
         Args: {
