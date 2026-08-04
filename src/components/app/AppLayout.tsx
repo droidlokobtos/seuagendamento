@@ -48,8 +48,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NotificationsBell } from "@/components/app/NotificationsBell";
 import { getImpersonation, stopImpersonation } from "@/lib/impersonation";
+import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 
-type NavItem = { to: string; label: string; icon: LucideIcon; end?: boolean };
+type NavItem = { to: string; label: string; icon: LucideIcon; end?: boolean; perm?: PermissionKey };
 type NavGroup = { id: string; label: string; emoji: string; items: NavItem[] };
 
 const GROUPS: NavGroup[] = [
@@ -58,8 +60,8 @@ const GROUPS: NavGroup[] = [
     label: "Início",
     emoji: "📊",
     items: [
-      { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true },
-      { to: "/app/reports", label: "Relatórios", icon: BarChart3 },
+      { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true, perm: "dashboard" },
+      { to: "/app/reports", label: "Relatórios", icon: BarChart3, perm: "relatorios" },
     ],
   },
   {
@@ -67,12 +69,12 @@ const GROUPS: NavGroup[] = [
     label: "Operação",
     emoji: "📅",
     items: [
-      { to: "/app/agenda", label: "Agenda", icon: Calendar },
-      { to: "/app/link", label: "Link exclusivo", icon: Link2 },
-      { to: "/app/portal", label: "Personalizar página", icon: Palette },
-      { to: "/app/confirmations", label: "Confirmações automáticas", icon: CalendarCheck },
-      { to: "/app/attendance", label: "Comparecimento", icon: ShieldAlert },
-      { to: "/app/blocks", label: "Bloqueios de horários", icon: Calendar },
+      { to: "/app/agenda", label: "Agenda", icon: Calendar, perm: "agenda" },
+      { to: "/app/link", label: "Link exclusivo", icon: Link2, perm: "configuracoes" },
+      { to: "/app/portal", label: "Personalizar página", icon: Palette, perm: "configuracoes" },
+      { to: "/app/confirmations", label: "Confirmações automáticas", icon: CalendarCheck, perm: "agendamentos" },
+      { to: "/app/attendance", label: "Comparecimento", icon: ShieldAlert, perm: "agendamentos" },
+      { to: "/app/blocks", label: "Bloqueios de horários", icon: Calendar, perm: "agenda" },
     ],
   },
   {
@@ -80,12 +82,12 @@ const GROUPS: NavGroup[] = [
     label: "Clientes",
     emoji: "👥",
     items: [
-      { to: "/app/customers", label: "Clientes e fichas", icon: Users },
-      { to: "/app/loyalty", label: "Fidelidade", icon: Award },
-      { to: "/app/rewards", label: "Recompensas", icon: Gift },
-      { to: "/app/reviews", label: "Avaliações", icon: Star },
-      { to: "/app/birthdays", label: "Aniversariantes", icon: Cake },
-      { to: "/app/campaigns", label: "Campanhas", icon: Megaphone },
+      { to: "/app/customers", label: "Clientes e fichas", icon: Users, perm: "clientes" },
+      { to: "/app/loyalty", label: "Fidelidade", icon: Award, perm: "clientes" },
+      { to: "/app/rewards", label: "Recompensas", icon: Gift, perm: "clientes" },
+      { to: "/app/reviews", label: "Avaliações", icon: Star, perm: "clientes" },
+      { to: "/app/birthdays", label: "Aniversariantes", icon: Cake, perm: "clientes" },
+      { to: "/app/campaigns", label: "Campanhas", icon: Megaphone, perm: "clientes" },
     ],
   },
   {
@@ -93,10 +95,10 @@ const GROUPS: NavGroup[] = [
     label: "Serviços",
     emoji: "✂️",
     items: [
-      { to: "/app/services", label: "Serviços e categorias", icon: Scissors },
-      { to: "/app/gallery", label: "Galeria de serviços", icon: ImageIcon },
-      { to: "/app/plans", label: "Planos e Pacotes", icon: Layers },
-      { to: "/app/procedures", label: "Calculadora de Procedimentos", icon: Calculator },
+      { to: "/app/services", label: "Serviços e categorias", icon: Scissors, perm: "servicos" },
+      { to: "/app/gallery", label: "Galeria de serviços", icon: ImageIcon, perm: "servicos" },
+      { to: "/app/plans", label: "Planos e Pacotes", icon: Layers, perm: "servicos" },
+      { to: "/app/procedures", label: "Calculadora de Procedimentos", icon: Calculator, perm: "servicos" },
     ],
   },
   {
@@ -104,26 +106,26 @@ const GROUPS: NavGroup[] = [
     label: "Financeiro",
     emoji: "💰",
     items: [
-      { to: "/app/finances", label: "Dashboard financeiro", icon: Wallet },
-      { to: "/app/payments", label: "Pagamentos", icon: Wallet },
-      { to: "/app/commissions", label: "Comissões", icon: BadgePercent },
-      { to: "/app/sales", label: "Vendas", icon: ShoppingCart },
-      { to: "/app/coupons", label: "Cupons de desconto", icon: Ticket },
+      { to: "/app/finances", label: "Dashboard financeiro", icon: Wallet, perm: "financeiro" },
+      { to: "/app/payments", label: "Pagamentos", icon: Wallet, perm: "financeiro" },
+      { to: "/app/commissions", label: "Comissões", icon: BadgePercent, perm: "comissoes" },
+      { to: "/app/sales", label: "Vendas", icon: ShoppingCart, perm: "caixa" },
+      { to: "/app/coupons", label: "Cupons de desconto", icon: Ticket, perm: "financeiro" },
     ],
   },
   {
     id: "estoque",
     label: "Estoque",
     emoji: "📦",
-    items: [{ to: "/app/products", label: "Produtos e movimentações", icon: Package }],
+    items: [{ to: "/app/products", label: "Produtos e movimentações", icon: Package, perm: "estoque" }],
   },
   {
     id: "equipe",
     label: "Equipe",
     emoji: "👨‍💼",
     items: [
-      { to: "/app/staff", label: "Funcionários", icon: UserCog },
-      { to: "/app/commissions", label: "Comissões individuais", icon: BadgePercent },
+      { to: "/app/staff", label: "Funcionários", icon: UserCog, perm: "configuracoes" },
+      { to: "/app/commissions", label: "Comissões individuais", icon: BadgePercent, perm: "comissoes" },
     ],
   },
   {
@@ -131,8 +133,8 @@ const GROUPS: NavGroup[] = [
     label: "Inteligência",
     emoji: "🤖",
     items: [
-      { to: "/app/ai", label: "Assistente IA", icon: Sparkles },
-      { to: "/app/reports", label: "Relatórios inteligentes", icon: BarChart3 },
+      { to: "/app/ai", label: "Assistente IA", icon: Sparkles, perm: "relatorios" },
+      { to: "/app/reports", label: "Relatórios inteligentes", icon: BarChart3, perm: "relatorios" },
     ],
   },
   {
@@ -140,23 +142,23 @@ const GROUPS: NavGroup[] = [
     label: "Administração",
     emoji: "⚙️",
     items: [
-      { to: "/app/users", label: "Usuários", icon: UserCog },
-      { to: "/app/whatsapp", label: "WhatsApp", icon: MessageCircle },
-      { to: "/app/settings", label: "Configurações", icon: Settings },
+      { to: "/app/users", label: "Usuários", icon: UserCog, perm: "usuarios" },
+      { to: "/app/whatsapp", label: "WhatsApp", icon: MessageCircle, perm: "configuracoes" },
+      { to: "/app/settings", label: "Configurações", icon: Settings, perm: "configuracoes" },
     ],
   },
 ];
 
-const QUICK_ACTIONS: { to: string; label: string; icon: LucideIcon }[] = [
-  { to: "/app/agenda", label: "Novo agendamento", icon: Calendar },
-  { to: "/app/customers", label: "Novo cliente", icon: Users },
-  { to: "/app/sales", label: "Registrar venda", icon: ShoppingCart },
-  { to: "/app/payments", label: "Registrar pagamento", icon: Wallet },
+const QUICK_ACTIONS: { to: string; label: string; icon: LucideIcon; perm: PermissionKey }[] = [
+  { to: "/app/agenda", label: "Novo agendamento", icon: Calendar, perm: "agendamentos" },
+  { to: "/app/customers", label: "Novo cliente", icon: Users, perm: "clientes_cadastro" },
+  { to: "/app/sales", label: "Registrar venda", icon: ShoppingCart, perm: "caixa" },
+  { to: "/app/payments", label: "Registrar pagamento", icon: Wallet, perm: "financeiro" },
 ];
 
 const BOTTOM_NAV: NavItem[] = [
   { to: "/app", label: "Início", icon: LayoutDashboard, end: true },
-  { to: "/app/agenda", label: "Agenda", icon: Calendar },
+  { to: "/app/agenda", label: "Agenda", icon: Calendar, perm: "agenda" },
   { to: "/app/customers", label: "Clientes", icon: Users },
   { to: "/app/finances", label: "Financeiro", icon: Wallet },
 ];
@@ -167,10 +169,21 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const { companies, activeCompany, setActiveCompanyId } = useCompany();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const { can } = usePermissions();
   const impersonating = isSuperAdmin && !!getImpersonation();
 
   const isActive = (to: string, end?: boolean) =>
     end ? path === to : path === to || path.startsWith(to + "/");
+
+  const groups = useMemo(
+    () =>
+      GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => !i.perm || can(i.perm)) })).filter(
+        (g) => g.items.length > 0,
+      ),
+    [can],
+  );
+  const quickActions = useMemo(() => QUICK_ACTIONS.filter((a) => can(a.perm)), [can]);
+  const bottomNav = useMemo(() => BOTTOM_NAV.filter((i) => !i.perm || can(i.perm)), [can]);
 
   const activeGroup = useMemo(
     () => GROUPS.find((g) => g.items.some((i) => isActive(i.to, i.end)))?.id ?? "inicio",
@@ -207,7 +220,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
 
   const NavList = () => (
     <nav className="flex flex-col gap-1 p-2">
-      {GROUPS.map((group) => {
+      {groups.map((group) => {
         const expanded = openGroups.includes(group.id);
         const groupActive = group.items.some((i) => isActive(i.to, i.end));
         return (
@@ -366,7 +379,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
 
             <div className="ml-auto flex items-center gap-1.5">
               <div className="hidden lg:flex items-center gap-1.5">
-                {QUICK_ACTIONS.map((a) => (
+                {quickActions.map((a) => (
                   <Button key={a.label} asChild variant="outline" size="sm">
                     <Link to={a.to}>
                       <a.icon className="h-3.5 w-3.5 mr-1.5" />
@@ -382,7 +395,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {QUICK_ACTIONS.map((a) => (
+                  {quickActions.map((a) => (
                     <DropdownMenuItem key={a.label} asChild>
                       <Link to={a.to}>
                         <a.icon className="h-4 w-4 mr-2" />
@@ -402,7 +415,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
       {/* Navegação inferior (mobile) */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-card/95 backdrop-blur">
         <div className="grid grid-cols-5">
-          {BOTTOM_NAV.map((item) => {
+          {bottomNav.map((item) => {
             const active = isActive(item.to, item.end);
             return (
               <Link
