@@ -7,6 +7,7 @@ export const resetUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
     email: z.string().email(),
+    phone: z.string().min(10),
     new_password: z.string().min(8),
   }).parse(data))
   .handler(async ({ context, data }) => {
@@ -86,6 +87,7 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
     niche_id: z.string().uuid(),
     sub_niche_id: z.string().uuid().nullable().optional(),
     email: z.string().email(),
+    phone: z.string().min(10),
     monthly_fee: z.number().nonnegative(),
     temp_password: z.string().min(8).optional(),
   }).parse(data))
@@ -125,7 +127,7 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
     }
 
     // Force password change on first login
-    await supabaseAdmin.from("profiles").update({ must_change_password: true }).eq("id", userId!);
+    await supabaseAdmin.from("profiles").update({ phone: data.phone, must_change_password: true }).eq("id", userId!);
 
     // Create the company
     const { data: company, error: cErr } = await supabaseAdmin
@@ -137,6 +139,8 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
         sub_niche_id: data.sub_niche_id ?? null,
         email,
         monthly_fee: data.monthly_fee,
+        phone: data.phone,
+        whatsapp: data.phone,
       } as any)
       .select("id")
       .single();

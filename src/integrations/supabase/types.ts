@@ -1015,11 +1015,13 @@ export type Database = {
       companies: {
         Row: {
           address: string | null
+          admin_notes: string | null
           amenities: string[]
           app_icon_url: string | null
           banner_url: string | null
           buffer_min: number
           city: string | null
+          contracted_plan: string | null
           created_at: string
           custom_domain: string | null
           deposit_enabled: boolean
@@ -1045,6 +1047,8 @@ export type Database = {
           next_due_at: string | null
           niche_id: string | null
           online_booking_enabled: boolean
+          owner_name: string | null
+          owner_whatsapp: string | null
           parent_company_id: string | null
           phone: string | null
           pix_bank: string | null
@@ -1078,11 +1082,13 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          admin_notes?: string | null
           amenities?: string[]
           app_icon_url?: string | null
           banner_url?: string | null
           buffer_min?: number
           city?: string | null
+          contracted_plan?: string | null
           created_at?: string
           custom_domain?: string | null
           deposit_enabled?: boolean
@@ -1108,6 +1114,8 @@ export type Database = {
           next_due_at?: string | null
           niche_id?: string | null
           online_booking_enabled?: boolean
+          owner_name?: string | null
+          owner_whatsapp?: string | null
           parent_company_id?: string | null
           phone?: string | null
           pix_bank?: string | null
@@ -1141,11 +1149,13 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          admin_notes?: string | null
           amenities?: string[]
           app_icon_url?: string | null
           banner_url?: string | null
           buffer_min?: number
           city?: string | null
+          contracted_plan?: string | null
           created_at?: string
           custom_domain?: string | null
           deposit_enabled?: boolean
@@ -1171,6 +1181,8 @@ export type Database = {
           next_due_at?: string | null
           niche_id?: string | null
           online_booking_enabled?: boolean
+          owner_name?: string | null
+          owner_whatsapp?: string | null
           parent_company_id?: string | null
           phone?: string | null
           pix_bank?: string | null
@@ -5317,6 +5329,10 @@ export type Database = {
           score: number
           total: number
         }[]
+      }
+      has_any_permission: {
+        Args: { _company: string; _keys: string[] }
+        Returns: boolean
       }
       has_permission: {
         Args: { _company: string; _key: string }
