@@ -80,7 +80,8 @@ function PermissionGate() {
   const { can, loading } = usePermissions();
   const key = routePermission(path);
   if (loading) return null;
-  if (key && !can(key)) {
+  const isDashboard = path === "/app" || path === "/app/";
+  if ((!isDashboard && !key) || (key && !can(key))) {
     return (
       <Card className="max-w-lg mx-auto">
         <CardContent className="p-8 text-center">

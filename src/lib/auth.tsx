@@ -76,7 +76,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
-      setTimeout(() => load(s?.user.id), 0);
+      setLoading(true);
+      if (event === "SIGNED_OUT") {
+        loadedFor = null;
+        setRoles([]);
+        setMemberships([]);
+        setMustChangePassword(false);
+        setLoading(false);
+        return;
+      }
+      loadedFor = null;
+      setTimeout(() => {
+        const uid = s?.user.id;
+        const key = uid ?? null;
+        loadedFor = key;
+        void loadRoles(uid).finally(() => setLoading(false));
+      }, 0);
     });
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
