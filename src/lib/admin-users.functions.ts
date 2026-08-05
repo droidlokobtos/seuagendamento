@@ -82,14 +82,26 @@ export const deleteCompany = createServerFn({ method: "POST" })
 export const createCompanyWithAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
-    name: z.string().min(2),
-    slug: z.string().min(2),
+    name: z.string().trim().min(2).max(160),
+    owner_name: z.string().trim().min(2).max(160),
+    slug: z.string().trim().min(2).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
     niche_id: z.string().uuid(),
     sub_niche_id: z.string().uuid().nullable().optional(),
-    email: z.string().email(),
-    phone: z.string().min(10),
+    email: z.string().trim().email().max(255),
+    phone: z.string().transform((value, ctx) => {
+      const digits = value.replace(/\D/g, "");
+      if (!/^[1-9]{2}9\d{8}$/.test(digits)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe um celular brasileiro válido com DDD." });
+        return z.NEVER;
+      }
+      return digits;
+    }),
     monthly_fee: z.number().nonnegative(),
-    temp_password: z.string().min(8).optional(),
+    temp_password: z.string().min(8).max(72),
+    contracted_plan: z.string().trim().min(1).max(100),
+    status: z.enum(["active", "due_soon", "overdue", "suspended"]),
+    next_due_at: z.string().date(),
+    admin_notes: z.string().trim().max(2000).nullable().optional(),
   }).parse(data))
   .handler(async ({ context, data }) => {
     const { data: isAdmin } = await context.supabase.rpc("is_super_admin");
@@ -102,9 +114,7 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
     let userId: string | null = null;
     const { findAuthUserByEmail } = await import("@/lib/admin-users.server");
     const existing = await findAuthUserByEmail(email);
-    const tempPassword = data.temp_password && data.temp_password.length >= 8
-      ? data.temp_password
-      : `Ag${Math.random().toString(36).slice(2, 8)}!${Math.floor(Math.random() * 90 + 10)}`;
+    const tempPassword = data.temp_password;
 
     if (existing) {
       userId = existing.id;
@@ -112,7 +122,7 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
       const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(existing.id, {
         password: tempPassword,
         email_confirm: true,
-        user_metadata: { ...(existing.user_metadata ?? {}), full_name: data.name },
+        user_metadata: { ...(existing.user_metadata ?? {}), full_name: data.owner_name },
       });
       if (updErr) throw new Error(`Falha ao configurar usuário existente: ${updErr.message}`);
     } else {
@@ -120,14 +130,21 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
         email,
         password: tempPassword,
         email_confirm: true,
-        user_metadata: { full_name: data.name },
+        user_metadata: { full_name: data.owner_name },
       });
       if (createErr) throw createErr;
-      userId = created.user!.id;
+      if (!created.user) throw new Error("Não foi possível criar o administrador da empresa.");
+      userId = created.user.id;
     }
 
     // Force password change on first login
-    await supabaseAdmin.from("profiles").update({ phone: data.phone, must_change_password: true }).eq("id", userId!);
+    if (!userId) throw new Error("Não foi possível configurar o administrador da empresa.");
+    await supabaseAdmin.from("profiles").upsert({
+      id: userId,
+      full_name: data.owner_name,
+      phone: data.phone,
+      must_change_password: true,
+    } as any, { onConflict: "id" });
 
     // Create the company
     const { data: company, error: cErr } = await supabaseAdmin
@@ -138,9 +155,16 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
         niche_id: data.niche_id,
         sub_niche_id: data.sub_niche_id ?? null,
         email,
+        owner_name: data.owner_name,
+        responsible_name: data.owner_name,
+        owner_whatsapp: data.phone,
         monthly_fee: data.monthly_fee,
         phone: data.phone,
         whatsapp: data.phone,
+        contracted_plan: data.contracted_plan,
+        status: data.status,
+        next_due_at: data.next_due_at,
+        admin_notes: data.admin_notes ?? null,
       } as any)
       .select("id")
       .single();
@@ -148,11 +172,11 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
 
     // Wire admin membership + role (idempotent)
     await supabaseAdmin.from("company_users").upsert(
-      { company_id: company.id, user_id: userId!, role: "company_admin" },
+      { company_id: company.id, user_id: userId, role: "company_admin", active: true, permissions: {} },
       { onConflict: "company_id,user_id" },
     );
     await supabaseAdmin.from("user_roles").upsert(
-      { user_id: userId!, role: "company_admin" },
+      { user_id: userId, role: "company_admin" },
       { onConflict: "user_id,role" },
     );
 
