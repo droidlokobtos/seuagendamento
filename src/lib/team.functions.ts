@@ -160,6 +160,11 @@ export const updateCompanyUser = createServerFn({ method: "POST" })
     if (data.role) {
       await supabaseAdmin
         .from("user_roles")
+        .delete()
+        .eq("user_id", row.user_id)
+        .in("role", ["company_admin", "staff", "receptionist"]);
+      await supabaseAdmin
+        .from("user_roles")
         .upsert({ user_id: row.user_id, role: data.role } as any, { onConflict: "user_id,role" });
     }
 
@@ -225,6 +230,7 @@ export const listCompanyUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ companyId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId, data.companyId);
     const { data: rows, error } = await context.supabase
       .from("company_users")
       .select("id,user_id,role,created_at,job_title,permissions,active,staff_id")

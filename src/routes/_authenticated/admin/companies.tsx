@@ -58,7 +58,7 @@ function Companies() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (v: { name: string; slug: string; niche_id: string; sub_niche_id: string | null; email: string; monthly_fee: number }) => {
+    mutationFn: async (v: NewCompanyInput) => {
       return await createCompanyFn({ data: v });
     },
     onSuccess: (res, v) => {
@@ -303,13 +303,36 @@ function DeleteCompanyDialog({ name, onConfirm }: { name: string; onConfirm: () 
   );
 }
 
+type NewCompanyInput = {
+  name: string;
+  owner_name: string;
+  slug: string;
+  niche_id: string;
+  sub_niche_id: string | null;
+  email: string;
+  phone: string;
+  temp_password: string;
+  contracted_plan: string;
+  status: "active" | "due_soon" | "overdue" | "suspended";
+  next_due_at: string;
+  admin_notes: string | null;
+  monthly_fee: number;
+};
+
+function formatBrazilianMobile(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 function NewCompanyDialog({
   niches,
   onSubmit,
   busy,
 }: {
   niches: { id: string; name: string }[];
-  onSubmit: (v: { name: string; slug: string; niche_id: string; sub_niche_id: string | null; email: string; monthly_fee: number }) => void;
+  onSubmit: (v: NewCompanyInput) => void;
   busy: boolean;
 }) {
   const [name, setName] = useState("");
@@ -317,6 +340,13 @@ function NewCompanyDialog({
   const [niche, setNiche] = useState("");
   const [subNiche, setSubNiche] = useState<string>("");
   const [email, setEmail] = useState("");
+  const [ownerName, setOwnerName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [plan, setPlan] = useState("");
+  const [status, setStatus] = useState<NewCompanyInput["status"]>("active");
+  const [dueDate, setDueDate] = useState("");
+  const [notes, setNotes] = useState("");
   const [fee, setFee] = useState("49.90");
   const [accepted, setAccepted] = useState(false);
 
@@ -332,8 +362,12 @@ function NewCompanyDialog({
       <DialogHeader><DialogTitle>Nova empresa</DialogTitle></DialogHeader>
       <div className="space-y-3">
         <div>
-          <Label>Nome</Label>
+          <Label>Nome da empresa</Label>
           <Input value={name} onChange={(e) => { setName(e.target.value); setSlug(slugify(e.target.value)); }} placeholder="Ex.: Studio Bella" />
+        </div>
+        <div>
+          <Label>Nome do proprietário</Label>
+          <Input value={ownerName} onChange={(e) => setOwnerName(e.target.value)} maxLength={160} placeholder="Nome completo" />
         </div>
         <div>
           <Label>Slug (URL pública)</Label>
@@ -359,12 +393,46 @@ function NewCompanyDialog({
           </Select>
         </div>
         <div>
-          <Label>E-mail do responsável</Label>
+          <Label>E-mail do proprietário</Label>
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="dono@empresa.com" />
+        </div>
+        <div>
+          <Label>Telefone/WhatsApp do proprietário</Label>
+          <Input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(formatBrazilianMobile(e.target.value))} placeholder="(11) 99999-9999" maxLength={15} />
+        </div>
+        <div>
+          <Label>Senha inicial</Label>
+          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} maxLength={72} autoComplete="new-password" />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <Label>Plano contratado</Label>
+            <Input value={plan} onChange={(e) => setPlan(e.target.value)} maxLength={100} placeholder="Ex.: Profissional" />
+          </div>
+          <div>
+            <Label>Status da empresa</Label>
+            <Select value={status} onValueChange={(value) => setStatus(value as NewCompanyInput["status"])}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Ativa</SelectItem>
+                <SelectItem value="due_soon">Próximo vencimento</SelectItem>
+                <SelectItem value="overdue">Em atraso</SelectItem>
+                <SelectItem value="suspended">Suspensa</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div>
+          <Label>Data de vencimento</Label>
+          <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
         </div>
         <div>
           <Label>Mensalidade (R$)</Label>
           <Input type="number" step="0.01" value={fee} onChange={(e) => setFee(e.target.value)} />
+        </div>
+        <div>
+          <Label>Observações (opcional)</Label>
+          <textarea className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} />
         </div>
         <label className="flex items-start gap-2 text-xs text-muted-foreground leading-snug pt-1">
           <input
@@ -384,8 +452,12 @@ function NewCompanyDialog({
       </div>
       <DialogFooter>
         <Button
-          onClick={() => onSubmit({ name, slug, niche_id: niche, sub_niche_id: subNiche || null, email, monthly_fee: Number(fee) })}
-          disabled={busy || !name || !slug || !niche || !email || !accepted}
+          onClick={() => onSubmit({
+            name, owner_name: ownerName, slug, niche_id: niche, sub_niche_id: subNiche || null,
+            email, phone, temp_password: password, contracted_plan: plan, status,
+            next_due_at: dueDate, admin_notes: notes.trim() || null, monthly_fee: Number(fee),
+          })}
+          disabled={busy || !name || !ownerName || !slug || !niche || !email || phone.replace(/\D/g, "").length !== 11 || password.length < 8 || !plan || !dueDate || !accepted}
         >
           {busy ? "Criando…" : "Criar empresa"}
         </Button>

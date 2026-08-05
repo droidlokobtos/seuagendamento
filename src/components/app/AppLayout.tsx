@@ -157,10 +157,10 @@ const QUICK_ACTIONS: { to: string; label: string; icon: LucideIcon; perm: Permis
 ];
 
 const BOTTOM_NAV: NavItem[] = [
-  { to: "/app", label: "Início", icon: LayoutDashboard, end: true },
+  { to: "/app", label: "Início", icon: LayoutDashboard, end: true, perm: "dashboard" },
   { to: "/app/agenda", label: "Agenda", icon: Calendar, perm: "agenda" },
-  { to: "/app/customers", label: "Clientes", icon: Users },
-  { to: "/app/finances", label: "Financeiro", icon: Wallet },
+  { to: "/app/customers", label: "Clientes", icon: Users, perm: "clientes" },
+  { to: "/app/finances", label: "Financeiro", icon: Wallet, perm: "financeiro" },
 ];
 
 export function AppLayout({ children }: { children?: ReactNode }) {
@@ -414,14 +414,14 @@ export function AppLayout({ children }: { children?: ReactNode }) {
 
       {/* Navegação inferior (mobile) */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-card/95 backdrop-blur">
-        <div className="grid grid-cols-5">
+        <div className="flex justify-around">
           {bottomNav.map((item) => {
             const active = isActive(item.to, item.end);
             return (
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium ${
+                className={`flex min-w-16 flex-col items-center gap-0.5 py-2 text-[10px] font-medium ${
                   active ? "text-primary" : "text-muted-foreground"
                 }`}
               >
@@ -433,7 +433,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-muted-foreground"
+            className="flex min-w-16 flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-muted-foreground"
           >
             <MoreHorizontal className="h-5 w-5" />
             Mais

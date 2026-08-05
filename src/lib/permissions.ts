@@ -12,6 +12,7 @@ export type PermissionKey =
   | "estoque"
   | "relatorios"
   | "comissoes"
+  | "desempenho"
   | "configuracoes"
   | "usuarios"
   | "excluir"
@@ -47,6 +48,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { key: "financeiro", label: "Financeiro" },
       { key: "caixa", label: "Caixa / Vendas" },
       { key: "comissoes", label: "Comissões" },
+      { key: "desempenho", label: "Desempenho profissional" },
       { key: "relatorios", label: "Relatórios" },
     ],
   },
@@ -94,6 +96,7 @@ export const ROLE_PRESETS: Record<string, PermissionMap> = {
     historico: true,
     clientes: true,
     comissoes: true,
+    desempenho: true,
   },
 };
 

@@ -17,7 +17,7 @@ function dayRange(offsetDays = 0) {
 
 export function ProfessionalDashboard() {
   const { activeCompany } = useCompany();
-  const { membership } = usePermissions();
+  const { membership, can } = usePermissions();
   const companyId = activeCompany?.id;
   const staffId = membership?.staffId ?? null;
 
@@ -121,15 +121,17 @@ export function ProfessionalDashboard() {
         <p className="text-sm text-muted-foreground">Sua agenda, atendimentos e comissões.</p>
       </div>
 
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        <Kpi icon={Calendar} label="Atendimentos no mês" value={String(kpi.count)} />
-        <Kpi icon={TrendingUp} label="Faturamento gerado" value={brl(kpi.revenue / 100)} />
-        <Kpi icon={Star} label="Ticket médio" value={brl(kpi.ticket / 100)} />
-        <Kpi icon={BadgePercent} label="Comissão a receber" value={brl(kpi.pending / 100)} />
-      </div>
+      {can("desempenho") && (
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+          <Kpi icon={Calendar} label="Atendimentos no mês" value={String(kpi.count)} />
+          <Kpi icon={TrendingUp} label="Faturamento gerado" value={brl(kpi.revenue / 100)} />
+          <Kpi icon={Star} label="Ticket médio" value={brl(kpi.ticket / 100)} />
+          {can("comissoes") && <Kpi icon={BadgePercent} label="Comissão a receber" value={brl(kpi.pending / 100)} />}
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
+        {can("comissoes") && <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Clock className="h-4 w-4" /> Agenda de hoje
@@ -166,7 +168,7 @@ export function ProfessionalDashboard() {
               </div>
             )}
           </CardContent>
-        </Card>
+        </Card>}
 
         <Card>
           <CardHeader className="pb-2">
