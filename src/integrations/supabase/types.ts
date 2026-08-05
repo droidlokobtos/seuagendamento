@@ -5306,6 +5306,10 @@ export type Database = {
       }
     }
     Functions: {
+      can_access_appointment: {
+        Args: { _company: string; _keys: string[]; _staff: string }
+        Returns: boolean
+      }
       customer_booking_rule: {
         Args: { _company: string; _customer: string }
         Returns: {
