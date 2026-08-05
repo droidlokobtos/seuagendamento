@@ -182,6 +182,7 @@ function UsersPage() {
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["company-users", companyId] });
       qc.invalidateQueries({ queryKey: ["user-audit", companyId] });
+      qc.invalidateQueries({ queryKey: ["my-companies"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
   });
