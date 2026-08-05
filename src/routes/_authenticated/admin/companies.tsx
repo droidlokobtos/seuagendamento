@@ -58,7 +58,7 @@ function Companies() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (v: { name: string; slug: string; niche_id: string; sub_niche_id: string | null; email: string; monthly_fee: number }) => {
+    mutationFn: async (v: { name: string; slug: string; niche_id: string; sub_niche_id: string | null; email: string; phone: string; monthly_fee: number }) => {
       return await createCompanyFn({ data: v });
     },
     onSuccess: (res, v) => {
@@ -309,7 +309,7 @@ function NewCompanyDialog({
   busy,
 }: {
   niches: { id: string; name: string }[];
-  onSubmit: (v: { name: string; slug: string; niche_id: string; sub_niche_id: string | null; email: string; monthly_fee: number }) => void;
+  onSubmit: (v: { name: string; slug: string; niche_id: string; sub_niche_id: string | null; email: string; phone: string; monthly_fee: number }) => void;
   busy: boolean;
 }) {
   const [name, setName] = useState("");
@@ -317,6 +317,7 @@ function NewCompanyDialog({
   const [niche, setNiche] = useState("");
   const [subNiche, setSubNiche] = useState<string>("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [fee, setFee] = useState("49.90");
   const [accepted, setAccepted] = useState(false);
 
@@ -363,6 +364,10 @@ function NewCompanyDialog({
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="dono@empresa.com" />
         </div>
         <div>
+          <Label>WhatsApp do responsável</Label>
+          <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(11) 99999-9999" />
+        </div>
+        <div>
           <Label>Mensalidade (R$)</Label>
           <Input type="number" step="0.01" value={fee} onChange={(e) => setFee(e.target.value)} />
         </div>
@@ -384,8 +389,8 @@ function NewCompanyDialog({
       </div>
       <DialogFooter>
         <Button
-          onClick={() => onSubmit({ name, slug, niche_id: niche, sub_niche_id: subNiche || null, email, monthly_fee: Number(fee) })}
-          disabled={busy || !name || !slug || !niche || !email || !accepted}
+          onClick={() => onSubmit({ name, slug, niche_id: niche, sub_niche_id: subNiche || null, email, phone, monthly_fee: Number(fee) })}
+          disabled={busy || !name || !slug || !niche || !email || !phone || !accepted}
         >
           {busy ? "Criando…" : "Criar empresa"}
         </Button>
