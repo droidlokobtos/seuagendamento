@@ -408,6 +408,16 @@ function Agenda() {
         />
       )}
 
+      <AddServiceDialog
+        appt={addSvc}
+        services={services as any[]}
+        onClose={() => setAddSvc(null)}
+        loading={addService.isPending}
+        onSubmit={(serviceId, notes) =>
+          addService.mutate({ appointmentId: addSvc.id, serviceId, notes })
+        }
+      />
+
       <WhatsAppShareDialog
         open={waMsg.open}
         onOpenChange={(v) => setWaMsg((s) => ({ ...s, open: v }))}
@@ -415,6 +425,7 @@ function Agenda() {
         message={waMsg.message}
         phone={waMsg.phone}
       />
+
     </div>
   );
 }
