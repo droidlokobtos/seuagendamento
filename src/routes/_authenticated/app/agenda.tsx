@@ -430,6 +430,67 @@ function Agenda() {
   );
 }
 
+/* ---------- Adicionar serviço durante o atendimento ---------- */
+function AddServiceDialog({
+  appt, services, onClose, onSubmit, loading,
+}: {
+  appt: any | null;
+  services: any[];
+  onClose: () => void;
+  onSubmit: (serviceId: string, notes: string) => void;
+  loading: boolean;
+}) {
+  const [serviceId, setServiceId] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const svc = services.find((s) => s.id === serviceId);
+
+  return (
+    <Dialog
+      open={!!appt}
+      onOpenChange={(o) => { if (!o) { setServiceId(""); setNotes(""); onClose(); } }}
+    >
+      <DialogContent onInteractOutside={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle>Adicionar serviço ao atendimento</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Serviço</Label>
+            <Select value={serviceId} onValueChange={setServiceId}>
+              <SelectTrigger><SelectValue placeholder="Selecione o serviço" /></SelectTrigger>
+              <SelectContent>
+                {services.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name} · {brl((s.price_cents ?? 0) / 100)} · {s.duration_min ?? 30} min
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Observação (opcional)</Label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
+          </div>
+          {svc && (
+            <p className="text-xs text-muted-foreground">
+              O atendimento passará a somar +{brl((svc.price_cents ?? 0) / 100)} e +{svc.duration_min ?? 30} minutos.
+            </p>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button disabled={!serviceId || loading} onClick={() => onSubmit(serviceId, notes)}>
+            {loading ? "Adicionando..." : "Adicionar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+
 /* ---------- Day view ---------- */
 function DayView({
   appts, blocks, onOpen, onNewAt, onConfirmWa, onSetStatus, onFinish, onAddService, onDelete,
