@@ -421,15 +421,18 @@ function Agenda() {
 
 /* ---------- Day view ---------- */
 function DayView({
-  appts, blocks, onOpen, onNewAt, onConfirmWa, onSetStatus, onDelete,
+  appts, blocks, onOpen, onNewAt, onConfirmWa, onSetStatus, onFinish, onAddService, onDelete,
 }: {
   appts: any[]; blocks: any[];
   onOpen: (a: any) => void;
   onNewAt: (d: Date) => void;
   onConfirmWa: (a: any) => void;
   onSetStatus: (id: string, status: string) => void;
+  onFinish: (id: string) => void;
+  onAddService: (a: any) => void;
   onDelete: (id: string) => void;
 }) {
+
   if (!appts.length && !blocks.length) {
     return (
       <Card>
