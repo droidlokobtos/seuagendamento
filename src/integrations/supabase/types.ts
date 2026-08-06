@@ -518,6 +518,7 @@ export type Database = {
         Row: {
           cashback_earned_cents: number
           company_id: string
+          completed_at: string | null
           coupon_code: string | null
           coupon_id: string | null
           created_at: string
@@ -541,6 +542,7 @@ export type Database = {
         Insert: {
           cashback_earned_cents?: number
           company_id: string
+          completed_at?: string | null
           coupon_code?: string | null
           coupon_id?: string | null
           created_at?: string
@@ -564,6 +566,7 @@ export type Database = {
         Update: {
           cashback_earned_cents?: number
           company_id?: string
+          completed_at?: string | null
           coupon_code?: string | null
           coupon_id?: string | null
           created_at?: string
@@ -720,6 +723,7 @@ export type Database = {
           risk_score: number
           updated_at: string
           waitlist_enabled: boolean
+          waitlist_hold_minutes: number
           weight_cancel: number
           weight_completed: number
           weight_late_cancel: number
@@ -737,6 +741,7 @@ export type Database = {
           risk_score?: number
           updated_at?: string
           waitlist_enabled?: boolean
+          waitlist_hold_minutes?: number
           weight_cancel?: number
           weight_completed?: number
           weight_late_cancel?: number
@@ -754,6 +759,7 @@ export type Database = {
           risk_score?: number
           updated_at?: string
           waitlist_enabled?: boolean
+          waitlist_hold_minutes?: number
           weight_cancel?: number
           weight_completed?: number
           weight_late_cancel?: number
@@ -1034,6 +1040,7 @@ export type Database = {
           facebook_url: string | null
           id: string
           instagram_url: string | null
+          is_trial: boolean
           last_payment_at: string | null
           latitude: number | null
           legal_name: string | null
@@ -1055,6 +1062,8 @@ export type Database = {
           pix_holder: string | null
           pix_key: string | null
           pix_qr_url: string | null
+          plan_code: string | null
+          plan_cycle_months: number | null
           portal_bg_style: string
           portal_bg_url: string | null
           portal_button_color: string | null
@@ -1075,6 +1084,9 @@ export type Database = {
           suspended_at: string | null
           theme: string
           tiktok_url: string | null
+          trial_days: number | null
+          trial_ends_at: string | null
+          trial_started_at: string | null
           updated_at: string
           website_url: string | null
           welcome_message: string | null
@@ -1101,6 +1113,7 @@ export type Database = {
           facebook_url?: string | null
           id?: string
           instagram_url?: string | null
+          is_trial?: boolean
           last_payment_at?: string | null
           latitude?: number | null
           legal_name?: string | null
@@ -1122,6 +1135,8 @@ export type Database = {
           pix_holder?: string | null
           pix_key?: string | null
           pix_qr_url?: string | null
+          plan_code?: string | null
+          plan_cycle_months?: number | null
           portal_bg_style?: string
           portal_bg_url?: string | null
           portal_button_color?: string | null
@@ -1142,6 +1157,9 @@ export type Database = {
           suspended_at?: string | null
           theme?: string
           tiktok_url?: string | null
+          trial_days?: number | null
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
           website_url?: string | null
           welcome_message?: string | null
@@ -1168,6 +1186,7 @@ export type Database = {
           facebook_url?: string | null
           id?: string
           instagram_url?: string | null
+          is_trial?: boolean
           last_payment_at?: string | null
           latitude?: number | null
           legal_name?: string | null
@@ -1189,6 +1208,8 @@ export type Database = {
           pix_holder?: string | null
           pix_key?: string | null
           pix_qr_url?: string | null
+          plan_code?: string | null
+          plan_cycle_months?: number | null
           portal_bg_style?: string
           portal_bg_url?: string | null
           portal_button_color?: string | null
@@ -1209,6 +1230,9 @@ export type Database = {
           suspended_at?: string | null
           theme?: string
           tiktok_url?: string | null
+          trial_days?: number | null
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
           website_url?: string | null
           welcome_message?: string | null
@@ -1235,6 +1259,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companies_plan_code_fkey"
+            columns: ["plan_code"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["code"]
           },
           {
             foreignKeyName: "companies_sub_niche_id_fkey"
@@ -4575,6 +4606,57 @@ export type Database = {
           },
         ]
       }
+      subscription_plans: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          cycle_months: number | null
+          cycle_total_cents: number | null
+          description: string | null
+          discount_percent: number | null
+          features: Json
+          max_users: number | null
+          monthly_cents: number
+          name: string
+          selectable: boolean
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          cycle_months?: number | null
+          cycle_total_cents?: number | null
+          description?: string | null
+          discount_percent?: number | null
+          features?: Json
+          max_users?: number | null
+          monthly_cents?: number
+          name: string
+          selectable?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          cycle_months?: number | null
+          cycle_total_cents?: number | null
+          description?: string | null
+          discount_percent?: number | null
+          features?: Json
+          max_users?: number | null
+          monthly_cents?: number
+          name?: string
+          selectable?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       time_blocks: {
         Row: {
           company_id: string
@@ -4761,9 +4843,12 @@ export type Database = {
           id: string
           notes: string | null
           notified_at: string | null
+          offered_appointment_id: string | null
+          offered_at: string | null
           phone: string | null
           preferred_date: string | null
           preferred_period: string
+          reserved_until: string | null
           service_id: string | null
           staff_id: string | null
           status: string
@@ -4779,9 +4864,12 @@ export type Database = {
           id?: string
           notes?: string | null
           notified_at?: string | null
+          offered_appointment_id?: string | null
+          offered_at?: string | null
           phone?: string | null
           preferred_date?: string | null
           preferred_period?: string
+          reserved_until?: string | null
           service_id?: string | null
           staff_id?: string | null
           status?: string
@@ -4797,9 +4885,12 @@ export type Database = {
           id?: string
           notes?: string | null
           notified_at?: string | null
+          offered_appointment_id?: string | null
+          offered_at?: string | null
           phone?: string | null
           preferred_date?: string | null
           preferred_period?: string
+          reserved_until?: string | null
           service_id?: string | null
           staff_id?: string | null
           status?: string
@@ -4839,6 +4930,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_entries_offered_appointment_id_fkey"
+            columns: ["offered_appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
             referencedColumns: ["id"]
           },
           {
@@ -5310,6 +5408,7 @@ export type Database = {
         Args: { _company: string; _keys: string[]; _staff: string }
         Returns: boolean
       }
+      company_features: { Args: { _company: string }; Returns: Json }
       customer_booking_rule: {
         Args: { _company: string; _customer: string }
         Returns: {
@@ -5338,6 +5437,10 @@ export type Database = {
         Args: { _company: string; _keys: string[] }
         Returns: boolean
       }
+      has_feature: {
+        Args: { _company: string; _key: string }
+        Returns: boolean
+      }
       has_permission: {
         Args: { _company: string; _key: string }
         Returns: boolean
@@ -5350,6 +5453,7 @@ export type Database = {
         Returns: boolean
       }
       is_company_admin: { Args: { _company: string }; Returns: boolean }
+      is_company_blocked: { Args: { _company: string }; Returns: boolean }
       is_company_member: { Args: { _company: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       plan_mark_expired: { Args: never; Returns: undefined }
@@ -5395,7 +5499,13 @@ export type Database = {
         | "reminder_sent"
         | "cancelled_by_customer"
         | "cancelled_by_company"
-      company_status: "active" | "due_soon" | "overdue" | "suspended"
+      company_status:
+        | "active"
+        | "due_soon"
+        | "overdue"
+        | "suspended"
+        | "trial"
+        | "trial_expired"
       movement_type: "in" | "out" | "adjustment"
       payment_method_kind:
         | "cash"
@@ -5550,7 +5660,14 @@ export const Constants = {
         "cancelled_by_customer",
         "cancelled_by_company",
       ],
-      company_status: ["active", "due_soon", "overdue", "suspended"],
+      company_status: [
+        "active",
+        "due_soon",
+        "overdue",
+        "suspended",
+        "trial",
+        "trial_expired",
+      ],
       movement_type: ["in", "out", "adjustment"],
       payment_method_kind: [
         "cash",

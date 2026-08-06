@@ -21,6 +21,9 @@ import { toast } from "sonner";
 import { WhatsAppShareDialog } from "@/components/app/WhatsAppShareDialog";
 import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
+import { useServerFn } from "@tanstack/react-start";
+import { completeAppointment, addAppointmentService } from "@/lib/appointments.functions";
+
 
 const searchSchema = z.object({
   staff: z.string().optional(),
@@ -239,6 +242,30 @@ function Agenda() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const finishFn = useServerFn(completeAppointment);
+  const addServiceFn = useServerFn(addAppointmentService);
+  const [addSvc, setAddSvc] = useState<any | null>(null);
+
+  const finish = useMutation({
+    mutationFn: async (id: string) => finishFn({ data: { appointmentId: id } }),
+    onSuccess: (r: any) => {
+      toast.success(r?.alreadyCompleted ? "Atendimento já estava finalizado" : "Atendimento finalizado");
+      qc.invalidateQueries({ queryKey: ["appts", companyId] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível finalizar o atendimento"),
+  });
+
+  const addService = useMutation({
+    mutationFn: async (v: { appointmentId: string; serviceId: string; notes?: string }) =>
+      addServiceFn({ data: v }),
+    onSuccess: (r: any) => {
+      toast.success(`${r.serviceName} adicionado (+${brl(r.addedCents / 100)})`);
+      qc.invalidateQueries({ queryKey: ["appts", companyId] });
+      setAddSvc(null);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível adicionar o serviço"),
+  });
+
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase.from("appointments").update({ status: status as any }).eq("id", id);
@@ -250,6 +277,7 @@ function Agenda() {
     },
     onError: (e: any) => toast.error(e.message),
   });
+
 
   const del = useMutation({
     mutationFn: async (id: string) => {
@@ -355,7 +383,10 @@ function Agenda() {
           onNewAt={openNew}
           onConfirmWa={sendConfirm}
           onSetStatus={(id, status) => setStatus.mutate({ id, status })}
+          onFinish={(id) => finish.mutate(id)}
+          onAddService={(a) => setAddSvc(a)}
           onDelete={(id) => { if (confirm("Cancelar/remover?")) del.mutate(id); }}
+
         />
       )}
 
@@ -377,6 +408,16 @@ function Agenda() {
         />
       )}
 
+      <AddServiceDialog
+        appt={addSvc}
+        services={services as any[]}
+        onClose={() => setAddSvc(null)}
+        loading={addService.isPending}
+        onSubmit={(serviceId, notes) =>
+          addService.mutate({ appointmentId: addSvc.id, serviceId, notes })
+        }
+      />
+
       <WhatsAppShareDialog
         open={waMsg.open}
         onOpenChange={(v) => setWaMsg((s) => ({ ...s, open: v }))}
@@ -384,21 +425,86 @@ function Agenda() {
         message={waMsg.message}
         phone={waMsg.phone}
       />
+
     </div>
   );
 }
 
+/* ---------- Adicionar serviço durante o atendimento ---------- */
+function AddServiceDialog({
+  appt, services, onClose, onSubmit, loading,
+}: {
+  appt: any | null;
+  services: any[];
+  onClose: () => void;
+  onSubmit: (serviceId: string, notes: string) => void;
+  loading: boolean;
+}) {
+  const [serviceId, setServiceId] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const svc = services.find((s) => s.id === serviceId);
+
+  return (
+    <Dialog
+      open={!!appt}
+      onOpenChange={(o) => { if (!o) { setServiceId(""); setNotes(""); onClose(); } }}
+    >
+      <DialogContent onInteractOutside={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle>Adicionar serviço ao atendimento</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Serviço</Label>
+            <Select value={serviceId} onValueChange={setServiceId}>
+              <SelectTrigger><SelectValue placeholder="Selecione o serviço" /></SelectTrigger>
+              <SelectContent>
+                {services.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name} · {brl((s.price_cents ?? 0) / 100)} · {s.duration_min ?? 30} min
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Observação (opcional)</Label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
+          </div>
+          {svc && (
+            <p className="text-xs text-muted-foreground">
+              O atendimento passará a somar +{brl((svc.price_cents ?? 0) / 100)} e +{svc.duration_min ?? 30} minutos.
+            </p>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button disabled={!serviceId || loading} onClick={() => onSubmit(serviceId, notes)}>
+            {loading ? "Adicionando..." : "Adicionar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+
 /* ---------- Day view ---------- */
 function DayView({
-  appts, blocks, onOpen, onNewAt, onConfirmWa, onSetStatus, onDelete,
+  appts, blocks, onOpen, onNewAt, onConfirmWa, onSetStatus, onFinish, onAddService, onDelete,
 }: {
   appts: any[]; blocks: any[];
   onOpen: (a: any) => void;
   onNewAt: (d: Date) => void;
   onConfirmWa: (a: any) => void;
   onSetStatus: (id: string, status: string) => void;
+  onFinish: (id: string) => void;
+  onAddService: (a: any) => void;
   onDelete: (id: string) => void;
 }) {
+
   if (!appts.length && !blocks.length) {
     return (
       <Card>
@@ -477,11 +583,17 @@ function DayView({
                       <Play className="h-4 w-4" />
                     </Button>
                   )}
+                  {!["completed", "cancelled", "cancelled_by_customer", "cancelled_by_company", "no_show"].includes(a.status) && (
+                    <Button size="sm" variant="ghost" title="Adicionar serviço" onClick={() => onAddService(a)}>
+                      <Plus className="h-4 w-4 mr-1" /> Serviço
+                    </Button>
+                  )}
                   {a.status !== "completed" && a.status !== "cancelled" && (
-                    <Button size="icon" variant="ghost" title="Finalizar" onClick={() => onSetStatus(a.id, "completed")}>
+                    <Button size="icon" variant="ghost" title="Finalizar" onClick={() => onFinish(a.id)}>
                       <CheckCheck className="h-4 w-4" />
                     </Button>
                   )}
+
                   {a.status !== "cancelled" && (
                     <Button size="icon" variant="ghost" title="Cancelar" onClick={() => onSetStatus(a.id, "cancelled")}>
                       <X className="h-4 w-4" />
