@@ -383,7 +383,10 @@ function Agenda() {
           onNewAt={openNew}
           onConfirmWa={sendConfirm}
           onSetStatus={(id, status) => setStatus.mutate({ id, status })}
+          onFinish={(id) => finish.mutate(id)}
+          onAddService={(a) => setAddSvc(a)}
           onDelete={(id) => { if (confirm("Cancelar/remover?")) del.mutate(id); }}
+
         />
       )}
 
