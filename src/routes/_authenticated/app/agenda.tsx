@@ -511,11 +511,17 @@ function DayView({
                       <Play className="h-4 w-4" />
                     </Button>
                   )}
+                  {!["completed", "cancelled", "cancelled_by_customer", "cancelled_by_company", "no_show"].includes(a.status) && (
+                    <Button size="sm" variant="ghost" title="Adicionar serviço" onClick={() => onAddService(a)}>
+                      <Plus className="h-4 w-4 mr-1" /> Serviço
+                    </Button>
+                  )}
                   {a.status !== "completed" && a.status !== "cancelled" && (
-                    <Button size="icon" variant="ghost" title="Finalizar" onClick={() => onSetStatus(a.id, "completed")}>
+                    <Button size="icon" variant="ghost" title="Finalizar" onClick={() => onFinish(a.id)}>
                       <CheckCheck className="h-4 w-4" />
                     </Button>
                   )}
+
                   {a.status !== "cancelled" && (
                     <Button size="icon" variant="ghost" title="Cancelar" onClick={() => onSetStatus(a.id, "cancelled")}>
                       <X className="h-4 w-4" />
