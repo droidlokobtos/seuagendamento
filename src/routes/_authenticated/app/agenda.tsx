@@ -21,6 +21,9 @@ import { toast } from "sonner";
 import { WhatsAppShareDialog } from "@/components/app/WhatsAppShareDialog";
 import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
+import { useServerFn } from "@tanstack/react-start";
+import { completeAppointment, addAppointmentService } from "@/lib/appointments.functions";
+
 
 const searchSchema = z.object({
   staff: z.string().optional(),
