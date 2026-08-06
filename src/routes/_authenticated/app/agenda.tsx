@@ -239,6 +239,30 @@ function Agenda() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const finishFn = useServerFn(completeAppointment);
+  const addServiceFn = useServerFn(addAppointmentService);
+  const [addSvc, setAddSvc] = useState<any | null>(null);
+
+  const finish = useMutation({
+    mutationFn: async (id: string) => finishFn({ data: { appointmentId: id } }),
+    onSuccess: (r: any) => {
+      toast.success(r?.alreadyCompleted ? "Atendimento já estava finalizado" : "Atendimento finalizado");
+      qc.invalidateQueries({ queryKey: ["appts", companyId] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível finalizar o atendimento"),
+  });
+
+  const addService = useMutation({
+    mutationFn: async (v: { appointmentId: string; serviceId: string; notes?: string }) =>
+      addServiceFn({ data: v }),
+    onSuccess: (r: any) => {
+      toast.success(`${r.serviceName} adicionado (+${brl(r.addedCents / 100)})`);
+      qc.invalidateQueries({ queryKey: ["appts", companyId] });
+      setAddSvc(null);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível adicionar o serviço"),
+  });
+
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase.from("appointments").update({ status: status as any }).eq("id", id);
@@ -250,6 +274,7 @@ function Agenda() {
     },
     onError: (e: any) => toast.error(e.message),
   });
+
 
   const del = useMutation({
     mutationFn: async (id: string) => {
