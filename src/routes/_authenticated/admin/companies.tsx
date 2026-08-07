@@ -131,6 +131,7 @@ function Companies() {
                   <tr>
                     <th className="text-left p-3 pl-6">Empresa</th>
                     <th className="text-left p-3">Nicho</th>
+                    <th className="text-left p-3">Plano</th>
                     <th className="text-left p-3">Status</th>
                     <th className="text-left p-3">Próx. venc.</th>
                     <th className="text-left p-3">Criada</th>
