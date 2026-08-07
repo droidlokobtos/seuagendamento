@@ -253,7 +253,16 @@ export const Route = createFileRoute("/api/public/book")({
             deposit_required_cents: depositCents,
             notes: customer.notes || null,
           } as any).select("id").single();
-        if (aErr) return Response.json({ error: aErr.message }, { status: 500 });
+        if (aErr) {
+          const msg = String(aErr.message ?? "");
+          if ((aErr as any).code === "23P01" || /exclus|overlap|conflit/i.test(msg)) {
+            return Response.json(
+              { error: "Este horário acabou de ser reservado. Escolha outro horário." },
+              { status: 409 },
+            );
+          }
+          return Response.json({ error: msg }, { status: 500 });
+        }
 
         const rows = services.map((s) => ({
           appointment_id: appt.id, service_id: s.id,
