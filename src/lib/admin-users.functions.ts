@@ -7,7 +7,7 @@ export const resetUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
     email: z.string().email(),
-    phone: z.string().min(10),
+    phone: z.string().min(10).optional(),
     new_password: z.string().min(8),
   }).parse(data))
   .handler(async ({ context, data }) => {
