@@ -149,6 +149,18 @@ function Companies() {
                         </td>
                         <td className="p-3 text-muted-foreground">{c.niches?.name ?? "—"}</td>
                         <td className="p-3">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs font-medium">
+                              {(plans as any[]).find((p) => p.code === c.plan_code)?.name ?? c.plan_code ?? "—"}
+                            </span>
+                            {c.is_trial && (
+                              <span className="inline-flex w-fit items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                                <Sparkles className="h-3 w-3" /> Teste até {dateBR(c.trial_ends_at)}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-3">
                           <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${s.className}`}>
                             <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
                             {s.label}
