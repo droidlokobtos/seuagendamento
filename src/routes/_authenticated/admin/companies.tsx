@@ -28,9 +28,11 @@ function Companies() {
   const [open, setOpen] = useState(false);
   const [pwOpen, setPwOpen] = useState<{ email: string } | null>(null);
   const [delOpen, setDelOpen] = useState<{ id: string; name: string } | null>(null);
+  const [planOpen, setPlanOpen] = useState<any | null>(null);
   const resetPw = useServerFn(resetUserPassword);
   const delCompany = useServerFn(deleteCompany);
   const createCompanyFn = useServerFn(createCompanyWithAdmin);
+  const setPlanFn = useServerFn(setCompanyPlan);
   const [createdInfo, setCreatedInfo] = useState<{ email: string; password: string | null; name: string } | null>(null);
   const { isSuperAdmin } = useAuth();
 
@@ -39,11 +41,20 @@ function Companies() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("companies")
-        .select("id, name, slug, status, niche_id, email, created_at, next_due_at, monthly_fee, niches(name)")
+        .select(
+          "id, name, slug, status, niche_id, email, created_at, next_due_at, monthly_fee, plan_code, is_trial, trial_ends_at, niches(name)",
+        )
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
+  });
+
+  const { data: plans = [] } = useQuery({
+    queryKey: ["subscription-plans"],
+    queryFn: async () =>
+      (await supabase.from("subscription_plans").select("code, name, monthly_cents").eq("active", true).order("sort_order"))
+        .data ?? [],
   });
 
   const { data: niches = [] } = useQuery({
