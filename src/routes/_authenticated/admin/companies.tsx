@@ -516,3 +516,106 @@ function NewCompanyDialog({
     </DialogContent>
   );
 }
+
+type PlanUpdate = {
+  plan_code?: string | null;
+  monthly_fee?: number | null;
+  trial?: boolean;
+  trial_days?: number;
+};
+
+function PlanDialog({
+  company,
+  plans,
+  onSubmit,
+}: {
+  company: any;
+  plans: { code: string; name: string; monthly_cents: number }[];
+  onSubmit: (v: PlanUpdate) => Promise<void>;
+}) {
+  const [code, setCode] = useState<string>(company.plan_code ?? "none");
+  const [fee, setFee] = useState<string>(company.monthly_fee != null ? String(company.monthly_fee) : "");
+  const [trial, setTrial] = useState<boolean>(!!company.is_trial);
+  const [days, setDays] = useState<string>(String(company.trial_days ?? 14));
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary" /> Plano e período de teste
+        </DialogTitle>
+      </DialogHeader>
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Definindo assinatura de <b>{company.name}</b>.
+        </p>
+        <div>
+          <Label>Plano de assinatura</Label>
+          <Select
+            value={code}
+            onValueChange={(v) => {
+              setCode(v);
+              const p = plans.find((x) => x.code === v);
+              if (p) setFee(((p.monthly_cents ?? 0) / 100).toFixed(2));
+            }}
+          >
+            <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">— Sem plano —</SelectItem>
+              {plans.map((p) => (
+                <SelectItem key={p.code} value={p.code}>
+                  {p.name} — R$ {((p.monthly_cents ?? 0) / 100).toFixed(2)}/mês
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Mensalidade (R$)</Label>
+          <Input type="number" step="0.01" value={fee} onChange={(e) => setFee(e.target.value)} />
+        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-input accent-primary"
+            checked={trial}
+            onChange={(e) => setTrial(e.target.checked)}
+          />
+          Ativar período de teste gratuito
+        </label>
+        {trial && (
+          <div>
+            <Label>Dias de teste</Label>
+            <Input type="number" min={1} max={365} value={days} onChange={(e) => setDays(e.target.value)} />
+            {company.is_trial && company.trial_ends_at && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Teste atual termina em {dateBR(company.trial_ends_at)}. Salvar reinicia a contagem.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+      <DialogFooter>
+        <Button
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await onSubmit({
+                plan_code: code === "none" ? null : code,
+                monthly_fee: fee === "" ? null : Number(fee),
+                trial,
+                ...(trial ? { trial_days: Math.max(1, Number(days) || 14) } : {}),
+              });
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {busy ? "Salvando…" : "Salvar"}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
