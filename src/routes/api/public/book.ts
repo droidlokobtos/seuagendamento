@@ -239,6 +239,25 @@ export const Route = createFileRoute("/api/public/book")({
           }
         }
 
+        // Bloqueia duplicidade: mesmo cliente com agendamento ativo no mesmo intervalo
+        if (customerId) {
+          const { data: dup } = await supabaseAdmin
+            .from("appointments")
+            .select("id")
+            .eq("company_id", company.id)
+            .eq("customer_id", customerId)
+            .in("status", ["scheduled", "confirmed", "in_progress"])
+            .lt("starts_at", end.toISOString())
+            .gt("ends_at", start.toISOString())
+            .limit(1);
+          if (dup && dup.length > 0) {
+            return Response.json(
+              { error: "Você já possui um agendamento neste horário." },
+              { status: 409 },
+            );
+          }
+        }
+
         const { data: appt, error: aErr } = await supabaseAdmin
           .from("appointments")
           .insert({
