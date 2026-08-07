@@ -8,12 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Search, Building2, LogIn, KeyRound, Trash2 } from "lucide-react";
+import { Plus, Search, Building2, LogIn, KeyRound, Trash2, Sparkles } from "lucide-react";
 import { dateBR, slugify, statusLabel } from "@/lib/format";
 import { toast } from "sonner";
 import { startImpersonation } from "@/lib/impersonation";
 import { useServerFn } from "@tanstack/react-start";
-import { resetUserPassword, deleteCompany, createCompanyWithAdmin } from "@/lib/admin-users.functions";
+import { resetUserPassword, deleteCompany, createCompanyWithAdmin, setCompanyPlan } from "@/lib/admin-users.functions";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/admin/companies")({
@@ -28,9 +28,11 @@ function Companies() {
   const [open, setOpen] = useState(false);
   const [pwOpen, setPwOpen] = useState<{ email: string } | null>(null);
   const [delOpen, setDelOpen] = useState<{ id: string; name: string } | null>(null);
+  const [planOpen, setPlanOpen] = useState<any | null>(null);
   const resetPw = useServerFn(resetUserPassword);
   const delCompany = useServerFn(deleteCompany);
   const createCompanyFn = useServerFn(createCompanyWithAdmin);
+  const setPlanFn = useServerFn(setCompanyPlan);
   const [createdInfo, setCreatedInfo] = useState<{ email: string; password: string | null; name: string } | null>(null);
   const { isSuperAdmin } = useAuth();
 
@@ -39,11 +41,20 @@ function Companies() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("companies")
-        .select("id, name, slug, status, niche_id, email, created_at, next_due_at, monthly_fee, niches(name)")
+        .select(
+          "id, name, slug, status, niche_id, email, created_at, next_due_at, monthly_fee, plan_code, is_trial, trial_ends_at, niches(name)",
+        )
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
+  });
+
+  const { data: plans = [] } = useQuery({
+    queryKey: ["subscription-plans"],
+    queryFn: async () =>
+      (await supabase.from("subscription_plans").select("code, name, monthly_cents").eq("active", true).order("sort_order"))
+        .data ?? [],
   });
 
   const { data: niches = [] } = useQuery({
@@ -120,6 +131,7 @@ function Companies() {
                   <tr>
                     <th className="text-left p-3 pl-6">Empresa</th>
                     <th className="text-left p-3">Nicho</th>
+                    <th className="text-left p-3">Plano</th>
                     <th className="text-left p-3">Status</th>
                     <th className="text-left p-3">Próx. venc.</th>
                     <th className="text-left p-3">Criada</th>
@@ -136,6 +148,18 @@ function Companies() {
                           <p className="text-xs text-muted-foreground">/{c.slug}</p>
                         </td>
                         <td className="p-3 text-muted-foreground">{c.niches?.name ?? "—"}</td>
+                        <td className="p-3">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs font-medium">
+                              {(plans as any[]).find((p) => p.code === c.plan_code)?.name ?? c.plan_code ?? "—"}
+                            </span>
+                            {c.is_trial && (
+                              <span className="inline-flex w-fit items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                                <Sparkles className="h-3 w-3" /> Teste até {dateBR(c.trial_ends_at)}
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="p-3">
                           <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${s.className}`}>
                             <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
@@ -159,6 +183,11 @@ function Companies() {
                           {c.email && (
                             <Button size="sm" variant="ghost" onClick={() => setPwOpen({ email: c.email })}>
                               <KeyRound className="h-3.5 w-3.5 mr-1.5" /> Resetar senha
+                            </Button>
+                          )}
+                          {isSuperAdmin && (
+                            <Button size="sm" variant="ghost" onClick={() => setPlanOpen(c)}>
+                              <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Plano / Teste
                             </Button>
                           )}
                           {isSuperAdmin && (
@@ -199,6 +228,28 @@ function Companies() {
           />
         )}
       </Dialog>
+
+      <Dialog open={!!planOpen} onOpenChange={(o) => !o && setPlanOpen(null)}>
+        {planOpen && (
+          <PlanDialog
+            key={planOpen.id}
+            company={planOpen}
+            plans={plans as any[]}
+            onSubmit={async (v) => {
+              try {
+                await setPlanFn({ data: { company_id: planOpen.id, ...v } });
+                toast.success("Plano atualizado.");
+                setPlanOpen(null);
+                qc.invalidateQueries({ queryKey: ["admin-companies"] });
+              } catch (e: any) {
+                toast.error(e.message ?? "Erro ao atualizar plano.");
+              }
+            }}
+          />
+        )}
+      </Dialog>
+
+
 
       <Dialog open={!!delOpen} onOpenChange={(o) => !o && setDelOpen(null)}>
         {delOpen && (
@@ -460,6 +511,109 @@ function NewCompanyDialog({
           disabled={busy || !name || !ownerName || !slug || !niche || !email || phone.replace(/\D/g, "").length !== 11 || password.length < 8 || !plan || !dueDate || !accepted}
         >
           {busy ? "Criando…" : "Criar empresa"}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
+type PlanUpdate = {
+  plan_code?: string | null;
+  monthly_fee?: number | null;
+  trial?: boolean;
+  trial_days?: number;
+};
+
+function PlanDialog({
+  company,
+  plans,
+  onSubmit,
+}: {
+  company: any;
+  plans: { code: string; name: string; monthly_cents: number }[];
+  onSubmit: (v: PlanUpdate) => Promise<void>;
+}) {
+  const [code, setCode] = useState<string>(company.plan_code ?? "none");
+  const [fee, setFee] = useState<string>(company.monthly_fee != null ? String(company.monthly_fee) : "");
+  const [trial, setTrial] = useState<boolean>(!!company.is_trial);
+  const [days, setDays] = useState<string>(String(company.trial_days ?? 14));
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary" /> Plano e período de teste
+        </DialogTitle>
+      </DialogHeader>
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Definindo assinatura de <b>{company.name}</b>.
+        </p>
+        <div>
+          <Label>Plano de assinatura</Label>
+          <Select
+            value={code}
+            onValueChange={(v) => {
+              setCode(v);
+              const p = plans.find((x) => x.code === v);
+              if (p) setFee(((p.monthly_cents ?? 0) / 100).toFixed(2));
+            }}
+          >
+            <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">— Sem plano —</SelectItem>
+              {plans.map((p) => (
+                <SelectItem key={p.code} value={p.code}>
+                  {p.name} — R$ {((p.monthly_cents ?? 0) / 100).toFixed(2)}/mês
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Mensalidade (R$)</Label>
+          <Input type="number" step="0.01" value={fee} onChange={(e) => setFee(e.target.value)} />
+        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-input accent-primary"
+            checked={trial}
+            onChange={(e) => setTrial(e.target.checked)}
+          />
+          Ativar período de teste gratuito
+        </label>
+        {trial && (
+          <div>
+            <Label>Dias de teste</Label>
+            <Input type="number" min={1} max={365} value={days} onChange={(e) => setDays(e.target.value)} />
+            {company.is_trial && company.trial_ends_at && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Teste atual termina em {dateBR(company.trial_ends_at)}. Salvar reinicia a contagem.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+      <DialogFooter>
+        <Button
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await onSubmit({
+                plan_code: code === "none" ? null : code,
+                monthly_fee: fee === "" ? null : Number(fee),
+                trial,
+                ...(trial ? { trial_days: Math.max(1, Number(days) || 14) } : {}),
+              });
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {busy ? "Salvando…" : "Salvar"}
         </Button>
       </DialogFooter>
     </DialogContent>

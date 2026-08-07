@@ -7,7 +7,7 @@ export const resetUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
     email: z.string().email(),
-    phone: z.string().min(10),
+    phone: z.string().min(10).optional(),
     new_password: z.string().min(8),
   }).parse(data))
   .handler(async ({ context, data }) => {
@@ -195,4 +195,72 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
       email,
       temp_password: tempPassword,
     };
+  });
+
+/** Admin Master: define plano de assinatura e/ou período de teste de uma empresa. */
+export const setCompanyPlan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        company_id: z.string().uuid(),
+        plan_code: z.string().min(1).max(50).nullable().optional(),
+        monthly_fee: z.number().min(0).nullable().optional(),
+        trial: z.boolean().optional(),
+        trial_days: z.number().int().min(1).max(365).optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: isAdmin } = await context.supabase.rpc("is_super_admin");
+    if (!isAdmin) throw new Error("Apenas Admin Master pode alterar planos.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const patch: Record<string, unknown> = {};
+    if (data.plan_code !== undefined) {
+      if (data.plan_code) {
+        const { data: plan } = await supabaseAdmin
+          .from("subscription_plans")
+          .select("code, monthly_cents")
+          .eq("code", data.plan_code)
+          .maybeSingle();
+        if (!plan) throw new Error("Plano inexistente.");
+        patch['plan_code'] = plan.code;
+        if (data.monthly_fee === undefined) patch['monthly_fee'] = (plan.monthly_cents ?? 0) / 100;
+      } else {
+        patch['plan_code'] = null;
+      }
+    }
+    if (data.monthly_fee !== undefined && data.monthly_fee !== null) patch['monthly_fee'] = data.monthly_fee;
+
+    if (data.trial === true) {
+      const days = data.trial_days ?? 14;
+      const start = new Date();
+      const end = new Date(start.getTime() + days * 86400000);
+      patch['is_trial'] = true;
+      patch['trial_days'] = days;
+      patch['trial_started_at'] = start.toISOString();
+      patch['trial_ends_at'] = end.toISOString();
+      patch['status'] = "trial";
+      patch['next_due_at'] = end.toISOString().slice(0, 10);
+    } else if (data.trial === false) {
+      patch['is_trial'] = false;
+      patch['trial_ends_at'] = null;
+      patch['status'] = "active";
+    }
+
+    if (Object.keys(patch).length === 0) return { ok: true };
+
+    const { error } = await supabaseAdmin.from("companies").update(patch as never).eq("id", data.company_id);
+    if (error) throw new Error(error.message);
+
+    await context.supabase.from("admin_access_logs").insert({
+      user_id: context.userId,
+      email: "",
+      event: "update_company_plan",
+      metadata: { company_id: data.company_id, ...patch } as never,
+    });
+
+    return { ok: true };
   });
