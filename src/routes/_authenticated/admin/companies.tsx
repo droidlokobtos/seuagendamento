@@ -229,6 +229,28 @@ function Companies() {
         )}
       </Dialog>
 
+      <Dialog open={!!planOpen} onOpenChange={(o) => !o && setPlanOpen(null)}>
+        {planOpen && (
+          <PlanDialog
+            key={planOpen.id}
+            company={planOpen}
+            plans={plans as any[]}
+            onSubmit={async (v) => {
+              try {
+                await setPlanFn({ data: { company_id: planOpen.id, ...v } });
+                toast.success("Plano atualizado.");
+                setPlanOpen(null);
+                qc.invalidateQueries({ queryKey: ["admin-companies"] });
+              } catch (e: any) {
+                toast.error(e.message ?? "Erro ao atualizar plano.");
+              }
+            }}
+          />
+        )}
+      </Dialog>
+
+
+
       <Dialog open={!!delOpen} onOpenChange={(o) => !o && setDelOpen(null)}>
         {delOpen && (
           <DeleteCompanyDialog
