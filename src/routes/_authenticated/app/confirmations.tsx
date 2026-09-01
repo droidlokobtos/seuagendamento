@@ -11,25 +11,50 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
-  CONFIRMATION_STATUS, DEFAULT_CONFIRMATION_TEMPLATE, RESEND_COOLDOWN_MIN,
-  CHANNELS, WHATSAPP_PROVIDERS, SMS_PROVIDERS, EMAIL_PROVIDERS,
+  CONFIRMATION_STATUS,
+  DEFAULT_CONFIRMATION_TEMPLATE,
+  RESEND_COOLDOWN_MIN,
+  CHANNELS,
 } from "@/lib/messaging";
-import { CalendarCheck, Send, MessageCircle, RefreshCw, Percent, Clock, XCircle } from "lucide-react";
+import {
+  CalendarCheck,
+  Send,
+  MessageCircle,
+  RefreshCw,
+  Percent,
+  Clock,
+  XCircle,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/confirmations")({
   component: Confirmations,
 });
 
 type Conf = {
-  id: string; appointment_id: string; company_id: string; token: string; channel: string;
-  status: string; message: string | null; send_url: string | null; sent_at: string | null;
-  last_sent_at: string | null; send_attempts: number; responded_at: string | null;
-  response: string | null; cancel_reason: string | null; expires_at: string; created_at: string;
-  appointments: { starts_at: string; status: string; customers: { name: string | null; phone: string | null } | null } | null;
+  id: string;
+  appointment_id: string;
+  company_id: string;
+  token: string;
+  channel: string;
+  status: string;
+  message: string | null;
+  send_url: string | null;
+  sent_at: string | null;
+  last_sent_at: string | null;
+  send_attempts: number;
+  responded_at: string | null;
+  response: string | null;
+  cancel_reason: string | null;
+  expires_at: string;
+  created_at: string;
+  appointments: {
+    starts_at: string;
+    status: string;
+    customers: { name: string | null; phone: string | null } | null;
+  } | null;
 };
 
 function Confirmations() {
@@ -125,14 +150,46 @@ function Confirmations() {
       </div>
 
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        <Kpi label="Aguardando confirmação" value={String(kpis.awaiting)} icon={<Clock className="h-4 w-4" />} />
-        <Kpi label="Confirmados" value={String(kpis.confirmed)} icon={<CalendarCheck className="h-4 w-4" />} />
-        <Kpi label="Cancelados" value={String(kpis.cancelled)} icon={<XCircle className="h-4 w-4" />} />
-        <Kpi label="Não respondidos" value={String(kpis.noReply)} icon={<Clock className="h-4 w-4" />} />
-        <Kpi label="Taxa de confirmação" value={`${kpis.rate}%`} icon={<Percent className="h-4 w-4" />} />
-        <Kpi label="Lembretes hoje" value={String(kpis.sentToday)} icon={<Send className="h-4 w-4" />} />
-        <Kpi label="Lembretes no mês" value={String(kpis.sentMonth)} icon={<Send className="h-4 w-4" />} />
-        <Kpi label="Respostas" value={String(kpis.answered)} icon={<MessageCircle className="h-4 w-4" />} />
+        <Kpi
+          label="Aguardando confirmação"
+          value={String(kpis.awaiting)}
+          icon={<Clock className="h-4 w-4" />}
+        />
+        <Kpi
+          label="Confirmados"
+          value={String(kpis.confirmed)}
+          icon={<CalendarCheck className="h-4 w-4" />}
+        />
+        <Kpi
+          label="Cancelados"
+          value={String(kpis.cancelled)}
+          icon={<XCircle className="h-4 w-4" />}
+        />
+        <Kpi
+          label="Não respondidos"
+          value={String(kpis.noReply)}
+          icon={<Clock className="h-4 w-4" />}
+        />
+        <Kpi
+          label="Taxa de confirmação"
+          value={`${kpis.rate}%`}
+          icon={<Percent className="h-4 w-4" />}
+        />
+        <Kpi
+          label="Lembretes hoje"
+          value={String(kpis.sentToday)}
+          icon={<Send className="h-4 w-4" />}
+        />
+        <Kpi
+          label="Lembretes no mês"
+          value={String(kpis.sentMonth)}
+          icon={<Send className="h-4 w-4" />}
+        />
+        <Kpi
+          label="Respostas"
+          value={String(kpis.answered)}
+          icon={<MessageCircle className="h-4 w-4" />}
+        />
       </div>
 
       <Tabs defaultValue="history">
@@ -151,7 +208,8 @@ function Confirmations() {
                 <div className="p-12 text-center">
                   <CalendarCheck className="h-8 w-8 mx-auto text-muted-foreground" />
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Nenhuma confirmação gerada ainda. O sistema cria automaticamente 24h antes de cada agendamento.
+                    Nenhuma confirmação gerada ainda. O sistema cria automaticamente 24h antes de
+                    cada agendamento.
                   </p>
                 </div>
               ) : (
@@ -169,24 +227,34 @@ function Confirmations() {
                   </thead>
                   <tbody>
                     {confs.map((c) => {
-                      const when = c.appointments?.starts_at ? new Date(c.appointments.starts_at) : null;
+                      const when = c.appointments?.starts_at
+                        ? new Date(c.appointments.starts_at)
+                        : null;
                       return (
                         <tr key={c.id} className="border-b last:border-0">
                           <td className="p-3">
                             <p className="font-medium">{c.appointments?.customers?.name ?? "—"}</p>
-                            <p className="text-xs text-muted-foreground">{c.appointments?.customers?.phone ?? ""}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {c.appointments?.customers?.phone ?? ""}
+                            </p>
                           </td>
                           <td className="p-3 whitespace-nowrap">
-                            {when ? `${when.toLocaleDateString("pt-BR")} ${when.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : "—"}
+                            {when
+                              ? `${when.toLocaleDateString("pt-BR")} ${when.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+                              : "—"}
                           </td>
                           <td className="p-3">
-                            <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${CONFIRMATION_STATUS[c.status]?.color ?? ""}`}>
+                            <span
+                              className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${CONFIRMATION_STATUS[c.status]?.color ?? ""}`}
+                            >
                               {CONFIRMATION_STATUS[c.status]?.label ?? c.status}
                             </span>
                           </td>
                           <td className="p-3">{c.channel}</td>
                           <td className="p-3 whitespace-nowrap text-xs text-muted-foreground">
-                            {c.last_sent_at ? new Date(c.last_sent_at).toLocaleString("pt-BR") : "—"}
+                            {c.last_sent_at
+                              ? new Date(c.last_sent_at).toLocaleString("pt-BR")
+                              : "—"}
                             {c.send_attempts > 1 && ` (${c.send_attempts}x)`}
                           </td>
                           <td className="p-3 text-xs">
@@ -194,7 +262,9 @@ function Confirmations() {
                               <>
                                 {c.response === "confirm" ? "Confirmou" : "Cancelou"} ·{" "}
                                 {new Date(c.responded_at).toLocaleString("pt-BR")}
-                                {c.cancel_reason && <p className="text-muted-foreground">{c.cancel_reason}</p>}
+                                {c.cancel_reason && (
+                                  <p className="text-muted-foreground">{c.cancel_reason}</p>
+                                )}
                               </>
                             ) : (
                               "—"
@@ -203,12 +273,21 @@ function Confirmations() {
                           <td className="p-3 text-right">
                             <div className="flex justify-end gap-1">
                               {c.send_url && (
-                                <Button size="sm" variant="outline" onClick={() => window.open(c.send_url!, "_blank", "noopener")}>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => window.open(c.send_url!, "_blank", "noopener")}
+                                >
                                   <MessageCircle className="h-4 w-4" />
                                 </Button>
                               )}
                               {!c.responded_at && (
-                                <Button size="sm" variant="ghost" title="Reenviar confirmação" onClick={() => resend.mutate(c)}>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  title="Reenviar confirmação"
+                                  onClick={() => resend.mutate(c)}
+                                >
                                   <RefreshCw className="h-4 w-4" />
                                 </Button>
                               )}
@@ -228,7 +307,9 @@ function Confirmations() {
           <Card>
             <CardContent className="p-0 overflow-x-auto">
               {!logs.length ? (
-                <p className="p-12 text-center text-sm text-muted-foreground">Nenhum log registrado ainda.</p>
+                <p className="p-12 text-center text-sm text-muted-foreground">
+                  Nenhum log registrado ainda.
+                </p>
               ) : (
                 <table className="w-full text-sm">
                   <thead className="border-b bg-muted/40 text-left">
@@ -243,7 +324,9 @@ function Confirmations() {
                   <tbody>
                     {logs.map((l) => (
                       <tr key={l.id} className="border-b last:border-0">
-                        <td className="p-3 whitespace-nowrap">{new Date(l.created_at).toLocaleString("pt-BR")}</td>
+                        <td className="p-3 whitespace-nowrap">
+                          {new Date(l.created_at).toLocaleString("pt-BR")}
+                        </td>
                         <td className="p-3">{l.event}</td>
                         <td className="p-3">{l.channel ?? "—"}</td>
                         <td className="p-3 text-muted-foreground">{l.detail ?? "—"}</td>
@@ -270,7 +353,11 @@ function MessagingSettings({ companyId }: { companyId: string }) {
   const { data } = useQuery({
     queryKey: ["messaging-settings", companyId],
     queryFn: async () => {
-      const { data } = await supabase.from("messaging_settings").select("*").eq("company_id", companyId).maybeSingle();
+      const { data } = await supabase
+        .from("messaging_settings")
+        .select("*")
+        .eq("company_id", companyId)
+        .maybeSingle();
       return (data ?? null) as any;
     },
   });
@@ -283,7 +370,8 @@ function MessagingSettings({ companyId }: { companyId: string }) {
   });
 
   useEffect(() => {
-    if (data) setF({ ...data, message_template: data.message_template ?? DEFAULT_CONFIRMATION_TEMPLATE });
+    if (data)
+      setF({ ...data, message_template: data.message_template ?? DEFAULT_CONFIRMATION_TEMPLATE });
   }, [data]);
 
   const save = useMutation({
@@ -291,7 +379,9 @@ function MessagingSettings({ companyId }: { companyId: string }) {
       const payload = { ...f, company_id: companyId };
       delete payload.created_at;
       delete payload.updated_at;
-      const { error } = await supabase.from("messaging_settings").upsert(payload, { onConflict: "company_id" } as any);
+      const { error } = await supabase
+        .from("messaging_settings")
+        .upsert(payload, { onConflict: "company_id" } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -303,16 +393,19 @@ function MessagingSettings({ companyId }: { companyId: string }) {
 
   const toggleChannel = (id: string, on: boolean) => {
     const cur: string[] = f.active_channels ?? [];
-    setF({ ...f, active_channels: on ? Array.from(new Set([...cur, id])) : cur.filter((c) => c !== id) });
+    setF({
+      ...f,
+      active_channels: on ? Array.from(new Set([...cur, id])) : cur.filter((c) => c !== id),
+    });
   };
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card>
         <CardContent className="p-5 space-y-4">
-          <h2 className="font-medium">Confirmação automática</h2>
+          <h2 className="font-medium">Geração automática de lembretes</h2>
           <div className="flex items-center justify-between">
-            <Label>Ativar envio automático</Label>
+            <Label>Gerar lembretes automaticamente</Label>
             <Switch
               checked={!!f.auto_confirmation_enabled}
               onCheckedChange={(v) => setF({ ...f, auto_confirmation_enabled: v })}
@@ -331,7 +424,9 @@ function MessagingSettings({ companyId }: { companyId: string }) {
             <Label>Canais ativos</Label>
             {CHANNELS.map((ch) => (
               <div key={ch.id} className="flex items-center justify-between rounded-lg border p-3">
-                <span className="text-sm">{ch.icon} {ch.label}</span>
+                <span className="text-sm">
+                  {ch.icon} {ch.label}
+                </span>
                 <Switch
                   checked={(f.active_channels ?? []).includes(ch.id)}
                   onCheckedChange={(v) => toggleChannel(ch.id, v)}
@@ -347,7 +442,10 @@ function MessagingSettings({ companyId }: { companyId: string }) {
               onChange={(e) => setF({ ...f, message_template: e.target.value })}
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              Variáveis: {"{{NomeCliente}} {{Data}} {{Hora}} {{Servico}} {{Funcionario}} {{LinkConfirmacao}} {{Empresa}}"}
+              Variáveis:{" "}
+              {
+                "{{NomeCliente}} {{Data}} {{Hora}} {{Servico}} {{Funcionario}} {{LinkConfirmacao}} {{Empresa}}"
+              }
             </p>
           </div>
         </CardContent>
@@ -356,53 +454,12 @@ function MessagingSettings({ companyId }: { companyId: string }) {
       <Card>
         <CardContent className="p-5 space-y-4">
           <div>
-            <h2 className="font-medium">Provedores</h2>
-            <p className="text-xs text-muted-foreground">
-              Preencha para integrar futuramente (WhatsApp Cloud API, Evolution, Z-API, Twilio, Resend…).
+            <h2 className="font-medium">Método de envio</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              O sistema gera o lembrete e abre o WhatsApp com o número e a mensagem preenchidos. O
+              envio final é sempre confirmado manualmente no WhatsApp.
             </p>
           </div>
-
-          <Provider
-            title="WhatsApp"
-            options={WHATSAPP_PROVIDERS}
-            value={f.whatsapp_provider}
-            onProvider={(v) => setF({ ...f, whatsapp_provider: v })}
-            fields={[
-              ["whatsapp_api_url", "URL da API"],
-              ["whatsapp_api_token", "Token"],
-              ["whatsapp_instance", "Instância"],
-              ["whatsapp_sender", "Número remetente"],
-            ]}
-            f={f}
-            setF={setF}
-          />
-          <Provider
-            title="SMS"
-            options={SMS_PROVIDERS}
-            value={f.sms_provider}
-            onProvider={(v) => setF({ ...f, sms_provider: v })}
-            fields={[
-              ["sms_api_url", "URL da API"],
-              ["sms_api_token", "Token"],
-              ["sms_sender", "Remetente"],
-            ]}
-            f={f}
-            setF={setF}
-          />
-          <Provider
-            title="E-mail"
-            options={EMAIL_PROVIDERS}
-            value={f.email_provider}
-            onProvider={(v) => setF({ ...f, email_provider: v })}
-            fields={[
-              ["email_api_url", "URL da API"],
-              ["email_api_token", "Token"],
-              ["email_from", "Remetente"],
-            ]}
-            f={f}
-            setF={setF}
-          />
-
           <Button className="w-full" disabled={save.isPending} onClick={() => save.mutate()}>
             Salvar configurações
           </Button>
@@ -412,36 +469,14 @@ function MessagingSettings({ companyId }: { companyId: string }) {
   );
 }
 
-function Provider({
-  title, options, value, onProvider, fields, f, setF,
-}: {
-  title: string; options: string[]; value: string | null; onProvider: (v: string) => void;
-  fields: [string, string][]; f: any; setF: (v: any) => void;
-}) {
-  return (
-    <div className="rounded-lg border p-3 space-y-2">
-      <p className="text-sm font-medium">{title}</p>
-      <Select value={value ?? "manual"} onValueChange={onProvider}>
-        <SelectTrigger><SelectValue /></SelectTrigger>
-        <SelectContent>
-          {options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-        </SelectContent>
-      </Select>
-      {fields.map(([k, label]) => (
-        <div key={k}>
-          <Label className="text-xs">{label}</Label>
-          <Input value={f[k] ?? ""} onChange={(e) => setF({ ...f, [k]: e.target.value })} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function Kpi({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="flex items-center gap-2 text-muted-foreground text-xs">{icon}{label}</div>
+        <div className="flex items-center gap-2 text-muted-foreground text-xs">
+          {icon}
+          {label}
+        </div>
         <p className="mt-1 text-lg font-semibold">{value}</p>
       </CardContent>
     </Card>

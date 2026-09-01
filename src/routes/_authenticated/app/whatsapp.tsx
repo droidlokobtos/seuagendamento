@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { MessageCircle, Check, Copy, RefreshCw, Loader2, Sparkles, Send } from "lucide-react";
 import { toast } from "sonner";
+import { openWhatsAppLink, waLink, waNumber } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/app/whatsapp")({
   component: WhatsAppQueue,
@@ -36,57 +37,49 @@ const TEMPLATES: Template[] = [
     id: "confirmacao",
     label: "Confirmação de horário",
     emoji: "✅",
-    body:
-      "Olá {{nome}}! ✅\n\nConfirmando seu horário na *{{empresa}}*.\nQualquer alteração, é só me avisar por aqui. Até já! ✨",
+    body: "Olá {{nome}}! ✅\n\nConfirmando seu horário na *{{empresa}}*.\nQualquer alteração, é só me avisar por aqui. Até já! ✨",
   },
   {
     id: "boas_vindas",
     label: "Boas-vindas novo cliente",
     emoji: "👋",
-    body:
-      "Oi {{nome}}! 👋 Seja muito bem-vindo(a) à *{{empresa}}*.\n\nEstamos felizes em te receber. Qualquer dúvida, estou por aqui! 💛",
+    body: "Oi {{nome}}! 👋 Seja muito bem-vindo(a) à *{{empresa}}*.\n\nEstamos felizes em te receber. Qualquer dúvida, estou por aqui! 💛",
   },
   {
     id: "retorno",
     label: "Convite para retorno",
     emoji: "💇",
-    body:
-      "Oi {{nome}}! 💇 Já faz um tempinho desde sua última visita à *{{empresa}}*.\nQue tal agendar um novo horário? Posso te ajudar a escolher o melhor dia. ✨",
+    body: "Oi {{nome}}! 💇 Já faz um tempinho desde sua última visita à *{{empresa}}*.\nQue tal agendar um novo horário? Posso te ajudar a escolher o melhor dia. ✨",
   },
   {
     id: "aniversario",
     label: "Aniversário do cliente",
     emoji: "🎉",
-    body:
-      "Feliz aniversário, {{nome}}! 🎉🎂\n\nA equipe da *{{empresa}}* deseja um dia incrível.\nTemos um mimo especial esperando por você este mês. 💛",
+    body: "Feliz aniversário, {{nome}}! 🎉🎂\n\nA equipe da *{{empresa}}* deseja um dia incrível.\nTemos um mimo especial esperando por você este mês. 💛",
   },
   {
     id: "promocao",
     label: "Promoção da semana",
     emoji: "🔥",
-    body:
-      "Oi {{nome}}! 🔥 Promoção da semana na *{{empresa}}*.\n\nCondição especial válida por poucos dias. Quer que eu já reserve um horário para você?",
+    body: "Oi {{nome}}! 🔥 Promoção da semana na *{{empresa}}*.\n\nCondição especial válida por poucos dias. Quer que eu já reserve um horário para você?",
   },
   {
     id: "agradecimento",
     label: "Agradecimento pós-atendimento",
     emoji: "💛",
-    body:
-      "Oi {{nome}}! 💛 Obrigado por escolher a *{{empresa}}* hoje.\nEsperamos você em breve! ✨",
+    body: "Oi {{nome}}! 💛 Obrigado por escolher a *{{empresa}}* hoje.\nEsperamos você em breve! ✨",
   },
   {
     id: "no_show",
     label: "Falta / reagendar",
     emoji: "🗓️",
-    body:
-      "Oi {{nome}}! 🗓️ Notamos que não conseguimos te atender no horário marcado.\nPosso te encaixar em um novo dia? Me avise por aqui.",
+    body: "Oi {{nome}}! 🗓️ Notamos que não conseguimos te atender no horário marcado.\nPosso te encaixar em um novo dia? Me avise por aqui.",
   },
   {
     id: "cashback",
     label: "Cashback disponível",
     emoji: "💰",
-    body:
-      "Oi {{nome}}! 💰 Você tem cashback disponível na *{{empresa}}*.\nUse no seu próximo agendamento. Quer que eu reserve um horário?",
+    body: "Oi {{nome}}! 💰 Você tem cashback disponível na *{{empresa}}*.\nUse no seu próximo agendamento. Quer que eu reserve um horário?",
   },
 ];
 
@@ -95,7 +88,12 @@ function WhatsAppQueue() {
   const qc = useQueryClient();
   const companyId = activeCompany?.id;
 
-  const { data = [], isLoading, refetch, isFetching } = useQuery({
+  const {
+    data = [],
+    isLoading,
+    refetch,
+    isFetching,
+  } = useQuery({
     queryKey: ["wa-queue", companyId],
     queryFn: async () => {
       if (!companyId) return [];
@@ -124,8 +122,8 @@ function WhatsAppQueue() {
       toast.error("Cliente sem telefone cadastrado");
       return;
     }
-    window.open(n.metadata.wa_url, "_blank", "noopener");
-    void markSent(n.id);
+    const opened = openWhatsAppLink(n.metadata.wa_url);
+    if (!opened) toast.error("O navegador bloqueou a abertura do WhatsApp");
   };
 
   const copyMsg = async (n: any) => {
@@ -150,11 +148,16 @@ function WhatsAppQueue() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">WhatsApp</h1>
           <p className="text-sm text-muted-foreground">
-            Fila de lembretes prontos para envio. Clique em "Enviar" e o WhatsApp abre com a mensagem preenchida.
+            Fila de lembretes prontos para envio. Clique em "Enviar" e o WhatsApp abre com a
+            mensagem preenchida.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={runNow} disabled={isFetching}>
-          {isFetching ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+          {isFetching ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4 mr-2" />
+          )}
           Processar agora
         </Button>
       </div>
@@ -162,7 +165,7 @@ function WhatsAppQueue() {
       <QuickSend companyId={companyId} companyName={activeCompany?.name ?? ""} />
 
       <div>
-        <h2 className="text-lg font-semibold mb-2">Fila automática</h2>
+        <h2 className="text-lg font-semibold mb-2">Fila de lembretes</h2>
         {isLoading ? (
           <div className="grid place-items-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -181,14 +184,18 @@ function WhatsAppQueue() {
                 <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">{KIND_LABEL[n.kind] ?? n.kind}</Badge>
-                    <CardTitle className="text-base">{n.metadata?.customer_name ?? "Cliente"}</CardTitle>
+                    <CardTitle className="text-base">
+                      {n.metadata?.customer_name ?? "Cliente"}
+                    </CardTitle>
                   </div>
                   <span className="text-xs text-muted-foreground">
                     {new Date(n.created_at).toLocaleString("pt-BR")}
                   </span>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <p className="text-sm text-muted-foreground">{n.metadata?.phone ?? "Sem telefone"}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {n.metadata?.phone ?? "Sem telefone"}
+                  </p>
                   <pre className="whitespace-pre-wrap text-sm bg-muted/50 rounded-md p-3 font-sans">
                     {n.metadata?.message}
                   </pre>
@@ -228,12 +235,17 @@ function QuickSend({ companyId, companyName }: { companyId?: string; companyName
     queryFn: async () => {
       const { data } = await supabase
         .from("customers")
-        .select("id,name,phone")
+        .select("id,name,phone,whatsapp")
         .eq("company_id", companyId!)
-        .not("phone", "is", null)
+        .or("phone.not.is.null,whatsapp.not.is.null")
         .order("name")
         .limit(500);
-      return (data ?? []) as Array<{ id: string; name: string; phone: string }>;
+      return (data ?? []) as Array<{
+        id: string;
+        name: string;
+        phone: string | null;
+        whatsapp: string | null;
+      }>;
     },
   });
 
@@ -261,17 +273,17 @@ function QuickSend({ companyId, companyName }: { companyId?: string; companyName
       .replaceAll("{{empresa}}", companyName || "nossa loja");
   }, [message, selectedCustomer, manualName, companyName]);
 
-  const phoneDigits = (selectedCustomer?.phone ?? manualPhone).replace(/\D/g, "");
-  const waUrl = phoneDigits
-    ? `https://wa.me/${phoneDigits.startsWith("55") ? phoneDigits : "55" + phoneDigits}?text=${encodeURIComponent(finalMessage)}`
-    : null;
+  const selectedPhone = selectedCustomer?.whatsapp || selectedCustomer?.phone || manualPhone;
+  const normalizedPhone = waNumber(selectedPhone);
+  const waUrl = normalizedPhone ? waLink(normalizedPhone, finalMessage) : null;
 
   const send = () => {
     if (!waUrl) {
       toast.error("Informe um telefone válido");
       return;
     }
-    window.open(waUrl, "_blank", "noopener");
+    const opened = openWhatsAppLink(waUrl);
+    if (!opened) toast.error("O navegador bloqueou a abertura do WhatsApp");
   };
 
   const copy = async () => {
@@ -311,27 +323,47 @@ function QuickSend({ companyId, companyName }: { companyId?: string; companyName
               autoComplete="off"
               className="mb-2"
             />
-            <Select value={customerId} onValueChange={(v) => { setCustomerId(v); setCustomerSearch(""); }}>
+            <Select
+              value={customerId}
+              onValueChange={(v) => {
+                setCustomerId(v);
+                setCustomerSearch("");
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um cliente" />
               </SelectTrigger>
               <SelectContent>
-                {filteredCustomers.length ? filteredCustomers.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name} — {c.phone}
-                  </SelectItem>
-                )) : <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado.</div>}
+                {filteredCustomers.length ? (
+                  filteredCustomers.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} — {c.whatsapp || c.phone}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-sm text-muted-foreground">
+                    Nenhum cliente encontrado.
+                  </div>
+                )}
               </SelectContent>
             </Select>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label>Ou nome</Label>
-              <Input value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="Nome" />
+              <Input
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+                placeholder="Nome"
+              />
             </div>
             <div>
               <Label>Telefone</Label>
-              <Input value={manualPhone} onChange={(e) => setManualPhone(e.target.value)} placeholder="(11) 99999-9999" />
+              <Input
+                value={manualPhone}
+                onChange={(e) => setManualPhone(e.target.value)}
+                placeholder="(11) 99999-9999"
+              />
             </div>
           </div>
         </div>

@@ -1,26 +1,53 @@
-# Kind Connection
+# Seu Agendamento
 
-.
+SaaS multiempresa para gestão de salões, barbearias, clínicas de estética e negócios de beleza.
 
-This project was built with [Lovable](https://lovable.dev).
+Aplicação: https://seuagendamento.lovable.app
 
-**Live app**: https://seuagendamento.lovable.app
+## Tecnologias
 
-## Build with Lovable
+- React 19, TypeScript e TanStack Start
+- Tailwind CSS e componentes Radix UI
+- Supabase Auth, PostgreSQL, Storage e Row Level Security
+- Fuso de exibição: `America/Sao_Paulo`
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/2ca49ee1-054e-42b1-aa32-f886e5da6ed8).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+## Desenvolvimento
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+cp .env.example .env
+npm install
 npm run dev
 ```
+
+Antes de enviar alterações:
+
+```sh
+npm run check
+```
+
+O comando executa lint, testes automatizados e build de produção.
+
+## Variáveis de ambiente
+
+As variáveis públicas do Supabase podem ser usadas pelo navegador. A variável
+`SUPABASE_SERVICE_ROLE_KEY` é exclusiva do servidor e nunca deve ser incluída no Git,
+em código cliente ou em valores com prefixo `VITE_`.
+
+Consulte `.env.example` para a lista completa.
+
+## WhatsApp
+
+O envio é manual por link. O sistema normaliza o telefone, abre `wa.me` com a mensagem
+preenchida e o usuário confirma o envio dentro do WhatsApp. Não existe envio automático
+por API nesta versão.
+
+## Banco e segurança
+
+As alterações de banco ficam em `supabase/migrations`. Dados de cada empresa usam
+`company_id` e políticas RLS. Novas tabelas comerciais devem habilitar RLS e validar
+associação ou permissão da empresa antes de serem usadas na aplicação.
+
+## Lovable
+
+O projeto permanece sincronizado com o Lovable. Não reescreva o histórico publicado com
+force push, rebase ou amend de commits já enviados.
