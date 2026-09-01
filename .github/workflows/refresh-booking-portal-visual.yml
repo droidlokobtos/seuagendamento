@@ -44,26 +44,14 @@ jobs:
             '<Card className="overflow-hidden border-border/70 shadow-sm"><CardContent className="p-5 md:p-6 space-y-4"><div><h2 className="font-semibold text-xl tracking-tight">Escolha os serviços</h2><p className="text-sm text-muted-foreground mt-1">Selecione um ou mais serviços para continuar.</p></div>',
             1,
           )
-          text = text.replace(
-            '<div className="space-y-2">{services.map((s) => {',
-            '<div className="grid gap-3 md:grid-cols-2">{services.map((s) => {',
-            1,
-          )
+          text = text.replace('<div className="space-y-2">{services.map((s) => {', '<div className="grid gap-3 md:grid-cols-2">{services.map((s) => {', 1)
           text = text.replace(
             'className={`w-full text-left rounded-xl border overflow-hidden transition ${active ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}',
             'className={`group w-full text-left rounded-2xl border overflow-hidden transition-all duration-200 ${active ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20" : "border-border/70 bg-card hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"}`}',
             1,
           )
-          text = text.replace(
-            '<div className="h-32 w-full bg-muted overflow-hidden">',
-            '<div className="h-36 md:h-40 w-full bg-muted overflow-hidden">',
-            1,
-          )
-          text = text.replace(
-            '<div className="p-3 flex items-center justify-between gap-2">',
-            '<div className="p-4 flex items-center justify-between gap-3">',
-            1,
-          )
+          text = text.replace('<div className="h-32 w-full bg-muted overflow-hidden">', '<div className="h-36 md:h-40 w-full bg-muted overflow-hidden">', 1)
+          text = text.replace('<div className="p-3 flex items-center justify-between gap-2">', '<div className="p-4 flex items-center justify-between gap-3">', 1)
 
           text = text.replace(
             '<Card><CardContent className="p-4 space-y-4"><h2 className="font-semibold text-lg">Escolha a data</h2>',
@@ -81,11 +69,7 @@ jobs:
             '<Card className="border-border/70 shadow-sm"><CardContent className="p-5 md:p-6 space-y-5"><div><h2 className="font-semibold text-xl tracking-tight">Escolha o horário</h2><p className="text-sm text-muted-foreground mt-1">Selecione um dos horários disponíveis.</p></div>',
             1,
           )
-          text = text.replace(
-            '<div className="grid grid-cols-4 gap-2">{slots.map((t) =>',
-            '<div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">{slots.map((t) =>',
-            1,
-          )
+          text = text.replace('<div className="grid grid-cols-4 gap-2">{slots.map((t) =>', '<div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">{slots.map((t) =>', 1)
           text = text.replace(
             'className={`rounded-lg border py-2 text-sm transition ${timeStr === t ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-muted/50"}`}',
             'className={`rounded-xl border py-3 text-sm font-medium transition-all ${timeStr === t ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border/70 bg-card hover:border-primary/40 hover:bg-muted/40"}`}',
@@ -144,7 +128,6 @@ function BookingSummary({ selected, staff, dateStr, timeStr, totalMin, totalPric
 
 '''
           text = text.replace(marker, helpers + marker, 1)
-
           p.write_text(text, encoding='utf-8')
           PY
       - name: Commit refresh
@@ -159,3 +142,5 @@ function BookingSummary({ selected, staff, dateStr, timeStr, totalMin, totalPric
           git add 'src/routes/b.$slug.index.tsx'
           git commit -m 'feat: refresh public booking experience'
           git push
+
+# trigger-2
