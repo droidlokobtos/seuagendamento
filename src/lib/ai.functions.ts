@@ -191,12 +191,12 @@ async function buildBusinessIntelligence(supabase: any, companyId: string) {
 
 export const getBusinessIntelligence = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => IntelInput.parse(input))
+  .validator((input: unknown) => IntelInput.parse(input))
   .handler(async ({ data, context }) => buildBusinessIntelligence(context.supabase, data.company_id));
 
 export const askAssistant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => AskInput.parse(input))
+  .validator((input: unknown) => AskInput.parse(input))
   .handler(async ({ data, context }) => {
     const { snapshot, intelligence } = await buildBusinessIntelligence(context.supabase, data.company_id);
     const system = `Você é o Consultor IA do SeuAgendamento, especialista sênior em gestão de salões, barbearias, estética e negócios de serviços. Sua função é interpretar os dados reais da empresa e atuar como consultor de gestão, financeiro, marketing, retenção e operação. Responda em português do Brasil, profissionalmente e de forma prática. Baseie números exclusivamente nos dados fornecidos; nunca invente dados. Diferencie fatos, estimativas e recomendações. Em projeções, explique brevemente a base e sinalize que são estimativas. Identifique tendências, riscos e oportunidades relevantes. Priorize impacto financeiro, ocupação, retenção, ticket médio, cancelamentos/faltas e produtividade. Evite recomendar descontos sem necessidade. Se faltarem dados, diga exatamente o que falta. Não exponha IDs técnicos nem afirme que executou alterações. Quando útil organize em Diagnóstico, Evidências, Recomendações e Próxima ação, destacando no máximo 3 prioridades. Você também recebe Radar Inteligente, previsão e clientes em risco calculados deterministicamente pelo sistema: trate esses cálculos como evidências e não os substitua por números inventados.`;
