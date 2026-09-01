@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, DollarSign, Users, Package, Download, Printer } from "lucide-react";
-import { brl } from "@/lib/format";
+import { brl, saoPauloDate } from "@/lib/format";
 
 function downloadCsv(filename: string, rows: (string | number)[][]) {
   const escape = (v: string | number) => {
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/app/reports")({
 function Reports() {
   const { activeCompany } = useCompany();
   const companyId = activeCompany!.id;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = saoPauloDate();
   const firstOfMonth = today.slice(0, 8) + "01";
   const [from, setFrom] = useState(firstOfMonth);
   const [to, setTo] = useState(today);

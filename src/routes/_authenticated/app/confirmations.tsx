@@ -65,7 +65,7 @@ function Confirmations() {
   });
 
   const kpis = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = saoPauloDate();
     const month = today.slice(0, 7);
     const awaiting = confs.filter((c) => ["pending", "sent"].includes(c.status)).length;
     const confirmed = confs.filter((c) => c.status === "confirmed").length;

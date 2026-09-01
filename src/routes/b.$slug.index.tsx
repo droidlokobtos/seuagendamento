@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, MapPin, Phone, Check, Calendar, Clock, ChevronLeft, ChevronRight, User, Instagram, Facebook, Globe, Star, MessageCircle, X as XIcon, Image as ImageIcon, CalendarDays, Scissors, UsersRound, ClipboardCheck } from "lucide-react";
-import { brl } from "@/lib/format";
+import { brl, saoPauloDate } from "@/lib/format";
 import { computeDepositCents, depositConfigFromCompany } from "@/lib/finance";
 import { getAmenities } from "@/lib/amenities";
 import { toast } from "sonner";
@@ -95,7 +95,7 @@ function BookingPage() {
   const [step, setStep] = useState<Step>(1);
   const [selected, setSelected] = useState<Service[]>([]);
   const [staff, setStaff] = useState<Staff | null>(null);
-  const [dateStr, setDateStr] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [dateStr, setDateStr] = useState<string>(() => saoPauloDate());
   const [timeStr, setTimeStr] = useState<string>("");
   const [form, setForm] = useState({ name: "", phone: "", email: "", notes: "" });
   const [couponCode, setCouponCode] = useState("");

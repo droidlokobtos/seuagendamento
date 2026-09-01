@@ -1,3 +1,18 @@
+
+export const SAO_PAULO_TIME_ZONE = "America/Sao_Paulo";
+
+/** Data civil YYYY-MM-DD no horário oficial de Brasília. */
+export const saoPauloDate = (d: Date = new Date()) => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: SAO_PAULO_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(d);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+};
+
 export const brl = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
