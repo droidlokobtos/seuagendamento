@@ -1,0 +1,39 @@
+name: Integrate expense payment finance
+on:
+  push:
+    paths: ['.github/workflows/integrate-expense-payment-finance.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/routes/_authenticated/app/expenses.tsx')
+          s=p.read_text()
+          s=s.replace("const cats=['Aluguel','Água','Energia','Internet','Alimentação','Combustível','Contabilidade','Fornecedores','Marketing','Brindes','Manutenção','Outros'];", "const cats=['Aluguel','Água','Energia','Internet','Alimentação','Combustível','Contabilidade','Fornecedores','Marketing','Brindes','Manutenção','Outros'];\nconst methodLabels:Record<string,string>={cash:'Dinheiro',pix:'Pix',credit_card:'Cartão de crédito',debit_card:'Cartão de débito',bank_transfer:'Transferência bancária',other:'Outro'};")
+          s=s.replace("const [due,setDue]=useState('');", "const [due,setDue]=useState('');const [payRow,setPayRow]=useState<any|null>(null);const [paymentMethodId,setPaymentMethodId]=useState('');")
+          s=s.replace("const save=useMutation", "const {data:paymentMethods=[]}=useQuery({queryKey:['expense-payment-methods',id],enabled:!!id,queryFn:async()=>{const {data,error}=await supabase.from('payment_methods').select('id,method,enabled').eq('company_id',id!).eq('enabled',true).order('method');if(error)throw error;return data??[]}});\nconst save=useMutation")
+          old="const pay=useMutation({mutationFn:async(x:any)=>{const {error}=await supabase.from('business_expenses').update({status:'paid',paid_at:new Date().toISOString()}).eq('id',x.id);if(error)throw error},onSuccess:()=>{qc.invalidateQueries({queryKey:['expenses',id]});toast.success('Despesa marcada como paga')},onError:(e:any)=>toast.error(e.message)});"
+          new="const pay=useMutation({mutationFn:async()=>{if(!payRow?.id)throw new Error('Selecione uma despesa.');if(!paymentMethodId)throw new Error('Selecione a forma de pagamento.');const {error}=await (supabase as any).rpc('mark_business_expense_paid',{p_expense_id:payRow.id,p_payment_method_id:paymentMethodId});if(error)throw error},onSuccess:()=>{qc.invalidateQueries({queryKey:['expenses',id]});qc.invalidateQueries({queryKey:['financial_transactions',id]});qc.invalidateQueries({queryKey:['financial_transactions']});qc.invalidateQueries({queryKey:['operational_expenses_finance',id]});setPayRow(null);setPaymentMethodId('');toast.success('Despesa paga e lançada no financeiro')},onError:(e:any)=>toast.error(e.message)});"
+          if old not in s: raise SystemExit('pay mutation target not found')
+          s=s.replace(old,new)
+          s=s.replace("onClick={()=>pay.mutate(x)} disabled={pay.isPending}>Marcar paga</Button>", "onClick={()=>{setPayRow(x);setPaymentMethodId('')}} disabled={pay.isPending}>Marcar paga</Button>")
+          tail="{!rows.length&&<p className=\"py-8 text-center text-muted-foreground\">Nenhuma despesa registrada.</p>}</CardContent></Card></div>}"
+          repl="{!rows.length&&<p className=\"py-8 text-center text-muted-foreground\">Nenhuma despesa registrada.</p>}</CardContent></Card><Dialog open={!!payRow} onOpenChange={o=>{if(!o){setPayRow(null);setPaymentMethodId('')}}}><DialogContent><DialogHeader><DialogTitle>Confirmar pagamento</DialogTitle></DialogHeader><div className=\"space-y-4\"><div className=\"rounded-lg border p-3\"><p className=\"font-medium\">{payRow?.description}</p><p className=\"text-sm text-muted-foreground\">{payRow?money(payRow.amount_cents):''}</p></div><div><Label>Forma de pagamento</Label><Select value={paymentMethodId} onValueChange={setPaymentMethodId}><SelectTrigger><SelectValue placeholder=\"Selecionar forma de pagamento\"/></SelectTrigger><SelectContent>{(paymentMethods as any[]).map(m=><SelectItem key={m.id} value={m.id}>{methodLabels[m.method]??m.method}</SelectItem>)}</SelectContent></Select>{!paymentMethods.length&&<p className=\"mt-2 text-xs text-muted-foreground\">Cadastre ou ative uma forma de pagamento nas configurações financeiras.</p>}</div><p className=\"text-xs text-muted-foreground\">Ao confirmar, a conta será marcada como paga e uma única saída será registrada automaticamente no financeiro.</p></div><DialogFooter><Button variant=\"outline\" onClick={()=>setPayRow(null)}>Cancelar</Button><Button onClick={()=>pay.mutate()} disabled={!paymentMethodId||pay.isPending||!paymentMethods.length}>{pay.isPending?'Registrando...':'Confirmar pagamento'}</Button></DialogFooter></DialogContent></Dialog></div>}"
+          if tail not in s: raise SystemExit('tail target not found')
+          s=s.replace(tail,repl)
+          p.write_text(s)
+          PY
+          bun install --frozen-lockfile
+          bun run build
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/_authenticated/app/expenses.tsx
+          git commit -m 'feat: post paid expenses to finance atomically'
+          git push
