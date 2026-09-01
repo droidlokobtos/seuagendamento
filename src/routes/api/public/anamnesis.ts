@@ -61,6 +61,7 @@ export const Route = createFileRoute("/api/public/anamnesis")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const company = await loadCompany(supabaseAdmin, slug);
         if (!company) return Response.json({ error: "Empresa não encontrada" }, { status: 404 });
+        if (company.status === "suspended") return Response.json({ error: "Indisponível" }, { status: 403 });
 
         let sections: string[] = [];
         if (serviceIds.length) {
@@ -75,7 +76,7 @@ export const Route = createFileRoute("/api/public/anamnesis")({
           if (cust) {
             const { data: rec } = await supabaseAdmin
               .from("anamnesis_records").select("filled_at,sections")
-              .eq("customer_id", cust.id).order("filled_at", { ascending: false }).limit(1).maybeSingle();
+              .eq("company_id", company.id).eq("customer_id", cust.id).order("filled_at", { ascending: false }).limit(1).maybeSingle();
             if (rec) {
               lastFilledAt = rec.filled_at as string;
               // Se alguma seção nova (novo tipo de serviço) não estava na ficha anterior, exigir novamente.

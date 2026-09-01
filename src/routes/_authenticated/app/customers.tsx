@@ -119,11 +119,14 @@ function Customers() {
 
   const save = useMutation({
     mutationFn: async (v: Partial<C>) => {
+      const payload = Object.fromEntries(
+        Object.entries(v).filter(([key, value]) => key !== "id" && key !== "created_at" && value !== undefined),
+      ) as Partial<C>;
       if (edit) {
-        const { error } = await supabase.from("customers").update(v).eq("id", edit.id);
+        const { error } = await supabase.from("customers").update(payload).eq("id", edit.id).eq("company_id", companyId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("customers").insert({ ...v, company_id: companyId } as any);
+        const { error } = await supabase.from("customers").insert({ ...payload, company_id: companyId } as any);
         if (error) throw error;
       }
     },
