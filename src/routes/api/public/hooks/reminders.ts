@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { waLink, waNumber } from "@/lib/format";
 
 /**
  * Processes appointment reminders (24h, 1h, review) due for delivery.
@@ -42,21 +43,33 @@ export const Route = createFileRoute("/api/public/hooks/reminders")({
             .maybeSingle();
 
           if (!appt) {
-            await supabaseAdmin.from("appointment_reminders").update({ sent_at: now }).eq("id", r.id);
+            await supabaseAdmin
+              .from("appointment_reminders")
+              .update({ sent_at: now })
+              .eq("id", r.id);
             continue;
           }
 
           const skipStatuses = ["cancelled", "no_show"];
           if (skipStatuses.includes(appt.status)) {
-            await supabaseAdmin.from("appointment_reminders").update({ sent_at: now }).eq("id", r.id);
+            await supabaseAdmin
+              .from("appointment_reminders")
+              .update({ sent_at: now })
+              .eq("id", r.id);
             continue;
           }
           if (r.kind !== "review" && appt.status === "completed") {
-            await supabaseAdmin.from("appointment_reminders").update({ sent_at: now }).eq("id", r.id);
+            await supabaseAdmin
+              .from("appointment_reminders")
+              .update({ sent_at: now })
+              .eq("id", r.id);
             continue;
           }
           if (r.kind === "review" && appt.status !== "completed") {
-            await supabaseAdmin.from("appointment_reminders").update({ sent_at: now }).eq("id", r.id);
+            await supabaseAdmin
+              .from("appointment_reminders")
+              .update({ sent_at: now })
+              .eq("id", r.id);
             continue;
           }
 
@@ -96,8 +109,7 @@ export const Route = createFileRoute("/api/public/hooks/reminders")({
               `Se precisar remarcar ou cancelar, é só responder por aqui. Até breve! ✨`;
           } else if (r.kind === "1h") {
             title = "Lembrete 1h";
-            message =
-              `Oi ${cust?.name ?? ""}! Seu horário em *${companyName}* é daqui a pouco (${shortWhen}). Já estamos te esperando! 💇`;
+            message = `Oi ${cust?.name ?? ""}! Seu horário em *${companyName}* é daqui a pouco (${shortWhen}). Já estamos te esperando! 💇`;
           } else if (r.kind === "review") {
             title = "Pedir avaliação";
             message =
@@ -106,10 +118,8 @@ export const Route = createFileRoute("/api/public/hooks/reminders")({
               `\n\nSua opinião ajuda muito!`;
           }
 
-          const phoneDigits = (cust?.phone ?? "").replace(/\D/g, "");
-          const waUrl = phoneDigits
-            ? `https://wa.me/${phoneDigits.startsWith("55") ? phoneDigits : "55" + phoneDigits}?text=${encodeURIComponent(message)}`
-            : null;
+          const phone = waNumber(cust?.phone);
+          const waUrl = phone ? waLink(phone, message) : null;
 
           await supabaseAdmin.from("notifications").insert({
             company_id: r.company_id,
