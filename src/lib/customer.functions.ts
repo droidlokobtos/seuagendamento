@@ -4,7 +4,7 @@ import { z } from "zod";
 
 export const getMyBookings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { slug: string }) => z.object({ slug: z.string().min(1) }).parse(input))
+  .validator((input: { slug: string }) => z.object({ slug: z.string().min(1) }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
@@ -68,7 +68,7 @@ export const getMyBookings = createServerFn({ method: "POST" })
 
 export const cancelMyBooking = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { appointment_id: string }) =>
+  .validator((input: { appointment_id: string }) =>
     z.object({ appointment_id: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
