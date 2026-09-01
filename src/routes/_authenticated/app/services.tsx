@@ -12,36 +12,12 @@ import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Scissors, ArrowUp, ArrowDown, Move, ZoomIn, ZoomOut, GripVertical } from "lucide-react";
-
-// photo_position format: "<x>% <y>% <zoom>" (zoom optional, defaults 1)
-function parsePos(v: string | null | undefined) {
-  if (!v) return { x: 50, y: 50, z: 1 };
-  const parts = v.trim().split(/\s+/);
-  const x = parseFloat(parts[0]);
-  const y = parseFloat(parts[1]);
-  const z = parseFloat(parts[2]);
-  return {
-    x: Number.isFinite(x) ? x : 50,
-    y: Number.isFinite(y) ? y : 50,
-    z: Number.isFinite(z) && z > 0 ? z : 1,
-  };
-}
-export function framedImgStyle(pos: string | null | undefined): React.CSSProperties {
-  const { x, y, z } = parsePos(pos);
-  return {
-    objectPosition: `${x}% ${y}%`,
-    transform: z !== 1 ? `scale(${z})` : undefined,
-    transformOrigin: `${x}% ${y}%`,
-  };
-}
+import { Plus, Pencil, Trash2, Scissors, ArrowUp, ArrowDown, Move, ZoomIn, ZoomOut, GripVertical, Tags } from "lucide-react";
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
 
-export const Route = createFileRoute("/_authenticated/app/services")({
-  component: Services,
-});
+export const Route = createFileRoute("/_authenticated/app/services")({ component: Services });
 
 type S = {
   id: string; name: string; description: string | null;
@@ -58,33 +34,77 @@ const EMPTY: Partial<S> = {
   has_commission: false, commission_type: "percent", commission_value: 0,
 };
 
+function parsePos(v: string | null | undefined) {
+  if (!v) return { x: 50, y: 50, z: 1 };
+  const parts = v.trim().split(/\s+/);
+  const x = parseFloat(parts[0]);
+  const y = parseFloat(parts[1]);
+  const z = parseFloat(parts[2]);
+  return {
+    x: Number.isFinite(x) ? x : 50,
+    y: Number.isFinite(y) ? y : 50,
+    z: Number.isFinite(z) && z > 0 ? z : 1,
+  };
+}
+
+export function framedImgStyle(pos: string | null | undefined): React.CSSProperties {
+  const { x, y, z } = parsePos(pos);
+  return {
+    objectPosition: `${x}% ${y}%`,
+    transform: z !== 1 ? `scale(${z})` : undefined,
+    transformOrigin: `${x}% ${y}%`,
+  };
+}
+
 function Services() {
   const qc = useQueryClient();
   const { activeCompany } = useCompany();
   const companyId = activeCompany!.id;
   const [edit, setEdit] = useState<S | null>(null);
   const [open, setOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [savedCategories, setSavedCategories] = useState<string[]>([]);
+
+  const categoryStorageKey = `service-categories:${companyId}`;
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["services", companyId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("services")
-        .select("*")
-        .eq("company_id", companyId)
-        .order("sort_order", { ascending: true })
-        .order("name", { ascending: true });
+        .from("services").select("*").eq("company_id", companyId)
+        .order("sort_order", { ascending: true }).order("name", { ascending: true });
       if (error) throw error;
       return (data ?? []) as S[];
     },
   });
 
-  const categories = useMemo(
-    () => Array.from(new Set(data.map((s) => s.category).filter(Boolean))) as string[],
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(categoryStorageKey);
+      const parsed = raw ? JSON.parse(raw) : [];
+      setSavedCategories(Array.isArray(parsed) ? parsed.filter((v) => typeof v === "string") : []);
+    } catch {
+      setSavedCategories([]);
+    }
+  }, [categoryStorageKey]);
+
+  const usedCategories = useMemo(
+    () => Array.from(new Set(data.map((s) => s.category?.trim()).filter(Boolean))) as string[],
     [data],
   );
 
-  // Profissionais da empresa + vínculos por serviço
+  const categories = useMemo(
+    () => Array.from(new Set([...savedCategories, ...usedCategories])).sort((a, b) => a.localeCompare(b, "pt-BR")),
+    [savedCategories, usedCategories],
+  );
+
+  const persistCategories = (next: string[]) => {
+    const normalized = Array.from(new Set(next.map((c) => c.trim()).filter(Boolean)))
+      .sort((a, b) => a.localeCompare(b, "pt-BR"));
+    setSavedCategories(normalized);
+    localStorage.setItem(categoryStorageKey, JSON.stringify(normalized));
+  };
+
   const { data: staffOptions = [] } = useQuery({
     queryKey: ["svc_staff_options", companyId],
     queryFn: async () => {
@@ -100,7 +120,8 @@ function Services() {
     queryFn: async () => {
       const ids = staffOptions.map((s) => s.id);
       if (!ids.length) return [];
-      const { data: rows, error } = await supabase.from("staff_services").select("staff_id,service_id").in("staff_id", ids);
+      const { data: rows, error } = await supabase.from("staff_services")
+        .select("staff_id,service_id").in("staff_id", ids);
       if (error) throw error;
       return (rows ?? []) as { staff_id: string; service_id: string }[];
     },
@@ -109,8 +130,8 @@ function Services() {
 
   const save = useMutation({
     mutationFn: async ({ v, staffIds }: { v: Partial<S>; staffIds: string[] }) => {
-      // Never send id/created_at/updated_at
       const { id: _id, created_at: _c, updated_at: _u, ...clean } = v as any;
+      if (typeof clean.category === "string") clean.category = clean.category.trim() || null;
       let serviceId = edit?.id;
       if (edit?.id) {
         const { error } = await supabase.from("services").update(clean).eq("id", edit.id);
@@ -123,6 +144,7 @@ function Services() {
         if (error) throw error;
         serviceId = created.id;
       }
+      if (clean.category) persistCategories([...savedCategories, clean.category]);
       if (!serviceId) return;
       const current = links.filter((l) => l.service_id === serviceId).map((l) => l.staff_id);
       const toAdd = staffIds.filter((id) => !current.includes(id));
@@ -156,7 +178,6 @@ function Services() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  // Somente admin da empresa (ou master) pode reordenar
   const { data: canReorder = false } = useQuery({
     queryKey: ["can_reorder_services", companyId],
     queryFn: async () => {
@@ -166,7 +187,6 @@ function Services() {
     },
   });
 
-  // Lista local para atualização imediata durante o drag & drop
   const [items, setItems] = useState<S[]>([]);
   useEffect(() => { setItems(data); }, [data]);
   const dragId = useRef<string | null>(null);
@@ -194,7 +214,6 @@ function Services() {
   };
 
   const move = (idx: number, dir: -1 | 1) => applyOrder(idx, idx + dir);
-
   const onDrop = (targetId: string) => {
     const fromId = dragId.current;
     dragId.current = null;
@@ -203,51 +222,59 @@ function Services() {
     applyOrder(items.findIndex((s) => s.id === fromId), items.findIndex((s) => s.id === targetId));
   };
 
-
-  const openNew = () => { setEdit(null); setOpen(true); };
-  const openEdit = (s: S) => { setEdit(s); setOpen(true); };
-
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Serviços</h1>
           <p className="text-sm text-muted-foreground">Cadastre os serviços oferecidos.</p>
         </div>
-        <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEdit(null); }}>
-          <DialogTrigger asChild>
-            <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" /> Novo serviço</Button>
-          </DialogTrigger>
-          {open && (
-            <ServiceDialog
-              key={edit?.id ?? "new"}
-              edit={edit}
-              onSave={(v, staffIds) => save.mutate({ v, staffIds })}
-              staffOptions={staffOptions}
-              selectedStaffIds={edit ? links.filter((l) => l.service_id === edit.id).map((l) => l.staff_id) : []}
-              loading={save.isPending}
-              categories={categories}
-            />
+        <div className="flex flex-wrap gap-2">
+          {canReorder && (
+            <Button variant="outline" onClick={() => setCategoryOpen(true)}>
+              <Tags className="h-4 w-4 mr-2" /> Categorias
+            </Button>
           )}
-        </Dialog>
+          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEdit(null); }}>
+            <DialogTrigger asChild>
+              <Button onClick={() => { setEdit(null); setOpen(true); }}>
+                <Plus className="h-4 w-4 mr-2" /> Novo serviço
+              </Button>
+            </DialogTrigger>
+            {open && (
+              <ServiceDialog
+                key={edit?.id ?? "new"}
+                edit={edit}
+                onSave={(v, staffIds) => save.mutate({ v, staffIds })}
+                staffOptions={staffOptions}
+                selectedStaffIds={edit ? links.filter((l) => l.service_id === edit.id).map((l) => l.staff_id) : []}
+                loading={save.isPending}
+                categories={categories}
+              />
+            )}
+          </Dialog>
+        </div>
       </div>
+
+      <CategoryDialog
+        open={categoryOpen}
+        onOpenChange={setCategoryOpen}
+        categories={categories}
+        usedCategories={usedCategories}
+        onAdd={(name) => persistCategories([...savedCategories, name])}
+        onRemove={(name) => persistCategories(savedCategories.filter((c) => c !== name))}
+      />
 
       {isLoading ? (
         <Card><CardContent className="p-12 text-center text-muted-foreground">Carregando…</CardContent></Card>
       ) : !items.length ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Scissors className="h-8 w-8 mx-auto text-muted-foreground" />
-            <p className="mt-2 text-sm text-muted-foreground">Nenhum serviço cadastrado ainda.</p>
-          </CardContent>
-        </Card>
+        <Card><CardContent className="p-12 text-center">
+          <Scissors className="h-8 w-8 mx-auto text-muted-foreground" />
+          <p className="mt-2 text-sm text-muted-foreground">Nenhum serviço cadastrado ainda.</p>
+        </CardContent></Card>
       ) : (
         <>
-          {canReorder && (
-            <p className="text-xs text-muted-foreground">
-              Arraste os cartões pelo ícone <GripVertical className="inline h-3 w-3" /> para reorganizar a ordem — ela é salva automaticamente e usada em todas as telas.
-            </p>
-          )}
+          {canReorder && <p className="text-xs text-muted-foreground">Arraste os cartões pelo ícone <GripVertical className="inline h-3 w-3" /> para reorganizar a ordem — ela é salva automaticamente e usada em todas as telas.</p>}
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {items.map((s, idx) => (
               <Card
@@ -258,23 +285,9 @@ function Services() {
                 onDragLeave={() => setOverId((v) => (v === s.id ? null : v))}
                 onDrop={(e) => { if (!canReorder) return; e.preventDefault(); onDrop(s.id); }}
                 onDragEnd={() => { dragId.current = null; setOverId(null); }}
-                className={[
-                  "overflow-hidden transition-shadow",
-                  !s.active ? "opacity-60" : "",
-                  overId === s.id ? "ring-2 ring-primary" : "",
-                  canReorder ? "cursor-grab active:cursor-grabbing" : "",
-                ].join(" ")}
+                className={["overflow-hidden transition-shadow", !s.active ? "opacity-60" : "", overId === s.id ? "ring-2 ring-primary" : "", canReorder ? "cursor-grab active:cursor-grabbing" : ""].join(" ")}
               >
-                {s.photo_url && (
-                  <div className="h-32 w-full bg-muted overflow-hidden">
-                    <img
-                      src={s.photo_url}
-                      alt={s.name}
-                      className="h-full w-full object-cover"
-                      style={framedImgStyle(s.photo_position)}
-                    />
-                  </div>
-                )}
+                {s.photo_url && <div className="h-32 w-full bg-muted overflow-hidden"><img src={s.photo_url} alt={s.name} className="h-full w-full object-cover" style={framedImgStyle(s.photo_position)} /></div>}
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex items-start gap-2">
@@ -289,42 +302,70 @@ function Services() {
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      {canReorder && (
-                        <>
-                          <Button size="icon" variant="ghost" title="Mover para cima" disabled={idx === 0} onClick={() => move(idx, -1)}>
-                            <ArrowUp className="h-4 w-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" title="Mover para baixo" disabled={idx === items.length - 1} onClick={() => move(idx, 1)}>
-                            <ArrowDown className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(s)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover?")) del.mutate(s.id); }}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {canReorder && <><Button size="icon" variant="ghost" title="Mover para cima" disabled={idx === 0} onClick={() => move(idx, -1)}><ArrowUp className="h-4 w-4" /></Button><Button size="icon" variant="ghost" title="Mover para baixo" disabled={idx === items.length - 1} onClick={() => move(idx, 1)}><ArrowDown className="h-4 w-4" /></Button></>}
+                      <Button size="icon" variant="ghost" onClick={() => { setEdit(s); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover?")) del.mutate(s.id); }}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{s.duration_min} min</span>
-                    <span className="font-semibold">{brl(s.price_cents / 100)}</span>
-                  </div>
+                  <div className="mt-3 flex items-center justify-between text-sm"><span className="text-muted-foreground">{s.duration_min} min</span><span className="font-semibold">{brl(s.price_cents / 100)}</span></div>
                 </CardContent>
               </Card>
             ))}
           </div>
         </>
       )}
-
     </div>
   );
 }
 
-function ServiceDialog({
-  edit, onSave, loading, categories, staffOptions, selectedStaffIds,
-}: {
+function CategoryDialog({ open, onOpenChange, categories, usedCategories, onAdd, onRemove }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  categories: string[];
+  usedCategories: string[];
+  onAdd: (name: string) => void;
+  onRemove: (name: string) => void;
+}) {
+  const [name, setName] = useState("");
+  const add = () => {
+    const clean = name.trim();
+    if (!clean) return;
+    if (categories.some((c) => c.toLocaleLowerCase("pt-BR") === clean.toLocaleLowerCase("pt-BR"))) {
+      toast.error("Essa categoria já existe");
+      return;
+    }
+    onAdd(clean);
+    setName("");
+    toast.success("Categoria criada");
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader><DialogTitle>Gerenciar categorias</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <Input value={name} placeholder="Ex.: Cabelo, Unhas, Estética" onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") add(); }} />
+            <Button onClick={add} disabled={!name.trim()}><Plus className="h-4 w-4 mr-2" /> Criar</Button>
+          </div>
+          <div className="max-h-72 overflow-y-auto space-y-2">
+            {!categories.length ? <p className="text-sm text-muted-foreground text-center py-6">Nenhuma categoria cadastrada.</p> : categories.map((category) => {
+              const inUse = usedCategories.includes(category);
+              return (
+                <div key={category} className="flex items-center justify-between gap-3 rounded-md border px-3 py-2">
+                  <div><p className="text-sm font-medium">{category}</p>{inUse && <p className="text-xs text-muted-foreground">Em uso por um ou mais serviços</p>}</div>
+                  <Button size="icon" variant="ghost" disabled={inUse} title={inUse ? "Categoria em uso" : "Excluir categoria"} onClick={() => { onRemove(category); toast.success("Categoria removida"); }}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ServiceDialog({ edit, onSave, loading, categories, staffOptions, selectedStaffIds }: {
   edit: S | null;
   onSave: (v: Partial<S>, staffIds: string[]) => void;
   loading: boolean;
@@ -335,158 +376,55 @@ function ServiceDialog({
   const [f, setF] = useState<Partial<S>>(edit ? { ...edit } : { ...EMPTY });
   const [reposition, setReposition] = useState(false);
   const [staffIds, setStaffIds] = useState<string[]>(selectedStaffIds);
-  const toggleStaff = (id: string) =>
-    setStaffIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const toggleStaff = (id: string) => setStaffIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
 
   return (
     <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle>{edit ? "Editar serviço" : "Novo serviço"}</DialogTitle>
-      </DialogHeader>
+      <DialogHeader><DialogTitle>{edit ? "Editar serviço" : "Novo serviço"}</DialogTitle></DialogHeader>
       <div className="space-y-3">
         <div>
           <Label>Foto</Label>
-          <ImageUpload
-            value={f.photo_url}
-            folder="services"
-            aspect="wide"
-            preset="service"
-            onChange={(url) => setF({ ...f, photo_url: url, photo_position: "center center" })}
-          />
-          {f.photo_url && (
-            <div className="mt-2 space-y-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => setReposition((v) => !v)}
-              >
-                <Move className="h-4 w-4 mr-2" />
-                {reposition ? "Concluir reposicionamento" : "Reposicionar imagem"}
-              </Button>
-              {reposition && (
-                <RepositionEditor
-                  url={f.photo_url}
-                  value={f.photo_position ?? "center center"}
-                  onChange={(pos) => setF({ ...f, photo_position: pos })}
-                />
-              )}
-            </div>
-          )}
+          <ImageUpload value={f.photo_url} folder="services" aspect="wide" preset="service" onChange={(url) => setF({ ...f, photo_url: url, photo_position: "center center" })} />
+          {f.photo_url && <div className="mt-2 space-y-2"><Button type="button" variant="outline" size="sm" className="w-full" onClick={() => setReposition((v) => !v)}><Move className="h-4 w-4 mr-2" />{reposition ? "Concluir reposicionamento" : "Reposicionar imagem"}</Button>{reposition && <RepositionEditor url={f.photo_url} value={f.photo_position ?? "center center"} onChange={(pos) => setF({ ...f, photo_position: pos })} />}</div>}
         </div>
-        <div>
-          <Label>Nome</Label>
-          <Input value={f.name ?? ""} onChange={(e) => setF({ ...f, name: e.target.value })} />
-        </div>
-        <div>
-          <Label>Descrição</Label>
-          <Textarea value={f.description ?? ""} onChange={(e) => setF({ ...f, description: e.target.value })} />
-        </div>
+        <div><Label>Nome</Label><Input value={f.name ?? ""} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
+        <div><Label>Descrição</Label><Textarea value={f.description ?? ""} onChange={(e) => setF({ ...f, description: e.target.value })} /></div>
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>Duração (min)</Label>
-            <Input type="number" value={f.duration_min ?? 30}
-              onChange={(e) => setF({ ...f, duration_min: parseInt(e.target.value || "0", 10) })} />
-          </div>
-          <div>
-            <Label>Preço (R$)</Label>
-            <Input type="number" step="0.01" value={((f.price_cents ?? 0) / 100).toString()}
-              onChange={(e) => setF({ ...f, price_cents: Math.round(parseFloat(e.target.value || "0") * 100) })} />
-          </div>
+          <div><Label>Duração (min)</Label><Input type="number" value={f.duration_min ?? 30} onChange={(e) => setF({ ...f, duration_min: parseInt(e.target.value || "0", 10) })} /></div>
+          <div><Label>Preço (R$)</Label><Input type="number" step="0.01" value={((f.price_cents ?? 0) / 100).toString()} onChange={(e) => setF({ ...f, price_cents: Math.round(parseFloat(e.target.value || "0") * 100) })} /></div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Categoria</Label>
-            <Input list="svc-categories" value={f.category ?? ""}
-              onChange={(e) => setF({ ...f, category: e.target.value })} />
-            <datalist id="svc-categories">
-              {categories.map((c) => <option key={c} value={c} />)}
-            </datalist>
+            <Input list="svc-categories" value={f.category ?? ""} onChange={(e) => setF({ ...f, category: e.target.value })} placeholder="Selecione ou digite" />
+            <datalist id="svc-categories">{categories.map((c) => <option key={c} value={c} />)}</datalist>
           </div>
-          <div>
-            <Label>Cor</Label>
-            <Input type="color" value={f.color ?? "#8b7355"} onChange={(e) => setF({ ...f, color: e.target.value })} />
-          </div>
+          <div><Label>Cor</Label><Input type="color" value={f.color ?? "#8b7355"} onChange={(e) => setF({ ...f, color: e.target.value })} /></div>
         </div>
         <div className="rounded-lg border p-3 space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Comissão</Label>
-              <p className="text-xs text-muted-foreground">Possui comissão para este serviço</p>
-            </div>
-            <Switch
-              checked={f.has_commission ?? false}
-              onCheckedChange={(v) => setF({ ...f, has_commission: v })}
-            />
-          </div>
-          {f.has_commission && (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Tipo</Label>
-                <select
-                  className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                  value={f.commission_type ?? "percent"}
-                  onChange={(e) => setF({ ...f, commission_type: e.target.value })}
-                >
-                  <option value="percent">Percentual (%)</option>
-                  <option value="fixed">Valor fixo (R$)</option>
-                </select>
-              </div>
-              <div>
-                <Label>{f.commission_type === "fixed" ? "Valor (R$)" : "Percentual (%)"}</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={String(f.commission_value ?? 0)}
-                  onChange={(e) => setF({ ...f, commission_value: parseFloat(e.target.value || "0") })}
-                />
-              </div>
-            </div>
-          )}
+          <div className="flex items-center justify-between"><div><Label>Comissão</Label><p className="text-xs text-muted-foreground">Possui comissão para este serviço</p></div><Switch checked={f.has_commission ?? false} onCheckedChange={(v) => setF({ ...f, has_commission: v })} /></div>
+          {f.has_commission && <div className="grid grid-cols-2 gap-3"><div><Label>Tipo</Label><select className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={f.commission_type ?? "percent"} onChange={(e) => setF({ ...f, commission_type: e.target.value })}><option value="percent">Percentual (%)</option><option value="fixed">Valor fixo (R$)</option></select></div><div><Label>{f.commission_type === "fixed" ? "Valor (R$)" : "Percentual (%)"}</Label><Input type="number" step="0.01" value={String(f.commission_value ?? 0)} onChange={(e) => setF({ ...f, commission_value: parseFloat(e.target.value || "0") })} /></div></div>}
         </div>
         <div className="rounded-lg border p-3 space-y-2">
           <Label>Profissionais que realizam este serviço</Label>
-          <p className="text-xs text-muted-foreground">
-            No agendamento online o cliente só verá os profissionais marcados aqui.
-          </p>
-          {!staffOptions.length ? (
-            <p className="text-xs text-muted-foreground">Cadastre funcionários primeiro.</p>
-          ) : (
-            <div className="max-h-44 overflow-y-auto space-y-1">
-              {staffOptions.map((s) => (
-                <label key={s.id} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
-                  <input type="checkbox" className="h-4 w-4" checked={staffIds.includes(s.id)} onChange={() => toggleStaff(s.id)} />
-                  <span className={s.active ? "" : "text-muted-foreground line-through"}>{s.name}</span>
-                </label>
-              ))}
-            </div>
-          )}
+          <p className="text-xs text-muted-foreground">No agendamento online o cliente só verá os profissionais marcados aqui.</p>
+          {!staffOptions.length ? <p className="text-xs text-muted-foreground">Cadastre funcionários primeiro.</p> : <div className="max-h-44 overflow-y-auto space-y-1">{staffOptions.map((s) => <label key={s.id} className="flex items-center gap-2 text-sm py-1 cursor-pointer"><input type="checkbox" className="h-4 w-4" checked={staffIds.includes(s.id)} onChange={() => toggleStaff(s.id)} /><span className={s.active ? "" : "text-muted-foreground line-through"}>{s.name}</span></label>)}</div>}
         </div>
-        <div className="flex items-center justify-between">
-          <Label>Ativo</Label>
-          <Switch checked={f.active ?? true} onCheckedChange={(v) => setF({ ...f, active: v })} />
-        </div>
+        <div className="flex items-center justify-between"><Label>Ativo</Label><Switch checked={f.active ?? true} onCheckedChange={(v) => setF({ ...f, active: v })} /></div>
       </div>
-      <DialogFooter>
-        <Button onClick={() => onSave(f, staffIds)} disabled={loading || !f.name}>Salvar</Button>
-      </DialogFooter>
+      <DialogFooter><Button onClick={() => onSave(f, staffIds)} disabled={loading || !f.name}>Salvar</Button></DialogFooter>
     </DialogContent>
   );
 }
 
-function RepositionEditor({
-  url, value, onChange,
-}: { url: string; value: string; onChange: (pos: string) => void }) {
+function RepositionEditor({ url, value, onChange }: { url: string; value: string; onChange: (pos: string) => void }) {
   const initial = parsePos(value);
   const [pos, setPos] = useState({ x: initial.x, y: initial.y });
   const [zoom, setZoom] = useState(initial.z);
   const dragging = useRef(false);
   const boxRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    onChange(`${pos.x}% ${pos.y}% ${zoom}`);
-  }, [pos, zoom]);
+  useEffect(() => { onChange(`${pos.x}% ${pos.y}% ${zoom}`); }, [pos, zoom]);
 
   const updateFromEvent = (clientX: number, clientY: number) => {
     const el = boxRef.current;
@@ -496,55 +434,15 @@ function RepositionEditor({
     const y = Math.min(100, Math.max(0, ((clientY - r.top) / r.height) * 100));
     setPos({ x, y });
   };
-
   const clampZoom = (z: number) => Math.min(4, Math.max(1, Math.round(z * 10) / 10));
 
   return (
     <div className="space-y-2">
-      <div
-        ref={boxRef}
-        className="relative h-40 w-full overflow-hidden rounded-md border bg-muted cursor-move select-none touch-none"
-        onPointerDown={(e) => {
-          dragging.current = true;
-          (e.target as HTMLElement).setPointerCapture(e.pointerId);
-          updateFromEvent(e.clientX, e.clientY);
-        }}
-        onPointerMove={(e) => { if (dragging.current) updateFromEvent(e.clientX, e.clientY); }}
-        onPointerUp={() => { dragging.current = false; }}
-        onWheel={(e) => {
-          e.preventDefault();
-          setZoom((z) => clampZoom(z + (e.deltaY < 0 ? 0.1 : -0.1)));
-        }}
-      >
-        <img
-          src={url}
-          alt=""
-          className="h-full w-full object-cover pointer-events-none"
-          style={{
-            objectPosition: `${pos.x}% ${pos.y}%`,
-            transform: zoom !== 1 ? `scale(${zoom})` : undefined,
-            transformOrigin: `${pos.x}% ${pos.y}%`,
-          }}
-        />
+      <div ref={boxRef} className="relative h-40 w-full overflow-hidden rounded-md border bg-muted cursor-move select-none touch-none" onPointerDown={(e) => { dragging.current = true; (e.target as HTMLElement).setPointerCapture(e.pointerId); updateFromEvent(e.clientX, e.clientY); }} onPointerMove={(e) => { if (dragging.current) updateFromEvent(e.clientX, e.clientY); }} onPointerUp={() => { dragging.current = false; }} onWheel={(e) => { e.preventDefault(); setZoom((z) => clampZoom(z + (e.deltaY < 0 ? 0.1 : -0.1))); }}>
+        <img src={url} alt="" className="h-full w-full object-cover pointer-events-none" style={{ objectPosition: `${pos.x}% ${pos.y}%`, transform: zoom !== 1 ? `scale(${zoom})` : undefined, transformOrigin: `${pos.x}% ${pos.y}%` }} />
       </div>
-      <div className="flex items-center gap-2">
-        <Button type="button" size="icon" variant="outline" onClick={() => setZoom((z) => clampZoom(z - 0.1))} disabled={zoom <= 1}>
-          <ZoomOut className="h-4 w-4" />
-        </Button>
-        <input
-          type="range" min={1} max={4} step={0.1} value={zoom}
-          onChange={(e) => setZoom(clampZoom(parseFloat(e.target.value)))}
-          className="flex-1 accent-primary"
-        />
-        <Button type="button" size="icon" variant="outline" onClick={() => setZoom((z) => clampZoom(z + 0.1))} disabled={zoom >= 4}>
-          <ZoomIn className="h-4 w-4" />
-        </Button>
-        <span className="text-xs text-muted-foreground w-10 text-right">{zoom.toFixed(1)}x</span>
-      </div>
-      <p className="text-xs text-muted-foreground text-center">
-        Arraste para reposicionar · use os botões ou a rolagem para ampliar/reduzir.
-      </p>
+      <div className="flex items-center gap-2"><Button type="button" size="icon" variant="outline" onClick={() => setZoom((z) => clampZoom(z - 0.1))} disabled={zoom <= 1}><ZoomOut className="h-4 w-4" /></Button><input type="range" min={1} max={4} step={0.1} value={zoom} onChange={(e) => setZoom(clampZoom(parseFloat(e.target.value)))} className="flex-1 accent-primary" /><Button type="button" size="icon" variant="outline" onClick={() => setZoom((z) => clampZoom(z + 0.1))} disabled={zoom >= 4}><ZoomIn className="h-4 w-4" /></Button><span className="text-xs text-muted-foreground w-10 text-right">{zoom.toFixed(1)}x</span></div>
+      <p className="text-xs text-muted-foreground text-center">Arraste para reposicionar · use os botões ou a rolagem para ampliar/reduzir.</p>
     </div>
   );
 }
-
