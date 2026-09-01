@@ -48,7 +48,11 @@ function AppShell() {
 
 function PermissionGate() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const { isSuperAdmin } = useAuth();
   const { can, hasFeature, loading } = usePermissions();
+
+  if (isSuperAdmin) return <Outlet />;
+
   const key = routePermission(path);
   const feature = routeFeature(path);
   if (loading) return null;
