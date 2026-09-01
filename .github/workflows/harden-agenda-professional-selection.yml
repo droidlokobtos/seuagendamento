@@ -1,0 +1,35 @@
+name: Harden agenda professional selection
+on:
+  push:
+    paths: ['.github/workflows/harden-agenda-professional-selection.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/routes/_authenticated/app/agenda.tsx')
+          s=p.read_text()
+          s=s.replace('''      const err = validate(starts, ends, v.staff_id || null, edit?.id || undefined);\n      if (err) throw new Error(err);''','''      if (!v.customer_id) throw new Error("Selecione o cliente.");\n      if (!v.staff_id) throw new Error("Selecione o profissional.");\n      if (!edit?.id && !v.service_id) throw new Error("Selecione o serviço.");\n      if (!v.starts_at || Number.isNaN(starts.getTime())) throw new Error("Informe uma data e horário válidos.");\n      const err = validate(starts, ends, v.staff_id, edit?.id || undefined);\n      if (err) throw new Error(err);''')
+          s=s.replace('''.from("appointments").update(payload).eq("id", edit.id);''','''.from("appointments").update(payload).eq("id", edit.id).eq("company_id", companyId);''')
+          s=s.replace('''        if (v.service_id) {\n          await supabase.from("appointment_services").delete().eq("appointment_id", edit.id);\n          await supabase.from("appointment_services").insert({\n            appointment_id: edit.id, service_id: v.service_id, price_cents: price, duration_min: dur,\n          });\n        }''','''        if (v.service_id) {\n          const { error: deleteServiceError } = await supabase.from("appointment_services").delete().eq("appointment_id", edit.id);\n          if (deleteServiceError) throw deleteServiceError;\n          const { error: serviceError } = await supabase.from("appointment_services").insert({\n            appointment_id: edit.id, service_id: v.service_id, price_cents: price, duration_min: dur,\n          });\n          if (serviceError) throw serviceError;\n        }''')
+          s=s.replace('''      if (v.service_id) {\n        await supabase.from("appointment_services").insert({\n          appointment_id: appt!.id, service_id: v.service_id, price_cents: price, duration_min: dur,\n        });\n      }''','''      if (v.service_id) {\n        const { error: serviceError } = await supabase.from("appointment_services").insert({\n          appointment_id: appt!.id, service_id: v.service_id, price_cents: price, duration_min: dur,\n        });\n        if (serviceError) {\n          await supabase.from("appointments").delete().eq("id", appt!.id).eq("company_id", companyId);\n          throw serviceError;\n        }\n      }''')
+          old='''        <Button onClick={() => { try { onSave(f); } catch (err) { console.error("[agenda] erro ao salvar agendamento:", err); toast.error("Não foi possível salvar. Tente novamente."); } }} disabled={loading}>Salvar</Button>'''
+          new='''        <Button\n          onClick={() => onSave(f)}\n          disabled={loading || !f.customer_id || !f.staff_id || (!edit && !f.service_id) || !f.starts_at}\n        >{loading ? "Salvando..." : "Salvar"}</Button>'''
+          if old not in s: raise SystemExit('save button target not found')
+          s=s.replace(old,new)
+          p.write_text(s)
+          PY
+          bun install --frozen-lockfile
+          bun run build
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/_authenticated/app/agenda.tsx
+          git commit -m 'fix: harden agenda professional selection'
+          git push
