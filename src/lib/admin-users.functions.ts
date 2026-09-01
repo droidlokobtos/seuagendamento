@@ -70,90 +70,45 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
     admin_notes: z.string().trim().max(2000).nullable().optional(),
   }).parse(data))
   .handler(async ({ context, data }) => {
-    const { data: isAdmin } = await context.supabase.rpc("is_super_admin");
+    const { data: isAdmin, error: adminError } = await context.supabase.rpc("is_super_admin");
+    if (adminError) throw new Error(adminError.message);
     if (!isAdmin) throw new Error("Apenas Admin Master pode criar empresas.");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email = data.email.toLowerCase();
-
-    let userId: string | null = null;
-    const { findAuthUserByEmail } = await import("@/lib/admin-users.server");
-    const existing = await findAuthUserByEmail(email);
-    const tempPassword = data.temp_password;
-
-    if (existing) {
-      userId = existing.id;
-      const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(existing.id, {
-        password: tempPassword,
-        email_confirm: true,
-        user_metadata: { ...(existing.user_metadata ?? {}), full_name: data.owner_name },
-      });
-      if (updErr) throw new Error(`Falha ao configurar usuário existente: ${updErr.message}`);
-    } else {
-      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        password: tempPassword,
-        email_confirm: true,
-        user_metadata: { full_name: data.owner_name },
-      });
-      if (createErr) throw createErr;
-      if (!created.user) throw new Error("Não foi possível criar o administrador da empresa.");
-      userId = created.user.id;
-    }
-
-    if (!userId) throw new Error("Não foi possível configurar o administrador da empresa.");
-    await supabaseAdmin.from("profiles").upsert({
-      id: userId,
-      full_name: data.owner_name,
-      phone: data.phone,
-      must_change_password: true,
-    } as any, { onConflict: "id" });
-
-    const { data: company, error: cErr } = await supabaseAdmin
-      .from("companies")
-      .insert({
-        name: data.name,
-        slug: data.slug,
-        niche_id: data.niche_id,
-        sub_niche_id: data.sub_niche_id ?? null,
-        email,
-        owner_name: data.owner_name,
-        responsible_name: data.owner_name,
-        owner_whatsapp: data.phone,
-        monthly_fee: data.monthly_fee,
-        phone: data.phone,
-        whatsapp: data.phone,
-        contracted_plan: data.contracted_plan,
-        status: data.status,
-        next_due_at: data.next_due_at,
-        admin_notes: data.admin_notes ?? null,
-      } as any)
-      .select("id")
-      .single();
-    if (cErr) throw new Error(`Falha ao criar empresa: ${cErr.message}`);
-
-    await supabaseAdmin.from("company_users").upsert(
-      { company_id: company.id, user_id: userId, role: "company_admin", active: true, permissions: {} },
-      { onConflict: "company_id,user_id" },
-    );
-    await supabaseAdmin.from("user_roles").upsert(
-      { user_id: userId, role: "company_admin" },
-      { onConflict: "user_id,role" },
-    );
-
-    await context.supabase.from("admin_access_logs").insert({
-      user_id: context.userId,
+    const { createUserWithPublicSignup } = await import("@/lib/public-signup.server");
+    const created = await createUserWithPublicSignup({
       email,
-      event: "create_company",
-      metadata: { company_id: company.id, admin_user_id: userId, created_user: !existing },
+      password: data.temp_password,
+      fullName: data.owner_name,
     });
+
+    const { data: result, error } = await (context.supabase as any).rpc(
+      "create_company_for_user_as_super_admin",
+      {
+        _user_id: created.userId,
+        _name: data.name,
+        _owner_name: data.owner_name,
+        _slug: data.slug,
+        _niche_id: data.niche_id,
+        _sub_niche_id: data.sub_niche_id ?? null,
+        _email: email,
+        _phone: data.phone,
+        _monthly_fee: data.monthly_fee,
+        _contracted_plan: data.contracted_plan,
+        _status: data.status,
+        _next_due_at: data.next_due_at,
+        _admin_notes: data.admin_notes ?? null,
+      },
+    );
+    if (error) throw new Error(`Falha ao criar empresa: ${error.message}`);
 
     return {
       ok: true,
-      company_id: company.id,
-      admin_user_id: userId,
+      company_id: result?.company_id,
+      admin_user_id: created.userId,
       email,
-      temp_password: tempPassword,
+      temp_password: data.temp_password,
+      email_confirmation_required: !created.emailConfirmed && !created.hasSession,
     };
   });
 
