@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Calendar, Users, UserCog, Scissors, Settings, LogOut, Menu, Sparkles,
   Wallet, Package, BarChart3, Ticket, Award, Star, Megaphone, Cake, Gift, Link2,
   MessageCircle, Image as ImageIcon, BadgePercent, CalendarCheck, Layers, Calculator,
-  ShoppingCart, Palette, ChevronDown, Plus, MoreHorizontal, ShieldAlert, type LucideIcon,
+  ShoppingCart, Palette, ChevronDown, Plus, MoreHorizontal, ShieldAlert, BookOpen, type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,9 @@ const GROUPS: NavGroup[] = [
     { to: "/app/users", label: "Usuários", icon: UserCog, perm: "usuarios" },
     { to: "/app/whatsapp", label: "WhatsApp", icon: MessageCircle, perm: "configuracoes" },
     { to: "/app/settings", label: "Configurações", icon: Settings, perm: "configuracoes" },
+  ]},
+  { id: "ajuda", label: "Ajuda", icon: BookOpen, items: [
+    { to: "/app/help", label: "Central de Ajuda", icon: BookOpen },
   ]},
 ];
 
