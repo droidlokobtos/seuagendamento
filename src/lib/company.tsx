@@ -12,6 +12,7 @@ export type Company = {
   secondary_color: string | null;
   status: string | null;
   niche_id: string | null;
+  plan_code: string | null;
 };
 
 type CompanyCtx = {
@@ -36,17 +37,15 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       let q = supabase
         .from("companies")
-        .select("id,name,slug,logo_url,primary_color,secondary_color,status,niche_id")
+        .select("id,name,slug,logo_url,primary_color,secondary_color,status,niche_id,plan_code")
         .order("name");
       if (!isSuperAdmin) q = q.in("id", companyIds.length ? companyIds : ["00000000-0000-0000-0000-000000000000"]);
       const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Company[];
     },
-    // lista de empresas muda muito pouco — evita refetch a cada navegação
     staleTime: 5 * 60_000,
   });
-
 
   useEffect(() => {
     if (!companies.length) return;
