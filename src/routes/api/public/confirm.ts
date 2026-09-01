@@ -39,18 +39,29 @@ export const Route = createFileRoute("/api/public/confirm")({
             .select("id, starts_at, status, customer_id, staff_id")
             .eq("id", conf.appointment_id)
             .maybeSingle(),
-          supabaseAdmin.from("companies").select("name, logo_url, slug, phone").eq("id", conf.company_id).maybeSingle(),
+          supabaseAdmin
+            .from("companies")
+            .select("name, logo_url, slug, phone")
+            .eq("id", conf.company_id)
+            .maybeSingle(),
         ]);
 
         const [{ data: cust }, { data: stf }, { data: svcs }] = await Promise.all([
           appt?.customer_id
-            ? supabaseAdmin.from("customers").select("name, phone").eq("id", appt.customer_id).maybeSingle()
+            ? supabaseAdmin
+                .from("customers")
+                .select("name, phone")
+                .eq("id", appt.customer_id)
+                .maybeSingle()
             : Promise.resolve({ data: null } as any),
           appt?.staff_id
             ? supabaseAdmin.from("staff").select("name").eq("id", appt.staff_id).maybeSingle()
             : Promise.resolve({ data: null } as any),
           appt
-            ? supabaseAdmin.from("appointment_services").select("services(name)").eq("appointment_id", appt.id)
+            ? supabaseAdmin
+                .from("appointment_services")
+                .select("services(name)")
+                .eq("appointment_id", appt.id)
             : Promise.resolve({ data: [] } as any),
         ]);
 
@@ -64,7 +75,11 @@ export const Route = createFileRoute("/api/public/confirm")({
           expired,
           respondedAt: conf.responded_at,
           cancelReason: conf.cancel_reason,
-          company: { name: company?.name ?? "", logo_url: company?.logo_url ?? null, slug: company?.slug ?? null },
+          company: {
+            name: company?.name ?? "",
+            logo_url: company?.logo_url ?? null,
+            slug: company?.slug ?? null,
+          },
           appointment: {
             startsAt: appt?.starts_at ?? null,
             status: appt?.status ?? null,
@@ -93,7 +108,10 @@ export const Route = createFileRoute("/api/public/confirm")({
           return Response.json({ error: "Este link já foi utilizado" }, { status: 409 });
         }
         if (new Date(conf.expires_at).getTime() < Date.now()) {
-          await supabaseAdmin.from("appointment_confirmations").update({ status: "expired" }).eq("id", conf.id);
+          await supabaseAdmin
+            .from("appointment_confirmations")
+            .update({ status: "expired" })
+            .eq("id", conf.id);
           return Response.json({ error: "Link expirado" }, { status: 410 });
         }
 
@@ -103,16 +121,23 @@ export const Route = createFileRoute("/api/public/confirm")({
           .select("status")
           .eq("id", conf.appointment_id)
           .maybeSingle();
-        const closed = ["completed", "cancelled", "cancelled_by_company", "cancelled_by_customer", "no_show"];
+        const closed = [
+          "completed",
+          "cancelled",
+          "cancelled_by_company",
+          "cancelled_by_customer",
+          "no_show",
+        ];
         if (current && closed.includes(current.status)) {
-          await supabaseAdmin.from("appointment_confirmations").update({ status: "expired" }).eq("id", conf.id);
+          await supabaseAdmin
+            .from("appointment_confirmations")
+            .update({ status: "expired" })
+            .eq("id", conf.id);
           return Response.json(
             { error: "Este agendamento não está mais disponível para confirmação." },
             { status: 409 },
           );
         }
-
-
 
         const ip =
           request.headers.get("cf-connecting-ip") ??
@@ -123,7 +148,7 @@ export const Route = createFileRoute("/api/public/confirm")({
 
         const newApptStatus = action === "confirm" ? "confirmed" : "cancelled_by_customer";
 
-        await supabaseAdmin
+        const { data: claimed, error: claimError } = await supabaseAdmin
           .from("appointment_confirmations")
           .update({
             status: action === "confirm" ? "confirmed" : "cancelled",
@@ -133,7 +158,14 @@ export const Route = createFileRoute("/api/public/confirm")({
             response_ip: ip,
             response_user_agent: ua,
           } as any)
-          .eq("id", conf.id);
+          .eq("id", conf.id)
+          .eq("status", conf.status)
+          .select("id")
+          .maybeSingle();
+
+        if (claimError || !claimed) {
+          return Response.json({ error: "Este link já foi utilizado" }, { status: 409 });
+        }
 
         await supabaseAdmin
           .from("appointments")
@@ -146,7 +178,11 @@ export const Route = createFileRoute("/api/public/confirm")({
           .eq("id", conf.appointment_id)
           .maybeSingle();
         const { data: cust } = appt?.customer_id
-          ? await supabaseAdmin.from("customers").select("name").eq("id", appt.customer_id).maybeSingle()
+          ? await supabaseAdmin
+              .from("customers")
+              .select("name")
+              .eq("id", appt.customer_id)
+              .maybeSingle()
           : { data: null as any };
 
         await supabaseAdmin.from("messaging_logs").insert({
@@ -156,14 +192,16 @@ export const Route = createFileRoute("/api/public/confirm")({
           channel: "link",
           event: action === "confirm" ? "confirmed" : "cancelled",
           status: action === "confirm" ? "confirmed" : "cancelled",
-          detail: action === "cancel" ? (reason ?? "Cancelado pelo cliente") : "Confirmado pelo cliente",
+          detail:
+            action === "cancel" ? (reason ?? "Cancelado pelo cliente") : "Confirmado pelo cliente",
           ip,
           user_agent: ua,
         } as any);
 
         await supabaseAdmin.from("notifications").insert({
           company_id: conf.company_id,
-          kind: action === "confirm" ? "appointment_confirmed" : "appointment_cancelled_by_customer",
+          kind:
+            action === "confirm" ? "appointment_confirmed" : "appointment_cancelled_by_customer",
           title: action === "confirm" ? "Agendamento confirmado" : "Cancelado pelo cliente",
           body: `${cust?.name ?? "Cliente"}${
             appt?.starts_at
