@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Calendar, Users, UserCog, Scissors, Settings, LogOut, Menu, Sparkles,
   Wallet, Package, BarChart3, Ticket, Award, Star, Megaphone, Cake, Gift, Link2,
   MessageCircle, Image as ImageIcon, BadgePercent, CalendarCheck, Layers, Calculator,
-  ShoppingCart, Palette, ChevronDown, Plus, MoreHorizontal, ShieldAlert, BookOpen, type LucideIcon,
+  ShoppingCart, Palette, ChevronDown, Plus, MoreHorizontal, ShieldAlert, BookOpen, CircleDollarSign, History, type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ const GROUPS: NavGroup[] = [
   ]},
   { id: "operacao", label: "Operação", icon: Calendar, items: [
     { to: "/app/agenda", label: "Agenda", icon: Calendar, perm: "agenda" },
+    { to: "/app/operations", label: "Central de Atendimento", icon: CalendarCheck, perm: "agendamentos" },
     { to: "/app/link", label: "Link exclusivo", icon: Link2, perm: "configuracoes" },
     { to: "/app/portal", label: "Personalizar página", icon: Palette, perm: "configuracoes" },
     { to: "/app/confirmations", label: "Confirmações automáticas", icon: CalendarCheck, perm: "agendamentos" },
@@ -49,6 +50,8 @@ const GROUPS: NavGroup[] = [
   ]},
   { id: "financeiro", label: "Financeiro", icon: Wallet, items: [
     { to: "/app/finances", label: "Dashboard financeiro", icon: Wallet, perm: "financeiro" },
+    { to: "/app/cash", label: "Fechamento de caixa", icon: CircleDollarSign, perm: "financeiro" },
+    { to: "/app/audit", label: "Auditoria", icon: History, perm: "financeiro" },
     { to: "/app/payments", label: "Pagamentos", icon: Wallet, perm: "financeiro" },
     { to: "/app/commissions", label: "Comissões", icon: BadgePercent, perm: "comissoes" },
     { to: "/app/sales", label: "Vendas", icon: ShoppingCart, perm: "caixa" },

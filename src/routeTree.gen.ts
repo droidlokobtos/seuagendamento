@@ -51,6 +51,7 @@ import { Route as AuthenticatedAppProceduresRouteImport } from './routes/_authen
 import { Route as AuthenticatedAppPortalRouteImport } from './routes/_authenticated/app/portal'
 import { Route as AuthenticatedAppPlansRouteImport } from './routes/_authenticated/app/plans'
 import { Route as AuthenticatedAppPaymentsRouteImport } from './routes/_authenticated/app/payments'
+import { Route as AuthenticatedAppOperationsRouteImport } from './routes/_authenticated/app/operations'
 import { Route as AuthenticatedAppLoyaltyRouteImport } from './routes/_authenticated/app/loyalty'
 import { Route as AuthenticatedAppLinkRouteImport } from './routes/_authenticated/app/link'
 import { Route as AuthenticatedAppHelpRouteImport } from './routes/_authenticated/app/help'
@@ -60,9 +61,11 @@ import { Route as AuthenticatedAppCustomersRouteImport } from './routes/_authent
 import { Route as AuthenticatedAppCouponsRouteImport } from './routes/_authenticated/app/coupons'
 import { Route as AuthenticatedAppConfirmationsRouteImport } from './routes/_authenticated/app/confirmations'
 import { Route as AuthenticatedAppCommissionsRouteImport } from './routes/_authenticated/app/commissions'
+import { Route as AuthenticatedAppCashRouteImport } from './routes/_authenticated/app/cash'
 import { Route as AuthenticatedAppCampaignsRouteImport } from './routes/_authenticated/app/campaigns'
 import { Route as AuthenticatedAppBlocksRouteImport } from './routes/_authenticated/app/blocks'
 import { Route as AuthenticatedAppBirthdaysRouteImport } from './routes/_authenticated/app/birthdays'
+import { Route as AuthenticatedAppAuditRouteImport } from './routes/_authenticated/app/audit'
 import { Route as AuthenticatedAppAttendanceRouteImport } from './routes/_authenticated/app/attendance'
 import { Route as AuthenticatedAppAiAlertsRouteImport } from './routes/_authenticated/app/ai-alerts'
 import { Route as AuthenticatedAppAiRouteImport } from './routes/_authenticated/app/ai'
@@ -294,6 +297,12 @@ const AuthenticatedAppPaymentsRoute =
     path: '/payments',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
+const AuthenticatedAppOperationsRoute =
+  AuthenticatedAppOperationsRouteImport.update({
+    id: '/operations',
+    path: '/operations',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
 const AuthenticatedAppLoyaltyRoute = AuthenticatedAppLoyaltyRouteImport.update({
   id: '/loyalty',
   path: '/loyalty',
@@ -343,6 +352,11 @@ const AuthenticatedAppCommissionsRoute =
     path: '/commissions',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
+const AuthenticatedAppCashRoute = AuthenticatedAppCashRouteImport.update({
+  id: '/cash',
+  path: '/cash',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any)
 const AuthenticatedAppCampaignsRoute =
   AuthenticatedAppCampaignsRouteImport.update({
     id: '/campaigns',
@@ -360,6 +374,11 @@ const AuthenticatedAppBirthdaysRoute =
     path: '/birthdays',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
+const AuthenticatedAppAuditRoute = AuthenticatedAppAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any)
 const AuthenticatedAppAttendanceRoute =
   AuthenticatedAppAttendanceRouteImport.update({
     id: '/attendance',
@@ -465,9 +484,11 @@ export interface FileRoutesByFullPath {
   '/app/ai': typeof AuthenticatedAppAiRoute
   '/app/ai-alerts': typeof AuthenticatedAppAiAlertsRoute
   '/app/attendance': typeof AuthenticatedAppAttendanceRoute
+  '/app/audit': typeof AuthenticatedAppAuditRoute
   '/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
   '/app/blocks': typeof AuthenticatedAppBlocksRoute
   '/app/campaigns': typeof AuthenticatedAppCampaignsRoute
+  '/app/cash': typeof AuthenticatedAppCashRoute
   '/app/commissions': typeof AuthenticatedAppCommissionsRoute
   '/app/confirmations': typeof AuthenticatedAppConfirmationsRoute
   '/app/coupons': typeof AuthenticatedAppCouponsRoute
@@ -477,6 +498,7 @@ export interface FileRoutesByFullPath {
   '/app/help': typeof AuthenticatedAppHelpRoute
   '/app/link': typeof AuthenticatedAppLinkRoute
   '/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
+  '/app/operations': typeof AuthenticatedAppOperationsRoute
   '/app/payments': typeof AuthenticatedAppPaymentsRoute
   '/app/plans': typeof AuthenticatedAppPlansRoute
   '/app/portal': typeof AuthenticatedAppPortalRoute
@@ -532,9 +554,11 @@ export interface FileRoutesByTo {
   '/app/ai': typeof AuthenticatedAppAiRoute
   '/app/ai-alerts': typeof AuthenticatedAppAiAlertsRoute
   '/app/attendance': typeof AuthenticatedAppAttendanceRoute
+  '/app/audit': typeof AuthenticatedAppAuditRoute
   '/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
   '/app/blocks': typeof AuthenticatedAppBlocksRoute
   '/app/campaigns': typeof AuthenticatedAppCampaignsRoute
+  '/app/cash': typeof AuthenticatedAppCashRoute
   '/app/commissions': typeof AuthenticatedAppCommissionsRoute
   '/app/confirmations': typeof AuthenticatedAppConfirmationsRoute
   '/app/coupons': typeof AuthenticatedAppCouponsRoute
@@ -544,6 +568,7 @@ export interface FileRoutesByTo {
   '/app/help': typeof AuthenticatedAppHelpRoute
   '/app/link': typeof AuthenticatedAppLinkRoute
   '/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
+  '/app/operations': typeof AuthenticatedAppOperationsRoute
   '/app/payments': typeof AuthenticatedAppPaymentsRoute
   '/app/plans': typeof AuthenticatedAppPlansRoute
   '/app/portal': typeof AuthenticatedAppPortalRoute
@@ -603,9 +628,11 @@ export interface FileRoutesById {
   '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
   '/_authenticated/app/ai-alerts': typeof AuthenticatedAppAiAlertsRoute
   '/_authenticated/app/attendance': typeof AuthenticatedAppAttendanceRoute
+  '/_authenticated/app/audit': typeof AuthenticatedAppAuditRoute
   '/_authenticated/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
   '/_authenticated/app/blocks': typeof AuthenticatedAppBlocksRoute
   '/_authenticated/app/campaigns': typeof AuthenticatedAppCampaignsRoute
+  '/_authenticated/app/cash': typeof AuthenticatedAppCashRoute
   '/_authenticated/app/commissions': typeof AuthenticatedAppCommissionsRoute
   '/_authenticated/app/confirmations': typeof AuthenticatedAppConfirmationsRoute
   '/_authenticated/app/coupons': typeof AuthenticatedAppCouponsRoute
@@ -615,6 +642,7 @@ export interface FileRoutesById {
   '/_authenticated/app/help': typeof AuthenticatedAppHelpRoute
   '/_authenticated/app/link': typeof AuthenticatedAppLinkRoute
   '/_authenticated/app/loyalty': typeof AuthenticatedAppLoyaltyRoute
+  '/_authenticated/app/operations': typeof AuthenticatedAppOperationsRoute
   '/_authenticated/app/payments': typeof AuthenticatedAppPaymentsRoute
   '/_authenticated/app/plans': typeof AuthenticatedAppPlansRoute
   '/_authenticated/app/portal': typeof AuthenticatedAppPortalRoute
@@ -674,9 +702,11 @@ export interface FileRouteTypes {
     | '/app/ai'
     | '/app/ai-alerts'
     | '/app/attendance'
+    | '/app/audit'
     | '/app/birthdays'
     | '/app/blocks'
     | '/app/campaigns'
+    | '/app/cash'
     | '/app/commissions'
     | '/app/confirmations'
     | '/app/coupons'
@@ -686,6 +716,7 @@ export interface FileRouteTypes {
     | '/app/help'
     | '/app/link'
     | '/app/loyalty'
+    | '/app/operations'
     | '/app/payments'
     | '/app/plans'
     | '/app/portal'
@@ -741,9 +772,11 @@ export interface FileRouteTypes {
     | '/app/ai'
     | '/app/ai-alerts'
     | '/app/attendance'
+    | '/app/audit'
     | '/app/birthdays'
     | '/app/blocks'
     | '/app/campaigns'
+    | '/app/cash'
     | '/app/commissions'
     | '/app/confirmations'
     | '/app/coupons'
@@ -753,6 +786,7 @@ export interface FileRouteTypes {
     | '/app/help'
     | '/app/link'
     | '/app/loyalty'
+    | '/app/operations'
     | '/app/payments'
     | '/app/plans'
     | '/app/portal'
@@ -811,9 +845,11 @@ export interface FileRouteTypes {
     | '/_authenticated/app/ai'
     | '/_authenticated/app/ai-alerts'
     | '/_authenticated/app/attendance'
+    | '/_authenticated/app/audit'
     | '/_authenticated/app/birthdays'
     | '/_authenticated/app/blocks'
     | '/_authenticated/app/campaigns'
+    | '/_authenticated/app/cash'
     | '/_authenticated/app/commissions'
     | '/_authenticated/app/confirmations'
     | '/_authenticated/app/coupons'
@@ -823,6 +859,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/help'
     | '/_authenticated/app/link'
     | '/_authenticated/app/loyalty'
+    | '/_authenticated/app/operations'
     | '/_authenticated/app/payments'
     | '/_authenticated/app/plans'
     | '/_authenticated/app/portal'
@@ -1179,6 +1216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppPaymentsRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/operations': {
+      id: '/_authenticated/app/operations'
+      path: '/operations'
+      fullPath: '/app/operations'
+      preLoaderRoute: typeof AuthenticatedAppOperationsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/loyalty': {
       id: '/_authenticated/app/loyalty'
       path: '/loyalty'
@@ -1242,6 +1286,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCommissionsRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/cash': {
+      id: '/_authenticated/app/cash'
+      path: '/cash'
+      fullPath: '/app/cash'
+      preLoaderRoute: typeof AuthenticatedAppCashRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/campaigns': {
       id: '/_authenticated/app/campaigns'
       path: '/campaigns'
@@ -1261,6 +1312,13 @@ declare module '@tanstack/react-router' {
       path: '/birthdays'
       fullPath: '/app/birthdays'
       preLoaderRoute: typeof AuthenticatedAppBirthdaysRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/audit': {
+      id: '/_authenticated/app/audit'
+      path: '/audit'
+      fullPath: '/app/audit'
+      preLoaderRoute: typeof AuthenticatedAppAuditRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
     '/_authenticated/app/attendance': {
@@ -1395,9 +1453,11 @@ interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppAiRoute: typeof AuthenticatedAppAiRoute
   AuthenticatedAppAiAlertsRoute: typeof AuthenticatedAppAiAlertsRoute
   AuthenticatedAppAttendanceRoute: typeof AuthenticatedAppAttendanceRoute
+  AuthenticatedAppAuditRoute: typeof AuthenticatedAppAuditRoute
   AuthenticatedAppBirthdaysRoute: typeof AuthenticatedAppBirthdaysRoute
   AuthenticatedAppBlocksRoute: typeof AuthenticatedAppBlocksRoute
   AuthenticatedAppCampaignsRoute: typeof AuthenticatedAppCampaignsRoute
+  AuthenticatedAppCashRoute: typeof AuthenticatedAppCashRoute
   AuthenticatedAppCommissionsRoute: typeof AuthenticatedAppCommissionsRoute
   AuthenticatedAppConfirmationsRoute: typeof AuthenticatedAppConfirmationsRoute
   AuthenticatedAppCouponsRoute: typeof AuthenticatedAppCouponsRoute
@@ -1407,6 +1467,7 @@ interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppHelpRoute: typeof AuthenticatedAppHelpRoute
   AuthenticatedAppLinkRoute: typeof AuthenticatedAppLinkRoute
   AuthenticatedAppLoyaltyRoute: typeof AuthenticatedAppLoyaltyRoute
+  AuthenticatedAppOperationsRoute: typeof AuthenticatedAppOperationsRoute
   AuthenticatedAppPaymentsRoute: typeof AuthenticatedAppPaymentsRoute
   AuthenticatedAppPlansRoute: typeof AuthenticatedAppPlansRoute
   AuthenticatedAppPortalRoute: typeof AuthenticatedAppPortalRoute
@@ -1429,9 +1490,11 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppAiRoute: AuthenticatedAppAiRoute,
   AuthenticatedAppAiAlertsRoute: AuthenticatedAppAiAlertsRoute,
   AuthenticatedAppAttendanceRoute: AuthenticatedAppAttendanceRoute,
+  AuthenticatedAppAuditRoute: AuthenticatedAppAuditRoute,
   AuthenticatedAppBirthdaysRoute: AuthenticatedAppBirthdaysRoute,
   AuthenticatedAppBlocksRoute: AuthenticatedAppBlocksRoute,
   AuthenticatedAppCampaignsRoute: AuthenticatedAppCampaignsRoute,
+  AuthenticatedAppCashRoute: AuthenticatedAppCashRoute,
   AuthenticatedAppCommissionsRoute: AuthenticatedAppCommissionsRoute,
   AuthenticatedAppConfirmationsRoute: AuthenticatedAppConfirmationsRoute,
   AuthenticatedAppCouponsRoute: AuthenticatedAppCouponsRoute,
@@ -1441,6 +1504,7 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppHelpRoute: AuthenticatedAppHelpRoute,
   AuthenticatedAppLinkRoute: AuthenticatedAppLinkRoute,
   AuthenticatedAppLoyaltyRoute: AuthenticatedAppLoyaltyRoute,
+  AuthenticatedAppOperationsRoute: AuthenticatedAppOperationsRoute,
   AuthenticatedAppPaymentsRoute: AuthenticatedAppPaymentsRoute,
   AuthenticatedAppPlansRoute: AuthenticatedAppPlansRoute,
   AuthenticatedAppPortalRoute: AuthenticatedAppPortalRoute,
