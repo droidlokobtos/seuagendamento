@@ -1,4 +1,3 @@
-
 export const SAO_PAULO_TIME_ZONE = "America/Sao_Paulo";
 
 /** Data civil YYYY-MM-DD no horário oficial de Brasília. */
@@ -32,8 +31,7 @@ export const nextMonthStart = (month: string) => {
   return `${nextYear}-${String(nextMon).padStart(2, "0")}-01`;
 };
 
-export const brl = (n: number) =>
-  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+export const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export const dateBR = (d: string | Date | null | undefined) => {
   if (!d) return "—";
@@ -50,10 +48,30 @@ export const slugify = (s: string) =>
     .replace(/(^-|-$)+/g, "");
 
 export const statusLabel: Record<string, { label: string; className: string; dot: string }> = {
-  active: { label: "Ativa", className: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30", dot: "bg-emerald-500" },
-  due_soon: { label: "Próximo venc.", className: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30", dot: "bg-amber-500" },
-  overdue: { label: "Em atraso", className: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-500/15 dark:text-orange-300 dark:border-orange-500/30", dot: "bg-orange-500" },
-  suspended: { label: "Suspensa", className: "bg-red-100 text-red-800 border-red-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/30", dot: "bg-red-500" },
+  active: {
+    label: "Ativa",
+    className:
+      "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30",
+    dot: "bg-emerald-500",
+  },
+  due_soon: {
+    label: "Próximo venc.",
+    className:
+      "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30",
+    dot: "bg-amber-500",
+  },
+  overdue: {
+    label: "Em atraso",
+    className:
+      "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-500/15 dark:text-orange-300 dark:border-orange-500/30",
+    dot: "bg-orange-500",
+  },
+  suspended: {
+    label: "Suspensa",
+    className:
+      "bg-red-100 text-red-800 border-red-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/30",
+    dot: "bg-red-500",
+  },
 };
 
 /**
@@ -61,19 +79,26 @@ export const statusLabel: Record<string, { label: string; className: string; dot
  * (somente dígitos, com DDI 55). Retorna "" quando não há número válido.
  */
 export const waNumber = (phone: string | null | undefined) => {
-  const d = (phone ?? "").replace(/\D/g, "");
-  if (!d) return "";
-  if (d.startsWith("55")) return d;
-  // 10 dígitos (fixo com DDD) ou 11 dígitos (celular com DDD) => falta o DDI
-  if (d.length === 10 || d.length === 11) return `55${d}`;
-  return d;
+  let digits = (phone ?? "").replace(/\D/g, "");
+  if (!digits) return "";
+
+  // Alguns cadastros brasileiros trazem 0 antes do DDD (ex.: 011...).
+  if (digits.startsWith("0") && (digits.length === 11 || digits.length === 12)) {
+    digits = digits.slice(1);
+  }
+
+  const national = digits.startsWith("55") ? digits.slice(2) : digits;
+  // WhatsApp Brasil: DDD (2) + fixo (8) ou celular (9).
+  if (!/^[1-9]{2}[2-9]\d{7,8}$/.test(national)) return "";
+  return `55${national}`;
 };
 
 /** Monta o link do WhatsApp com número normalizado e texto codificado. */
 export const waLink = (phone: string | null | undefined, message: string) => {
   const num = waNumber(phone);
   const text = encodeURIComponent(message);
-  return num
-    ? `https://api.whatsapp.com/send?phone=${num}&text=${text}`
-    : `https://api.whatsapp.com/send?text=${text}`;
+  return num ? `https://wa.me/${num}?text=${text}` : `https://wa.me/?text=${text}`;
 };
+
+/** Abre o WhatsApp e informa quando o navegador bloqueia a nova aba. */
+export const openWhatsAppLink = (url: string) => window.open(url, "_blank", "noopener,noreferrer");
