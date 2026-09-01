@@ -1,0 +1,41 @@
+name: Fix cash payment methods
+on:
+  push:
+    paths: ['.github/workflows/fix-cash-payment-methods.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/routes/_authenticated/app/cash.tsx')
+          s=p.read_text()
+          s=s.replace("const cents=(v:string)=>Math.round((Number(v.replace(',','.'))||0)*100);const money=(v:number)=>brl(Number(v||0)/100);", "const cents=(v:string)=>Math.round((Number(v.replace(',','.'))||0)*100);const money=(v:number)=>brl(Number(v||0)/100);\nconst methodLabels:Record<string,string>={cash:'Dinheiro',pix:'Pix',credit_card:'Crédito',debit_card:'Débito',bank_transfer:'Transferência',other:'Outro'};")
+          s=s.replace("select('amount_cents,kind,status,created_at')", "select('amount_cents,kind,status,method,created_at')")
+          old="const {data:session}=useQuery({queryKey:['cash-session',id],enabled:!!id,queryFn:async()=>{const {data,error}=await supabase.from('cash_sessions').select('*').eq('company_id',id!).eq('status','open').maybeSingle();if(error)throw error;return data}});\nconst received=p.filter((x:any)=>x.kind!=='refund').reduce((n:number,x:any)=>n+Number(x.amount_cents||0),0),refund=p.filter((x:any)=>x.kind==='refund').reduce((n:number,x:any)=>n+Number(x.amount_cents||0),0);const expected=Number(session?.opening_cents||0)+received-refund;"
+          new="const {data:session}=useQuery({queryKey:['cash-session',id],enabled:!!id,queryFn:async()=>{const {data,error}=await supabase.from('cash_sessions').select('*').eq('company_id',id!).eq('status','open').maybeSingle();if(error)throw error;return data}});\nconst {data:cashExpenses=[]}=useQuery({queryKey:['cash-expenses-today',id],enabled:!!id,queryFn:async()=>{const d=new Date();d.setHours(0,0,0,0);const {data,error}=await supabase.from('business_expenses').select('amount_cents,paid_at,payment_method,status').eq('company_id',id!).eq('status','paid').eq('payment_method','cash').gte('paid_at',d.toISOString());if(error)throw error;return data??[]}});\nconst received=p.filter((x:any)=>x.kind!=='refund').reduce((n:number,x:any)=>n+Number(x.amount_cents||0),0),refund=p.filter((x:any)=>x.kind==='refund').reduce((n:number,x:any)=>n+Number(x.amount_cents||0),0);\nconst cashReceived=p.filter((x:any)=>x.kind!=='refund'&&x.method==='cash').reduce((n:number,x:any)=>n+Number(x.amount_cents||0),0),cashRefund=p.filter((x:any)=>x.kind==='refund'&&x.method==='cash').reduce((n:number,x:any)=>n+Number(x.amount_cents||0),0),cashExpenseTotal=(cashExpenses as any[]).reduce((n:number,x:any)=>n+Number(x.amount_cents||0),0);\nconst expected=Number(session?.opening_cents||0)+cashReceived-cashRefund-cashExpenseTotal;\nconst breakdown=Object.entries((p as any[]).reduce((acc:any,x:any)=>{const key=x.method||'other';const sign=x.kind==='refund'?-1:1;acc[key]=(acc[key]||0)+sign*Number(x.amount_cents||0);return acc;},{} as Record<string,number>)).sort((a:any,b:any)=>Math.abs(b[1])-Math.abs(a[1]));"
+          if old not in s: raise SystemExit('core target not found')
+          s=s.replace(old,new)
+          s=s.replace("<p className=\"text-sm text-muted-foreground\">recebido hoje</p>", "<p className=\"text-sm text-muted-foreground\">recebido hoje · todas as formas</p>")
+          s=s.replace("<p className=\"text-sm text-muted-foreground\">estornos</p>", "<p className=\"text-sm text-muted-foreground\">estornos · todas as formas</p>")
+          s=s.replace("<p className=\"text-sm text-muted-foreground\">saldo esperado</p>", "<p className=\"text-sm text-muted-foreground\">dinheiro esperado no caixa</p>")
+          marker="</div><Card><CardHeader><CardTitle>{session?'Caixa aberto':'Caixa fechado'}</CardTitle>"
+          repl="</div><Card><CardHeader><CardTitle>Recebimentos por forma de pagamento</CardTitle></CardHeader><CardContent><div className=\"grid gap-2 sm:grid-cols-2 lg:grid-cols-3\">{breakdown.length?breakdown.map(([method,value]:any)=><div key={method} className=\"rounded-lg border p-3\"><p className=\"text-xs text-muted-foreground\">{methodLabels[method]??method}</p><p className=\"font-semibold\">{money(value)}</p></div>):<p className=\"text-sm text-muted-foreground\">Nenhum recebimento aprovado hoje.</p>}</div><div className=\"mt-4 grid gap-2 sm:grid-cols-3\"><div className=\"rounded-lg border p-3\"><p className=\"text-xs text-muted-foreground\">Dinheiro recebido</p><p className=\"font-semibold\">{money(cashReceived)}</p></div><div className=\"rounded-lg border p-3\"><p className=\"text-xs text-muted-foreground\">Estornos em dinheiro</p><p className=\"font-semibold\">{money(cashRefund)}</p></div><div className=\"rounded-lg border p-3\"><p className=\"text-xs text-muted-foreground\">Despesas pagas em dinheiro</p><p className=\"font-semibold\">{money(cashExpenseTotal)}</p></div></div></CardContent></Card><Card><CardHeader><CardTitle>{session?'Caixa aberto':'Caixa fechado'}</CardTitle>"
+          if marker not in s: raise SystemExit('card marker not found')
+          s=s.replace(marker,repl)
+          s=s.replace("Todos os recebimentos aprovados do dia entram automaticamente na conferência.", "O valor esperado considera apenas movimentações em dinheiro: saldo inicial + recebimentos em espécie - estornos em espécie - despesas pagas em dinheiro.")
+          p.write_text(s)
+          PY
+          bun install --frozen-lockfile
+          bun run build
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/_authenticated/app/cash.tsx
+          git commit -m 'fix: reconcile cash register by payment method'
+          git push
