@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/lib/company";
 import { useAuth } from "@/lib/auth";
-import { saoPauloDate } from "@/lib/format";
+import { openWhatsAppLink, saoPauloDate } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,21 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import {
-  CONFIRMATION_STATUS,
-  DEFAULT_CONFIRMATION_TEMPLATE,
-  RESEND_COOLDOWN_MIN,
-  CHANNELS,
-} from "@/lib/messaging";
-import {
-  CalendarCheck,
-  Send,
-  MessageCircle,
-  RefreshCw,
-  Percent,
-  Clock,
-  XCircle,
-} from "lucide-react";
+import { CONFIRMATION_STATUS, DEFAULT_CONFIRMATION_TEMPLATE, CHANNELS } from "@/lib/messaging";
+import { CalendarCheck, Send, MessageCircle, Percent, Clock, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/confirmations")({
   component: Confirmations,
@@ -104,18 +91,15 @@ function Confirmations() {
     return { awaiting, confirmed, cancelled, noReply, sentToday, sentMonth, rate, answered };
   }, [confs]);
 
-  const resend = useMutation({
+  const markSent = useMutation({
     mutationFn: async (c: Conf) => {
-      const last = c.last_sent_at ? new Date(c.last_sent_at).getTime() : 0;
-      const diffMin = (Date.now() - last) / 60000;
-      if (last && diffMin < RESEND_COOLDOWN_MIN) {
-        throw new Error(`Aguarde ${Math.ceil(RESEND_COOLDOWN_MIN - diffMin)} min para reenviar`);
-      }
+      const now = new Date().toISOString();
       const { error } = await supabase
         .from("appointment_confirmations")
         .update({
           status: "sent",
-          last_sent_at: new Date().toISOString(),
+          sent_at: c.sent_at ?? now,
+          last_sent_at: now,
           send_attempts: (c.send_attempts ?? 0) + 1,
         } as any)
         .eq("id", c.id);
@@ -125,15 +109,14 @@ function Confirmations() {
         appointment_id: c.appointment_id,
         confirmation_id: c.id,
         channel: c.channel,
-        event: "resent",
+        event: "marked_sent",
         status: "sent",
-        detail: "Reenvio manual",
+        detail: "Envio manual confirmado pelo usuário",
         actor_user_id: user?.id ?? null,
       } as any);
-      if (c.send_url) window.open(c.send_url, "_blank", "noopener");
     },
     onSuccess: () => {
-      toast.success("Confirmação reenviada");
+      toast.success("Mensagem marcada como enviada");
       qc.invalidateQueries({ queryKey: ["confirmations", companyId] });
       qc.invalidateQueries({ queryKey: ["messaging-logs", companyId] });
     },
@@ -145,7 +128,7 @@ function Confirmations() {
       <div>
         <h1 className="text-2xl font-semibold">Confirmações</h1>
         <p className="text-sm text-muted-foreground">
-          Lembretes automáticos antes do horário, com link único de confirmação.
+          Lembretes gerados automaticamente; o envio é confirmado manualmente no WhatsApp.
         </p>
       </div>
 
@@ -276,7 +259,8 @@ function Confirmations() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => window.open(c.send_url!, "_blank", "noopener")}
+                                  title="Abrir no WhatsApp"
+                                  onClick={() => openWhatsAppLink(c.send_url!)}
                                 >
                                   <MessageCircle className="h-4 w-4" />
                                 </Button>
@@ -285,10 +269,10 @@ function Confirmations() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  title="Reenviar confirmação"
-                                  onClick={() => resend.mutate(c)}
+                                  title="Marcar como enviado"
+                                  onClick={() => markSent.mutate(c)}
                                 >
-                                  <RefreshCw className="h-4 w-4" />
+                                  <Send className="h-4 w-4" />
                                 </Button>
                               )}
                             </div>

@@ -8,12 +8,37 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, MapPin, Phone, Check, Calendar, Clock, ChevronLeft, ChevronRight, User, Instagram, Facebook, Globe, Star, MessageCircle, X as XIcon, Image as ImageIcon, CalendarDays, Scissors, UsersRound, ClipboardCheck } from "lucide-react";
-import { brl, saoPauloDate } from "@/lib/format";
+import {
+  Sparkles,
+  MapPin,
+  Phone,
+  Check,
+  Calendar,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  User,
+  Instagram,
+  Facebook,
+  Globe,
+  Star,
+  MessageCircle,
+  X as XIcon,
+  Image as ImageIcon,
+  CalendarDays,
+  Scissors,
+  UsersRound,
+  ClipboardCheck,
+} from "lucide-react";
+import { brl, openWhatsAppLink, saoPauloDate, waLink, waNumber } from "@/lib/format";
 import { computeDepositCents, depositConfigFromCompany } from "@/lib/finance";
 import { getAmenities } from "@/lib/amenities";
 import { toast } from "sonner";
-import { getPublicCompany, getPublicTimeBlocks, getPublicOccupiedAppointments } from "@/lib/public-portal.functions";
+import {
+  getPublicCompany,
+  getPublicTimeBlocks,
+  getPublicOccupiedAppointments,
+} from "@/lib/public-portal.functions";
 import { portalTheme, heroBackground, heroImageOpacity, heroTextClass } from "@/lib/portal-theme";
 import { AnamnesisForm } from "@/components/app/AnamnesisForm";
 
@@ -27,7 +52,10 @@ export const Route = createFileRoute("/b/$slug/")({
     meta: loaderData
       ? [
           { title: `Agendar em ${loaderData.company.name}` },
-          { name: "description", content: `Escolha o serviço e horário para agendar com ${loaderData.company.name}.` },
+          {
+            name: "description",
+            content: `Escolha o serviço e horário para agendar com ${loaderData.company.name}.`,
+          },
           { property: "og:title", content: `Agendar em ${loaderData.company.name}` },
           { property: "og:description", content: `Reserve seu horário online.` },
           ...(loaderData.company.logo_url
@@ -55,12 +83,24 @@ export const Route = createFileRoute("/b/$slug/")({
   component: BookingPage,
 });
 
-type Service = { id: string; name: string; description: string | null; duration_min: number; price_cents: number; category: string | null; color: string | null; photo_url: string | null; photo_position: string | null };
+type Service = {
+  id: string;
+  name: string;
+  description: string | null;
+  duration_min: number;
+  price_cents: number;
+  category: string | null;
+  color: string | null;
+  photo_url: string | null;
+  photo_position: string | null;
+};
 
 function svcFrame(pos: string | null | undefined): React.CSSProperties {
   if (!pos) return { objectPosition: "50% 50%" };
   const p = pos.trim().split(/\s+/);
-  const x = parseFloat(p[0]); const y = parseFloat(p[1]); const z = parseFloat(p[2]);
+  const x = parseFloat(p[0]);
+  const y = parseFloat(p[1]);
+  const z = parseFloat(p[2]);
   const xx = Number.isFinite(x) ? x : 50;
   const yy = Number.isFinite(y) ? y : 50;
   const zz = Number.isFinite(z) && z > 0 ? z : 1;
@@ -70,14 +110,23 @@ function svcFrame(pos: string | null | undefined): React.CSSProperties {
     transformOrigin: `${xx}% ${yy}%`,
   };
 }
-type Staff = { id: string; name: string; role_title: string | null; photo_url: string | null; color: string | null };
+type Staff = {
+  id: string;
+  name: string;
+  role_title: string | null;
+  photo_url: string | null;
+  color: string | null;
+};
 type Hours = { weekday: number; start_time: string; end_time: string; closed: boolean };
 type TimeBlock = { starts_at: string; ends_at: string; staff_id: string | null };
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const DEFAULT_HOURS = { start_time: "09:00", end_time: "18:00", closed: false };
 
-function resolveHours(weekday: number, hours: Hours[]): { start_time: string; end_time: string; closed: boolean } | null {
+function resolveHours(
+  weekday: number,
+  hours: Hours[],
+): { start_time: string; end_time: string; closed: boolean } | null {
   if (!hours.length) return DEFAULT_HOURS;
   const h = hours.find((x) => x.weekday === weekday);
   if (!h) return null;
@@ -99,7 +148,11 @@ function BookingPage() {
   const [timeStr, setTimeStr] = useState<string>("");
   const [form, setForm] = useState({ name: "", phone: "", email: "", notes: "" });
   const [couponCode, setCouponCode] = useState("");
-  const [coupon, setCoupon] = useState<{ code: string; discount_cents: number; message: string } | null>(null);
+  const [coupon, setCoupon] = useState<{
+    code: string;
+    discount_cents: number;
+    message: string;
+  } | null>(null);
   const [validating, setValidating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<any | null>(null);
@@ -125,7 +178,10 @@ function BookingPage() {
     },
   });
   const anamCheckActive = step === 6 && !!customerPhone && selected.length > 0 && !anamDone;
-  const anamChecking = anamCheckActive && !anamQuery.isError && (anamQuery.isLoading || anamQuery.isFetching || anamQuery.data === undefined);
+  const anamChecking =
+    anamCheckActive &&
+    !anamQuery.isError &&
+    (anamQuery.isLoading || anamQuery.isFetching || anamQuery.data === undefined);
   const anamRequired = !anamDone && anamQuery.data?.required === true;
   const anamBlocked = anamChecking || anamRequired || (anamCheckActive && anamQuery.isError);
 
@@ -178,7 +234,9 @@ function BookingPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("services")
-        .select("id,company_id,name,description,duration_min,price_cents,category,color,photo_url,photo_position,sort_order,active,show_on_booking")
+        .select(
+          "id,company_id,name,description,duration_min,price_cents,category,color,photo_url,photo_position,sort_order,active,show_on_booking",
+        )
         .eq("company_id", companyId)
         .eq("active", true)
         .eq("show_on_booking", true)
@@ -192,7 +250,10 @@ function BookingPage() {
   const { data: hours = [] } = useQuery({
     queryKey: ["pub_hours", companyId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("company_hours").select("weekday,start_time,end_time,closed").eq("company_id", companyId);
+      const { data, error } = await supabase
+        .from("company_hours")
+        .select("weekday,start_time,end_time,closed")
+        .eq("company_id", companyId);
       if (error) throw error;
       return (data ?? []) as Hours[];
     },
@@ -201,7 +262,9 @@ function BookingPage() {
   const { data: blocks = [] } = useQuery({
     queryKey: ["pub_blocks", companyId, dateStr],
     queryFn: async () => {
-      const data = await getPublicTimeBlocks({ data: { companyId, from: `${dateStr}T00:00:00`, to: `${dateStr}T23:59:59` } });
+      const data = await getPublicTimeBlocks({
+        data: { companyId, from: `${dateStr}T00:00:00`, to: `${dateStr}T23:59:59` },
+      });
       return ((data ?? []) as TimeBlock[]).filter((b) => !b.staff_id);
     },
     enabled: !!dateStr,
@@ -209,7 +272,10 @@ function BookingPage() {
 
   const { data: occupied = [] } = useQuery({
     queryKey: ["pub_occupied", companyId, dateStr],
-    queryFn: async () => getPublicOccupiedAppointments({ data: { companyId, from: `${dateStr}T00:00:00`, to: `${dateStr}T23:59:59` } }),
+    queryFn: async () =>
+      getPublicOccupiedAppointments({
+        data: { companyId, from: `${dateStr}T00:00:00`, to: `${dateStr}T23:59:59` },
+      }),
     enabled: !!dateStr,
     refetchOnWindowFocus: true,
   });
@@ -217,7 +283,10 @@ function BookingPage() {
   const { data: staffData, isLoading: staffLoading } = useQuery({
     queryKey: ["pub_staff", company.slug, selectedServiceIdsKey, dateStr, timeStr],
     queryFn: async () => {
-      const params = new URLSearchParams({ slug: company.slug, service_ids: selectedServiceIdsKey });
+      const params = new URLSearchParams({
+        slug: company.slug,
+        service_ids: selectedServiceIdsKey,
+      });
       params.set("date", dateStr);
       params.set("time", timeStr);
       params.set("starts_at", new Date(`${dateStr}T${timeStr}:00-03:00`).toISOString());
@@ -237,7 +306,10 @@ function BookingPage() {
   const totalPrice = selected.reduce((s, x) => s + x.price_cents, 0) / 100;
   const minAdvanceMin = (company as any).min_advance_min ?? 0;
   const maxAdvanceDays = (company as any).max_advance_days ?? 60;
-  const slotIntervalMin = Math.min(240, Math.max(5, Number((company as any).booking_slot_interval_min) || 30));
+  const slotIntervalMin = Math.min(
+    240,
+    Math.max(5, Number((company as any).booking_slot_interval_min) || 30),
+  );
 
   const slots = useMemo(() => {
     if (!dateStr || !totalMin) return [] as string[];
@@ -254,7 +326,9 @@ function BookingPage() {
     const minStart = now + minAdvanceMin * 60_000;
     const out: string[] = [];
     for (let m = start; m + totalMin <= end; m += gran) {
-      const hh = Math.floor(m / 60).toString().padStart(2, "0");
+      const hh = Math.floor(m / 60)
+        .toString()
+        .padStart(2, "0");
       const mm = (m % 60).toString().padStart(2, "0");
       const iso = `${dateStr}T${hh}:${mm}:00-03:00`;
       const slotStart = new Date(iso).getTime();
@@ -283,7 +357,8 @@ function BookingPage() {
     const maxDays = Math.min(Math.max(maxAdvanceDays, 1), 60);
     const daysToShow = Math.min(14, maxDays);
     for (let i = 0; i < daysToShow; i++) {
-      const base = new Date(`${todayIso}T12:00:00-03:00`); base.setUTCDate(base.getUTCDate() + i);
+      const base = new Date(`${todayIso}T12:00:00-03:00`);
+      base.setUTCDate(base.getUTCDate() + i);
       const iso = saoPauloDate(base);
       const wd = new Date(`${iso}T12:00:00-03:00`).getUTCDay();
       const h = resolveHours(wd, hours);
@@ -294,8 +369,11 @@ function BookingPage() {
   }, [hours, maxAdvanceDays]);
 
   const toggleService = (s: Service) => {
-    setSelected((prev) => prev.some((x) => x.id === s.id) ? prev.filter((x) => x.id !== s.id) : [...prev, s]);
-    setStaff(null); setTimeStr("");
+    setSelected((prev) =>
+      prev.some((x) => x.id === s.id) ? prev.filter((x) => x.id !== s.id) : [...prev, s],
+    );
+    setStaff(null);
+    setTimeStr("");
   };
 
   const applyCoupon = async () => {
@@ -306,7 +384,11 @@ function BookingPage() {
       const res = await fetch("/api/public/coupon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ company_id: companyId, code: couponCode.trim(), subtotal_cents: subtotal }),
+        body: JSON.stringify({
+          company_id: companyId,
+          code: couponCode.trim(),
+          subtotal_cents: subtotal,
+        }),
       });
       const row = await res.json();
       if (!res.ok || !row?.ok) {
@@ -318,12 +400,18 @@ function BookingPage() {
       }
     } catch (e: any) {
       toast.error(e.message);
-    } finally { setValidating(false); }
+    } finally {
+      setValidating(false);
+    }
   };
 
   const submit = async () => {
     if (anamBlocked) {
-      toast.error(anamRequired ? "Preencha a ficha de anamnese antes de confirmar." : "Aguarde a verificação da ficha de anamnese.");
+      toast.error(
+        anamRequired
+          ? "Preencha a ficha de anamnese antes de confirmar."
+          : "Aguarde a verificação da ficha de anamnese.",
+      );
       return;
     }
     setSubmitting(true);
@@ -335,14 +423,23 @@ function BookingPage() {
       const res = await fetch("/api/public/book", {
         method: "POST",
         headers,
-        body: JSON.stringify({ slug: company.slug, service_ids: selected.map((s) => s.id), staff_id: staff?.id ?? null, starts_at: new Date(iso).toISOString(), coupon_code: coupon?.code ?? "", customer: form }),
+        body: JSON.stringify({
+          slug: company.slug,
+          service_ids: selected.map((s) => s.id),
+          staff_id: staff?.id ?? null,
+          starts_at: new Date(iso).toISOString(),
+          coupon_code: coupon?.code ?? "",
+          customer: form,
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Falha ao agendar");
       setDone(json);
     } catch (e: any) {
       toast.error(e.message);
-    } finally { setSubmitting(false); }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const theme = portalTheme(company);
@@ -377,27 +474,113 @@ function BookingPage() {
 
   if (done) {
     const d = new Date(done.starts_at);
-    const dateLabel = d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+    const dateLabel = d.toLocaleDateString("pt-BR", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+    });
     const timeLabel = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
     const servicesLine = selected.map((s) => `• ${s.name}`).join("\n");
-    const totalCents = selected.reduce((s, x) => s + x.price_cents, 0) - (coupon?.discount_cents ?? 0);
-    const waMsg = encodeURIComponent(`✨ Olá, *${company.name}*!\n\n✅ Acabei de confirmar meu agendamento pelo site.\n\n👤 *Cliente:* ${form.name}\n📅 *Data:* ${dateLabel}\n🕐 *Horário:* ${timeLabel}\n` + (staff ? `💇 *Profissional:* ${staff.name}\n` : "") + `\n💅 *Serviços:*\n${servicesLine}\n\n💰 *Total:* ${brl(totalCents / 100)}` + (coupon ? ` (cupom ${coupon.code})` : "") + `\n\n🙏 Aguardo a confirmação. Obrigado(a)!`);
+    const totalCents =
+      selected.reduce((s, x) => s + x.price_cents, 0) - (coupon?.discount_cents ?? 0);
+    const waMsg =
+      `✨ Olá, *${company.name}*!\n\n✅ Acabei de confirmar meu agendamento pelo site.\n\n👤 *Cliente:* ${form.name}\n📅 *Data:* ${dateLabel}\n🕐 *Horário:* ${timeLabel}\n` +
+      (staff ? `💇 *Profissional:* ${staff.name}\n` : "") +
+      `\n💅 *Serviços:*\n${servicesLine}\n\n💰 *Total:* ${brl(totalCents / 100)}` +
+      (coupon ? ` (cupom ${coupon.code})` : "") +
+      `\n\n🙏 Aguardo a confirmação. Obrigado(a)!`;
     const depositCents = Number(done.deposit_required_cents ?? 0);
     return (
       <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background">
-        <Hero company={company} primary={primary} accent={accent} slug={company.slug} loggedIn={!!session} />
+        <Hero
+          company={company}
+          primary={primary}
+          accent={accent}
+          slug={company.slug}
+          loggedIn={!!session}
+        />
         <div className="max-w-2xl mx-auto px-4 py-8 md:px-6 md:py-12 space-y-5">
-          <Card className="overflow-hidden border-border/60 shadow-lg"><CardContent className="p-7 md:p-10 text-center space-y-5">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl shadow-sm" style={{ background: accent }}><Check className="h-8 w-8 text-white" /></div>
-            <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Tudo certo</p><h2 className="mt-1 text-2xl md:text-3xl font-semibold tracking-tight">{depositCents > 0 ? "Agendamento registrado" : "Agendamento confirmado"}</h2><p className="mt-2 text-muted-foreground">{dateLabel} às {timeLabel}</p></div><div className="rounded-2xl border bg-muted/30 p-4 text-left"><p className="text-xs font-medium text-muted-foreground">Resumo</p><p className="mt-1 font-semibold">{selected.map((s) => s.name).join(" + ")}</p><p className="mt-1 text-sm text-muted-foreground">{staff?.name ?? "Profissional a definir"} · {brl(totalCents / 100)}</p></div>
-            {(done as any).plan_waiver && <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">{(done as any).plan_waiver.message}</p>}
-            {depositCents > 0 && <p className="text-sm text-amber-700">Aguardando confirmação do pagamento antecipado.</p>}
-            <div className="grid gap-2 pt-2 sm:grid-cols-2">
-              {session ? <Link className="w-full" to="/b/$slug/minha-conta" params={{ slug: company.slug }}><Button className="w-full" size="lg" style={{ background: primary }}>Ver meus agendamentos</Button></Link> : <Link className="w-full" to="/b/$slug/entrar" params={{ slug: company.slug }}><Button className="w-full" size="lg" style={{ background: primary }}>Criar conta e acompanhar</Button></Link>}
-              {company.whatsapp && (() => { const d = company.whatsapp.replace(/\D/g, ""); const p = d.startsWith("55") ? d : `55${d}`; return <a className="w-full" href={`https://api.whatsapp.com/send?phone=${p}&text=${waMsg}`} target="_blank" rel="noreferrer"><Button className="w-full" size="lg" style={{ background: "#25D366", color: "white" }}><Phone className="h-4 w-4 mr-2" /> Enviar no WhatsApp</Button></a>; })()}
-            </div>
-          </CardContent></Card>
-          {depositCents > 0 && <DepositPanel booking={done} phone={form.phone} primary={primary} accent={accent} />}
+          <Card className="overflow-hidden border-border/60 shadow-lg">
+            <CardContent className="p-7 md:p-10 text-center space-y-5">
+              <div
+                className="mx-auto grid h-16 w-16 place-items-center rounded-2xl shadow-sm"
+                style={{ background: accent }}
+              >
+                <Check className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  Tudo certo
+                </p>
+                <h2 className="mt-1 text-2xl md:text-3xl font-semibold tracking-tight">
+                  {depositCents > 0 ? "Agendamento registrado" : "Agendamento confirmado"}
+                </h2>
+                <p className="mt-2 text-muted-foreground">
+                  {dateLabel} às {timeLabel}
+                </p>
+              </div>
+              <div className="rounded-2xl border bg-muted/30 p-4 text-left">
+                <p className="text-xs font-medium text-muted-foreground">Resumo</p>
+                <p className="mt-1 font-semibold">{selected.map((s) => s.name).join(" + ")}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {staff?.name ?? "Profissional a definir"} · {brl(totalCents / 100)}
+                </p>
+              </div>
+              {(done as any).plan_waiver && (
+                <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                  {(done as any).plan_waiver.message}
+                </p>
+              )}
+              {depositCents > 0 && (
+                <p className="text-sm text-amber-700">
+                  Aguardando confirmação do pagamento antecipado.
+                </p>
+              )}
+              <div className="grid gap-2 pt-2 sm:grid-cols-2">
+                {session ? (
+                  <Link
+                    className="w-full"
+                    to="/b/$slug/minha-conta"
+                    params={{ slug: company.slug }}
+                  >
+                    <Button className="w-full" size="lg" style={{ background: primary }}>
+                      Ver meus agendamentos
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link className="w-full" to="/b/$slug/entrar" params={{ slug: company.slug }}>
+                    <Button className="w-full" size="lg" style={{ background: primary }}>
+                      Criar conta e acompanhar
+                    </Button>
+                  </Link>
+                )}
+                {company.whatsapp &&
+                  (() => {
+                    const p = waNumber(company.whatsapp);
+                    if (!p) return null;
+                    return (
+                      <a
+                        className="w-full"
+                        href={waLink(p, waMsg)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <Button
+                          className="w-full"
+                          size="lg"
+                          style={{ background: "#25D366", color: "white" }}
+                        >
+                          <Phone className="h-4 w-4 mr-2" /> Enviar no WhatsApp
+                        </Button>
+                      </a>
+                    );
+                  })()}
+              </div>
+            </CardContent>
+          </Card>
+          {depositCents > 0 && (
+            <DepositPanel booking={done} phone={form.phone} primary={primary} accent={accent} />
+          )}
         </div>
       </div>
     );
@@ -405,49 +588,617 @@ function BookingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background pb-24">
-      <Hero company={company} primary={primary} accent={accent} slug={company.slug} loggedIn={!!session} />
+      <Hero
+        company={company}
+        primary={primary}
+        accent={accent}
+        slug={company.slug}
+        loggedIn={!!session}
+      />
       <div className="max-w-5xl mx-auto px-4 py-5 md:px-6 md:py-8 space-y-5">
         <Steps step={step} accent={accent} showStaffStep={showStaffStep} />
         <BookingStepHeader step={step} />
-        {selected.length > 0 && <BookingSummary selected={selected} staff={staff} dateStr={dateStr} timeStr={timeStr} totalMin={totalMin} totalPrice={totalPrice} primary={primary} />}
-        {step === 1 && <Card className="overflow-hidden border-border/70 shadow-sm"><CardContent className="p-5 md:p-6 space-y-4"><div><h2 className="font-semibold text-xl tracking-tight">Escolha os serviços</h2><p className="text-sm text-muted-foreground mt-1">Selecione um ou mais serviços para continuar.</p></div>{!services.length && <p className="text-sm text-muted-foreground">Nenhum serviço disponível.</p>}<div className="grid gap-3 md:grid-cols-2">{services.map((s) => { const active = selected.some((x) => x.id === s.id); return <button key={s.id} onClick={() => toggleService(s)} className={`group w-full text-left rounded-2xl border overflow-hidden transition-all duration-200 ${active ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20" : "border-border/70 bg-card hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"}`}>{s.photo_url && <div className="h-36 md:h-40 w-full bg-muted overflow-hidden"><img src={s.photo_url} alt={s.name} className="h-full w-full object-cover" style={svcFrame(s.photo_position)} /></div>}<div className="p-4 flex items-center justify-between gap-3"><div className="min-w-0"><p className="font-medium truncate">{s.name}</p><p className="text-xs text-muted-foreground">{s.duration_min} min{s.category ? ` · ${s.category}` : ""}</p></div><div className="text-right"><p className="font-semibold">{brl(s.price_cents / 100)}</p>{active && <Badge variant="secondary" className="mt-1"><Check className="h-3 w-3 mr-1" /> Selecionado</Badge>}</div></div></button>; })}</div></CardContent></Card>}
-        {step === 1 && <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]"><PortalInfo company={company} hours={hours} primary={primary} accent={accent} /><GallerySection companyId={companyId} company={company} primary={primary} accent={accent} /></div>}
-        {step === 1 && company.show_reviews_on_portal && <ReviewsSection companyId={companyId} accent={accent} />}
-        {step === 2 && <Card className="border-border/70 shadow-sm"><CardContent className="p-5 md:p-6 space-y-5"><div><h2 className="font-semibold text-xl tracking-tight">Escolha a data</h2><p className="text-sm text-muted-foreground mt-1">Mostramos apenas os dias em que a empresa atende.</p></div><div><Label className="text-xs mb-2 flex items-center gap-1"><Calendar className="h-3 w-3" /> Data</Label><div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">{dateOptions.map((d) => <button key={d.iso} disabled={d.disabled} onClick={() => { setDateStr(d.iso); setTimeStr(""); setStaff(null); }} className={`shrink-0 rounded-2xl border px-4 py-3 min-w-20 text-center transition-all ${d.disabled ? "opacity-35 cursor-not-allowed" : dateStr === d.iso ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border/70 bg-card hover:border-primary/40 hover:bg-muted/40"}`}><p className="text-[10px] uppercase tracking-wider">{WEEKDAYS[d.wd]}</p><p className="font-semibold text-sm">{d.label}</p></button>)}</div>{dateOptions.every((d) => d.disabled) && <p className="text-xs text-muted-foreground text-center py-2">Sem datas disponíveis. Entre em contato pelo WhatsApp.</p>}</div></CardContent></Card>}
-        {step === 3 && <Card className="border-border/70 shadow-sm"><CardContent className="p-5 md:p-6 space-y-5"><div><h2 className="font-semibold text-xl tracking-tight">Escolha o horário</h2><p className="text-sm text-muted-foreground mt-1">Selecione um dos horários disponíveis.</p></div><div><Label className="text-xs mb-2 flex items-center gap-1"><Clock className="h-3 w-3" /> Horário</Label>{!slots.length ? <p className="text-sm text-muted-foreground text-center py-6">Sem horários disponíveis nesta data.</p> : <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">{slots.map((t) => <button key={t} onClick={() => { setTimeStr(t); setStaff(null); }} className={`rounded-xl border py-3 text-sm font-medium transition-all ${timeStr === t ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border/70 bg-card hover:border-primary/40 hover:bg-muted/40"}`}>{t}</button>)}</div>}</div></CardContent></Card>}
-        {step === 4 && showStaffStep && <Card className="border-border/70 shadow-sm"><CardContent className="p-5 md:p-6 space-y-4"><div><h2 className="font-semibold text-xl tracking-tight">Profissionais disponíveis</h2><p className="mt-1 text-sm text-muted-foreground">Escolha quem vai realizar seu atendimento.</p></div><p className="text-xs text-muted-foreground">Somente quem atende os serviços escolhidos e está livre em {dateStr.split("-").reverse().join("/")} às {timeStr}.</p>{staffLoading ? <p className="text-sm text-muted-foreground text-center py-6">Buscando profissionais…</p> : !staffList.length ? <div className="rounded-xl border border-dashed p-4 text-center space-y-2"><p className="text-sm font-medium">{staffReason === "no_link" ? "Nenhum profissional atende essa combinação de serviços." : staffReason === "no_staff" ? "Nenhum profissional cadastrado para atender." : "Nenhum profissional disponível neste horário."}</p><p className="text-xs text-muted-foreground">Volte e escolha outro horário ou outra data.</p><Button variant="outline" size="sm" onClick={() => setStep(3)}>Escolher outro horário</Button></div> : <>{staffList.length > 1 && <button onClick={() => setStaff(null)} className={`w-full text-left rounded-2xl border p-4 transition-all ${!staff ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20" : "border-border/70 bg-card hover:border-primary/40 hover:shadow-sm"}`}><p className="font-medium">Qualquer profissional</p><p className="text-xs text-muted-foreground">A empresa define quem atende</p></button>}{staffList.map((s) => <button key={s.id} onClick={() => setStaff(s)} className={`w-full text-left rounded-2xl border p-4 flex items-center gap-4 transition-all ${staff?.id === s.id ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20" : "border-border/70 bg-card hover:border-primary/40 hover:shadow-sm"}`}>{s.photo_url ? <img src={s.photo_url} alt="" className="h-12 w-12 rounded-2xl object-cover" /> : <div className="h-12 w-12 rounded-2xl grid place-items-center text-white text-sm font-semibold shadow-sm" style={{ background: s.color ?? accent }}>{s.name.charAt(0)}</div>}<div className="min-w-0"><p className="font-medium truncate">{s.name}</p>{s.role_title && <p className="text-xs text-muted-foreground truncate">{s.role_title}</p>}</div></button>)}</>}</CardContent></Card>}
-        {step === 5 && <Card className="border-border/70 shadow-sm"><CardContent className="p-5 md:p-6 space-y-4"><div><h2 className="font-semibold text-xl tracking-tight">Seus dados</h2><p className="mt-1 text-sm text-muted-foreground">Preencha somente as informações necessárias para sua reserva.</p></div><div><Label>Nome</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div><div><Label>WhatsApp</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" /></div><div><Label>E-mail (opcional)</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div><div><Label>Observações (opcional)</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div><div><Label>Cupom de desconto (opcional)</Label><div className="flex gap-2"><Input value={couponCode} onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCoupon(null); }} placeholder="CODIGO" /><Button type="button" variant="outline" disabled={validating || !couponCode.trim()} onClick={applyCoupon}>{validating ? "…" : coupon ? "OK" : "Aplicar"}</Button></div>{coupon && <p className="text-xs text-green-700 mt-1">Desconto de {brl(coupon.discount_cents / 100)} aplicado.</p>}</div></CardContent></Card>}
-        {step === 6 && anamChecking && <Card><CardContent className="p-4 space-y-2"><h2 className="font-semibold text-lg">Verificando ficha de anamnese</h2><p className="text-sm text-muted-foreground">Aguarde enquanto conferimos se a ficha está válida para os serviços escolhidos.</p></CardContent></Card>}
-        {step === 6 && anamQuery.isError && !anamChecking && <Card><CardContent className="p-4 space-y-3"><h2 className="font-semibold text-lg">Não foi possível verificar a anamnese</h2><p className="text-sm text-muted-foreground">Tente novamente para continuar com o agendamento.</p><Button type="button" variant="outline" onClick={() => anamQuery.refetch()}>Tentar novamente</Button></CardContent></Card>}
-        {step === 6 && anamRequired && !anamChecking && !anamQuery.isError && <div className="space-y-3"><div className="rounded-xl border p-3 text-sm" style={{ borderColor: accent }}><p className="font-semibold">🩺 Ficha de anamnese</p><p className="text-xs text-muted-foreground">{anamQuery.data?.last_filled_at ? "Sua ficha está vencida (mais de 6 meses) ou o serviço escolhido exige novas informações." : "Para sua segurança, precisamos de algumas informações de saúde antes do atendimento."}</p><p className="mt-1 text-[11px] text-muted-foreground">Preencha a ficha para liberar a confirmação do agendamento.</p></div><AnamnesisForm sections={(anamQuery.data?.questionnaire ?? []) as any} submitLabel="Enviar ficha" submitting={anamSubmitting} onSubmit={submitAnamnesis} /></div>}
-        {step === 6 && !anamBlocked && !anamRequired && <Card><CardContent className="p-4 space-y-3"><h2 className="font-semibold text-lg">Confirme seu agendamento</h2>{anamDone && <p className="text-xs text-green-700">✅ Ficha de anamnese recebida.</p>}<Summary selected={selected} staff={staff} dateStr={dateStr} timeStr={timeStr} totalMin={totalMin} totalPrice={totalPrice} discountCents={coupon?.discount_cents ?? 0} /><div className="rounded-xl border p-3 text-sm space-y-1"><p className="font-semibold">Contato</p><p className="text-xs text-muted-foreground">{form.name} · {form.phone}{form.email ? ` · ${form.email}` : ""}</p>{form.notes && <p className="text-xs text-muted-foreground italic">"{form.notes}"</p>}</div>{showStaffStep && <Button variant="outline" size="sm" className="w-full" onClick={() => setStep(4)}>Alterar profissional</Button>}{(() => { const dueCents = Math.max(0, Math.round(totalPrice * 100) - (coupon?.discount_cents ?? 0)); const dep = computeDepositCents(dueCents, depositConfigFromCompany(company)); if (dep <= 0) return null; return <div className="rounded-xl border p-3 text-sm space-y-1" style={{ borderColor: accent }}><p className="font-semibold">Garantia da reserva</p><p className="text-xs text-muted-foreground">Este horário exige um pagamento antecipado de <strong>{brl(dep / 100)}</strong>. O saldo restante de {brl((dueCents - dep) / 100)} é pago no atendimento. Os dados do PIX aparecem na próxima tela.</p></div>; })()}<p className="text-xs text-muted-foreground">Ao confirmar você aceita as condições de agendamento desta empresa.</p></CardContent></Card>}
+        {selected.length > 0 && (
+          <BookingSummary
+            selected={selected}
+            staff={staff}
+            dateStr={dateStr}
+            timeStr={timeStr}
+            totalMin={totalMin}
+            totalPrice={totalPrice}
+            primary={primary}
+          />
+        )}
+        {step === 1 && (
+          <Card className="overflow-hidden border-border/70 shadow-sm">
+            <CardContent className="p-5 md:p-6 space-y-4">
+              <div>
+                <h2 className="font-semibold text-xl tracking-tight">Escolha os serviços</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Selecione um ou mais serviços para continuar.
+                </p>
+              </div>
+              {!services.length && (
+                <p className="text-sm text-muted-foreground">Nenhum serviço disponível.</p>
+              )}
+              <div className="grid gap-3 md:grid-cols-2">
+                {services.map((s) => {
+                  const active = selected.some((x) => x.id === s.id);
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => toggleService(s)}
+                      className={`group w-full text-left rounded-2xl border overflow-hidden transition-all duration-200 ${active ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20" : "border-border/70 bg-card hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"}`}
+                    >
+                      {s.photo_url && (
+                        <div className="h-36 md:h-40 w-full bg-muted overflow-hidden">
+                          <img
+                            src={s.photo_url}
+                            alt={s.name}
+                            className="h-full w-full object-cover"
+                            style={svcFrame(s.photo_position)}
+                          />
+                        </div>
+                      )}
+                      <div className="p-4 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">{s.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {s.duration_min} min{s.category ? ` · ${s.category}` : ""}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">{brl(s.price_cents / 100)}</p>
+                          {active && (
+                            <Badge variant="secondary" className="mt-1">
+                              <Check className="h-3 w-3 mr-1" /> Selecionado
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        {step === 1 && (
+          <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
+            <PortalInfo company={company} hours={hours} primary={primary} accent={accent} />
+            <GallerySection
+              companyId={companyId}
+              company={company}
+              primary={primary}
+              accent={accent}
+            />
+          </div>
+        )}
+        {step === 1 && company.show_reviews_on_portal && (
+          <ReviewsSection companyId={companyId} accent={accent} />
+        )}
+        {step === 2 && (
+          <Card className="border-border/70 shadow-sm">
+            <CardContent className="p-5 md:p-6 space-y-5">
+              <div>
+                <h2 className="font-semibold text-xl tracking-tight">Escolha a data</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Mostramos apenas os dias em que a empresa atende.
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs mb-2 flex items-center gap-1">
+                  <Calendar className="h-3 w-3" /> Data
+                </Label>
+                <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+                  {dateOptions.map((d) => (
+                    <button
+                      key={d.iso}
+                      disabled={d.disabled}
+                      onClick={() => {
+                        setDateStr(d.iso);
+                        setTimeStr("");
+                        setStaff(null);
+                      }}
+                      className={`shrink-0 rounded-2xl border px-4 py-3 min-w-20 text-center transition-all ${d.disabled ? "opacity-35 cursor-not-allowed" : dateStr === d.iso ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border/70 bg-card hover:border-primary/40 hover:bg-muted/40"}`}
+                    >
+                      <p className="text-[10px] uppercase tracking-wider">{WEEKDAYS[d.wd]}</p>
+                      <p className="font-semibold text-sm">{d.label}</p>
+                    </button>
+                  ))}
+                </div>
+                {dateOptions.every((d) => d.disabled) && (
+                  <p className="text-xs text-muted-foreground text-center py-2">
+                    Sem datas disponíveis. Entre em contato pelo WhatsApp.
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        {step === 3 && (
+          <Card className="border-border/70 shadow-sm">
+            <CardContent className="p-5 md:p-6 space-y-5">
+              <div>
+                <h2 className="font-semibold text-xl tracking-tight">Escolha o horário</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Selecione um dos horários disponíveis.
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs mb-2 flex items-center gap-1">
+                  <Clock className="h-3 w-3" /> Horário
+                </Label>
+                {!slots.length ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    Sem horários disponíveis nesta data.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
+                    {slots.map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => {
+                          setTimeStr(t);
+                          setStaff(null);
+                        }}
+                        className={`rounded-xl border py-3 text-sm font-medium transition-all ${timeStr === t ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border/70 bg-card hover:border-primary/40 hover:bg-muted/40"}`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        {step === 4 && showStaffStep && (
+          <Card className="border-border/70 shadow-sm">
+            <CardContent className="p-5 md:p-6 space-y-4">
+              <div>
+                <h2 className="font-semibold text-xl tracking-tight">Profissionais disponíveis</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Escolha quem vai realizar seu atendimento.
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Somente quem atende os serviços escolhidos e está livre em{" "}
+                {dateStr.split("-").reverse().join("/")} às {timeStr}.
+              </p>
+              {staffLoading ? (
+                <p className="text-sm text-muted-foreground text-center py-6">
+                  Buscando profissionais…
+                </p>
+              ) : !staffList.length ? (
+                <div className="rounded-xl border border-dashed p-4 text-center space-y-2">
+                  <p className="text-sm font-medium">
+                    {staffReason === "no_link"
+                      ? "Nenhum profissional atende essa combinação de serviços."
+                      : staffReason === "no_staff"
+                        ? "Nenhum profissional cadastrado para atender."
+                        : "Nenhum profissional disponível neste horário."}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Volte e escolha outro horário ou outra data.
+                  </p>
+                  <Button variant="outline" size="sm" onClick={() => setStep(3)}>
+                    Escolher outro horário
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {staffList.length > 1 && (
+                    <button
+                      onClick={() => setStaff(null)}
+                      className={`w-full text-left rounded-2xl border p-4 transition-all ${!staff ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20" : "border-border/70 bg-card hover:border-primary/40 hover:shadow-sm"}`}
+                    >
+                      <p className="font-medium">Qualquer profissional</p>
+                      <p className="text-xs text-muted-foreground">A empresa define quem atende</p>
+                    </button>
+                  )}
+                  {staffList.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setStaff(s)}
+                      className={`w-full text-left rounded-2xl border p-4 flex items-center gap-4 transition-all ${staff?.id === s.id ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20" : "border-border/70 bg-card hover:border-primary/40 hover:shadow-sm"}`}
+                    >
+                      {s.photo_url ? (
+                        <img
+                          src={s.photo_url}
+                          alt=""
+                          className="h-12 w-12 rounded-2xl object-cover"
+                        />
+                      ) : (
+                        <div
+                          className="h-12 w-12 rounded-2xl grid place-items-center text-white text-sm font-semibold shadow-sm"
+                          style={{ background: s.color ?? accent }}
+                        >
+                          {s.name.charAt(0)}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{s.name}</p>
+                        {s.role_title && (
+                          <p className="text-xs text-muted-foreground truncate">{s.role_title}</p>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
+        {step === 5 && (
+          <Card className="border-border/70 shadow-sm">
+            <CardContent className="p-5 md:p-6 space-y-4">
+              <div>
+                <h2 className="font-semibold text-xl tracking-tight">Seus dados</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Preencha somente as informações necessárias para sua reserva.
+                </p>
+              </div>
+              <div>
+                <Label>Nome</Label>
+                <Input
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>WhatsApp</Label>
+                <Input
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+              <div>
+                <Label>E-mail (opcional)</Label>
+                <Input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Observações (opcional)</Label>
+                <Textarea
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Cupom de desconto (opcional)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={couponCode}
+                    onChange={(e) => {
+                      setCouponCode(e.target.value.toUpperCase());
+                      setCoupon(null);
+                    }}
+                    placeholder="CODIGO"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={validating || !couponCode.trim()}
+                    onClick={applyCoupon}
+                  >
+                    {validating ? "…" : coupon ? "OK" : "Aplicar"}
+                  </Button>
+                </div>
+                {coupon && (
+                  <p className="text-xs text-green-700 mt-1">
+                    Desconto de {brl(coupon.discount_cents / 100)} aplicado.
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        {step === 6 && anamChecking && (
+          <Card>
+            <CardContent className="p-4 space-y-2">
+              <h2 className="font-semibold text-lg">Verificando ficha de anamnese</h2>
+              <p className="text-sm text-muted-foreground">
+                Aguarde enquanto conferimos se a ficha está válida para os serviços escolhidos.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+        {step === 6 && anamQuery.isError && !anamChecking && (
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <h2 className="font-semibold text-lg">Não foi possível verificar a anamnese</h2>
+              <p className="text-sm text-muted-foreground">
+                Tente novamente para continuar com o agendamento.
+              </p>
+              <Button type="button" variant="outline" onClick={() => anamQuery.refetch()}>
+                Tentar novamente
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+        {step === 6 && anamRequired && !anamChecking && !anamQuery.isError && (
+          <div className="space-y-3">
+            <div className="rounded-xl border p-3 text-sm" style={{ borderColor: accent }}>
+              <p className="font-semibold">🩺 Ficha de anamnese</p>
+              <p className="text-xs text-muted-foreground">
+                {anamQuery.data?.last_filled_at
+                  ? "Sua ficha está vencida (mais de 6 meses) ou o serviço escolhido exige novas informações."
+                  : "Para sua segurança, precisamos de algumas informações de saúde antes do atendimento."}
+              </p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Preencha a ficha para liberar a confirmação do agendamento.
+              </p>
+            </div>
+            <AnamnesisForm
+              sections={(anamQuery.data?.questionnaire ?? []) as any}
+              submitLabel="Enviar ficha"
+              submitting={anamSubmitting}
+              onSubmit={submitAnamnesis}
+            />
+          </div>
+        )}
+        {step === 6 && !anamBlocked && !anamRequired && (
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <h2 className="font-semibold text-lg">Confirme seu agendamento</h2>
+              {anamDone && <p className="text-xs text-green-700">✅ Ficha de anamnese recebida.</p>}
+              <Summary
+                selected={selected}
+                staff={staff}
+                dateStr={dateStr}
+                timeStr={timeStr}
+                totalMin={totalMin}
+                totalPrice={totalPrice}
+                discountCents={coupon?.discount_cents ?? 0}
+              />
+              <div className="rounded-xl border p-3 text-sm space-y-1">
+                <p className="font-semibold">Contato</p>
+                <p className="text-xs text-muted-foreground">
+                  {form.name} · {form.phone}
+                  {form.email ? ` · ${form.email}` : ""}
+                </p>
+                {form.notes && (
+                  <p className="text-xs text-muted-foreground italic">"{form.notes}"</p>
+                )}
+              </div>
+              {showStaffStep && (
+                <Button variant="outline" size="sm" className="w-full" onClick={() => setStep(4)}>
+                  Alterar profissional
+                </Button>
+              )}
+              {(() => {
+                const dueCents = Math.max(
+                  0,
+                  Math.round(totalPrice * 100) - (coupon?.discount_cents ?? 0),
+                );
+                const dep = computeDepositCents(dueCents, depositConfigFromCompany(company));
+                if (dep <= 0) return null;
+                return (
+                  <div
+                    className="rounded-xl border p-3 text-sm space-y-1"
+                    style={{ borderColor: accent }}
+                  >
+                    <p className="font-semibold">Garantia da reserva</p>
+                    <p className="text-xs text-muted-foreground">
+                      Este horário exige um pagamento antecipado de{" "}
+                      <strong>{brl(dep / 100)}</strong>. O saldo restante de{" "}
+                      {brl((dueCents - dep) / 100)} é pago no atendimento. Os dados do PIX aparecem
+                      na próxima tela.
+                    </p>
+                  </div>
+                );
+              })()}
+              <p className="text-xs text-muted-foreground">
+                Ao confirmar você aceita as condições de agendamento desta empresa.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
-      <div className="fixed bottom-0 inset-x-0 z-40 border-t border-border/70 bg-card/95 shadow-[0_-10px_35px_rgba(0,0,0,0.08)] backdrop-blur-xl"><div className="mx-auto max-w-5xl px-3 py-3 md:px-6"><div className="flex items-center gap-3">{step > 1 && <Button variant="outline" size="lg" className="h-12 w-12 shrink-0 rounded-xl p-0" onClick={goPrev} aria-label="Voltar"><ChevronLeft className="h-5 w-5" /></Button>}<div className="min-w-0 flex-1">{selected.length > 0 ? <><div className="flex items-center gap-2"><span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-semibold text-white" style={{ background: accent }}>{selected.length}</span><p className="truncate text-xs font-medium text-muted-foreground">{selected.length === 1 ? selected[0]?.name : `${selected.length} serviços selecionados`}</p></div><div className="mt-0.5 flex items-baseline gap-2"><p className="text-lg font-bold tracking-tight" style={{ color: primary }}>{brl(totalPrice)}</p><p className="hidden text-xs text-muted-foreground sm:block">{totalMin} min{dateStr ? ` · ${dateStr.split("-").reverse().join("/")}` : ""}{timeStr ? ` às ${timeStr}` : ""}</p></div></> : <><p className="text-sm font-semibold">Monte seu agendamento</p><p className="text-xs text-muted-foreground">Selecione um serviço para começar</p></>}</div>{step < 6 ? <Button size="lg" className="h-12 shrink-0 rounded-xl px-5 font-semibold shadow-sm sm:px-7" style={{ background: primary }} disabled={!canContinue} onClick={goNext}><span>{step === 1 ? "Agendar" : "Continuar"}</span><ChevronRight className="ml-1.5 h-4 w-4" /></Button> : <Button size="lg" className="h-12 shrink-0 rounded-xl px-5 font-semibold shadow-sm sm:px-7" style={{ background: primary }} disabled={submitting || !form.name || !form.phone || !timeStr || anamBlocked} onClick={submit}>{submitting ? "Enviando…" : anamChecking ? "Verificando…" : anamRequired ? "Preencha a ficha" : anamQuery.isError ? "Verifique a ficha" : "Confirmar agendamento"}</Button>}</div></div></div>
+      <div className="fixed bottom-0 inset-x-0 z-40 border-t border-border/70 bg-card/95 shadow-[0_-10px_35px_rgba(0,0,0,0.08)] backdrop-blur-xl">
+        <div className="mx-auto max-w-5xl px-3 py-3 md:px-6">
+          <div className="flex items-center gap-3">
+            {step > 1 && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="h-12 w-12 shrink-0 rounded-xl p-0"
+                onClick={goPrev}
+                aria-label="Voltar"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+            )}
+            <div className="min-w-0 flex-1">
+              {selected.length > 0 ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-semibold text-white"
+                      style={{ background: accent }}
+                    >
+                      {selected.length}
+                    </span>
+                    <p className="truncate text-xs font-medium text-muted-foreground">
+                      {selected.length === 1
+                        ? selected[0]?.name
+                        : `${selected.length} serviços selecionados`}
+                    </p>
+                  </div>
+                  <div className="mt-0.5 flex items-baseline gap-2">
+                    <p className="text-lg font-bold tracking-tight" style={{ color: primary }}>
+                      {brl(totalPrice)}
+                    </p>
+                    <p className="hidden text-xs text-muted-foreground sm:block">
+                      {totalMin} min{dateStr ? ` · ${dateStr.split("-").reverse().join("/")}` : ""}
+                      {timeStr ? ` às ${timeStr}` : ""}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold">Monte seu agendamento</p>
+                  <p className="text-xs text-muted-foreground">Selecione um serviço para começar</p>
+                </>
+              )}
+            </div>
+            {step < 6 ? (
+              <Button
+                size="lg"
+                className="h-12 shrink-0 rounded-xl px-5 font-semibold shadow-sm sm:px-7"
+                style={{ background: primary }}
+                disabled={!canContinue}
+                onClick={goNext}
+              >
+                <span>{step === 1 ? "Agendar" : "Continuar"}</span>
+                <ChevronRight className="ml-1.5 h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                size="lg"
+                className="h-12 shrink-0 rounded-xl px-5 font-semibold shadow-sm sm:px-7"
+                style={{ background: primary }}
+                disabled={submitting || !form.name || !form.phone || !timeStr || anamBlocked}
+                onClick={submit}
+              >
+                {submitting
+                  ? "Enviando…"
+                  : anamChecking
+                    ? "Verificando…"
+                    : anamRequired
+                      ? "Preencha a ficha"
+                      : anamQuery.isError
+                        ? "Verifique a ficha"
+                        : "Confirmar agendamento"}
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-function Hero({ company, primary, accent, slug, loggedIn }: { company: any; primary: string; accent: string; slug: string; loggedIn: boolean }) {
+function Hero({
+  company,
+  primary,
+  accent,
+  slug,
+  loggedIn,
+}: {
+  company: any;
+  primary: string;
+  accent: string;
+  slug: string;
+  loggedIn: boolean;
+}) {
   const theme = portalTheme(company);
-  return <div className="relative" style={heroBackground(theme)}>{theme.bgUrl && <img src={theme.bgUrl} className="absolute inset-0 h-full w-full object-cover" style={{ opacity: heroImageOpacity(theme) }} alt="" />}<div className={`relative max-w-5xl mx-auto px-4 py-8 md:px-6 md:py-12 ${heroTextClass(theme)}`}><div className="flex items-start gap-3">{company.logo_url ? <img src={company.logo_url} className="h-16 w-16 md:h-20 md:w-20 rounded-2xl object-cover ring-2 ring-white/40 shadow-lg" alt="" /> : <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl grid place-items-center bg-white/15 ring-2 ring-white/40 shadow-lg"><Sparkles className="h-7 w-7" /></div>}<div className="flex-1 min-w-0"><h1 className="text-2xl font-semibold leading-tight truncate">{company.name}</h1>{theme.slogan && <p className="text-xs opacity-85 truncate">{theme.slogan}</p>}{company.address && <p className="text-xs opacity-80 flex items-center gap-1 mt-0.5"><MapPin className="h-3 w-3" /> {company.address}</p>}</div><Link to={loggedIn ? "/b/$slug/minha-conta" : "/b/$slug/entrar"} params={{ slug }} className="shrink-0 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur px-3 py-1.5 text-xs font-medium ring-1 ring-white/30 flex items-center gap-1.5"><User className="h-3.5 w-3.5" /> {loggedIn ? "Minha conta" : "Entrar"}</Link></div></div></div>;
+  return (
+    <div className="relative" style={heroBackground(theme)}>
+      {theme.bgUrl && (
+        <img
+          src={theme.bgUrl}
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ opacity: heroImageOpacity(theme) }}
+          alt=""
+        />
+      )}
+      <div
+        className={`relative max-w-5xl mx-auto px-4 py-8 md:px-6 md:py-12 ${heroTextClass(theme)}`}
+      >
+        <div className="flex items-start gap-3">
+          {company.logo_url ? (
+            <img
+              src={company.logo_url}
+              className="h-16 w-16 md:h-20 md:w-20 rounded-2xl object-cover ring-2 ring-white/40 shadow-lg"
+              alt=""
+            />
+          ) : (
+            <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl grid place-items-center bg-white/15 ring-2 ring-white/40 shadow-lg">
+              <Sparkles className="h-7 w-7" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-semibold leading-tight truncate">{company.name}</h1>
+            {theme.slogan && <p className="text-xs opacity-85 truncate">{theme.slogan}</p>}
+            {company.address && (
+              <p className="text-xs opacity-80 flex items-center gap-1 mt-0.5">
+                <MapPin className="h-3 w-3" /> {company.address}
+              </p>
+            )}
+          </div>
+          <Link
+            to={loggedIn ? "/b/$slug/minha-conta" : "/b/$slug/entrar"}
+            params={{ slug }}
+            className="shrink-0 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur px-3 py-1.5 text-xs font-medium ring-1 ring-white/30 flex items-center gap-1.5"
+          >
+            <User className="h-3.5 w-3.5" /> {loggedIn ? "Minha conta" : "Entrar"}
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function BookingStepHeader({ step }: { step: number }) {
-  const copy: Record<number, { eyebrow: string; title: string; description: string; icon: React.ReactNode }> = {
-    1: { eyebrow: "Comece por aqui", title: "O que você deseja fazer?", description: "Escolha os serviços que deseja reservar.", icon: <Scissors className="h-5 w-5" /> },
-    2: { eyebrow: "Sua disponibilidade", title: "Escolha o melhor dia", description: "Selecione uma data disponível para o atendimento.", icon: <CalendarDays className="h-5 w-5" /> },
-    3: { eyebrow: "Horários disponíveis", title: "Qual horário funciona para você?", description: "Os horários exibidos respeitam a agenda e a duração dos serviços.", icon: <Clock className="h-5 w-5" /> },
-    4: { eyebrow: "Profissional", title: "Quem vai atender você?", description: "Escolha um profissional disponível ou deixe a empresa definir.", icon: <UsersRound className="h-5 w-5" /> },
-    5: { eyebrow: "Quase pronto", title: "Informe seus dados", description: "Usaremos essas informações apenas para identificar e confirmar seu agendamento.", icon: <User className="h-5 w-5" /> },
-    6: { eyebrow: "Revisão final", title: "Confira antes de confirmar", description: "Revise os detalhes do seu agendamento antes de concluir.", icon: <ClipboardCheck className="h-5 w-5" /> },
+  const copy: Record<
+    number,
+    { eyebrow: string; title: string; description: string; icon: React.ReactNode }
+  > = {
+    1: {
+      eyebrow: "Comece por aqui",
+      title: "O que você deseja fazer?",
+      description: "Escolha os serviços que deseja reservar.",
+      icon: <Scissors className="h-5 w-5" />,
+    },
+    2: {
+      eyebrow: "Sua disponibilidade",
+      title: "Escolha o melhor dia",
+      description: "Selecione uma data disponível para o atendimento.",
+      icon: <CalendarDays className="h-5 w-5" />,
+    },
+    3: {
+      eyebrow: "Horários disponíveis",
+      title: "Qual horário funciona para você?",
+      description: "Os horários exibidos respeitam a agenda e a duração dos serviços.",
+      icon: <Clock className="h-5 w-5" />,
+    },
+    4: {
+      eyebrow: "Profissional",
+      title: "Quem vai atender você?",
+      description: "Escolha um profissional disponível ou deixe a empresa definir.",
+      icon: <UsersRound className="h-5 w-5" />,
+    },
+    5: {
+      eyebrow: "Quase pronto",
+      title: "Informe seus dados",
+      description:
+        "Usaremos essas informações apenas para identificar e confirmar seu agendamento.",
+      icon: <User className="h-5 w-5" />,
+    },
+    6: {
+      eyebrow: "Revisão final",
+      title: "Confira antes de confirmar",
+      description: "Revise os detalhes do seu agendamento antes de concluir.",
+      icon: <ClipboardCheck className="h-5 w-5" />,
+    },
   };
   const current = copy[step] ?? copy[1];
   return (
     <div className="rounded-2xl border border-border/60 bg-card/90 px-5 py-4 shadow-sm backdrop-blur md:px-6 md:py-5">
       <div className="flex items-start gap-3">
-        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">{current.icon}</div>
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+          {current.icon}
+        </div>
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{current.eyebrow}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            {current.eyebrow}
+          </p>
           <h1 className="mt-1 text-xl font-semibold tracking-tight md:text-2xl">{current.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{current.description}</p>
         </div>
@@ -456,75 +1207,627 @@ function BookingStepHeader({ step }: { step: number }) {
   );
 }
 
-function BookingSummary({ selected, staff, dateStr, timeStr, totalMin, totalPrice, primary }: {
-  selected: Service[]; staff: Staff | null; dateStr: string; timeStr: string; totalMin: number; totalPrice: number; primary: string;
+function BookingSummary({
+  selected,
+  staff,
+  dateStr,
+  timeStr,
+  totalMin,
+  totalPrice,
+  primary,
+}: {
+  selected: Service[];
+  staff: Staff | null;
+  dateStr: string;
+  timeStr: string;
+  totalMin: number;
+  totalPrice: number;
+  primary: string;
 }) {
-  const dateLabel = dateStr ? new Date(`${dateStr}T12:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "A definir";
+  const dateLabel = dateStr
+    ? new Date(`${dateStr}T12:00:00`).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "short",
+      })
+    : "A definir";
   return (
     <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm md:px-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-medium text-muted-foreground">Resumo do agendamento</p>
-          <p className="mt-0.5 truncate text-sm font-semibold">{selected.map((s) => s.name).join(" + ")}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{totalMin} min · {staff?.name ?? "Profissional a definir"} · {timeStr ? `${dateLabel} às ${timeStr}` : dateStr ? dateLabel : "Data a definir"}</p>
+          <p className="mt-0.5 truncate text-sm font-semibold">
+            {selected.map((s) => s.name).join(" + ")}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {totalMin} min · {staff?.name ?? "Profissional a definir"} ·{" "}
+            {timeStr ? `${dateLabel} às ${timeStr}` : dateStr ? dateLabel : "Data a definir"}
+          </p>
         </div>
         <div className="text-right">
           <p className="text-xs text-muted-foreground">Total</p>
-          <p className="text-lg font-semibold" style={{ color: primary }}>{brl(totalPrice)}</p>
+          <p className="text-lg font-semibold" style={{ color: primary }}>
+            {brl(totalPrice)}
+          </p>
         </div>
       </div>
     </div>
   );
 }
 
-function Steps({ step, accent, showStaffStep }: { step: number; accent: string; showStaffStep: boolean }) {
-  const labels = showStaffStep ? ["Serviços", "Data", "Horário", "Profissional", "Dados", "Confirmar"] : ["Serviços", "Data", "Horário", "Dados", "Confirmar"];
-  const visualStep = showStaffStep ? step : (step <= 3 ? step : step - 1);
-  return <div className="flex items-center gap-2">{labels.map((l, i) => { const active = visualStep === i + 1; const done = visualStep > i + 1; return <div key={l} className="flex-1 flex items-center gap-2"><div className={`h-7 w-7 rounded-full grid place-items-center text-xs font-semibold ${active ? "text-white" : done ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`} style={active ? { background: accent } : undefined}>{done ? <Check className="h-3.5 w-3.5" /> : i + 1}</div><span className={`text-xs hidden sm:inline ${active ? "font-semibold" : "text-muted-foreground"}`}>{l}</span></div>; })}</div>;
+function Steps({
+  step,
+  accent,
+  showStaffStep,
+}: {
+  step: number;
+  accent: string;
+  showStaffStep: boolean;
+}) {
+  const labels = showStaffStep
+    ? ["Serviços", "Data", "Horário", "Profissional", "Dados", "Confirmar"]
+    : ["Serviços", "Data", "Horário", "Dados", "Confirmar"];
+  const visualStep = showStaffStep ? step : step <= 3 ? step : step - 1;
+  return (
+    <div className="flex items-center gap-2">
+      {labels.map((l, i) => {
+        const active = visualStep === i + 1;
+        const done = visualStep > i + 1;
+        return (
+          <div key={l} className="flex-1 flex items-center gap-2">
+            <div
+              className={`h-7 w-7 rounded-full grid place-items-center text-xs font-semibold ${active ? "text-white" : done ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+              style={active ? { background: accent } : undefined}
+            >
+              {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
+            </div>
+            <span
+              className={`text-xs hidden sm:inline ${active ? "font-semibold" : "text-muted-foreground"}`}
+            >
+              {l}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
-function Summary({ selected, staff, dateStr, timeStr, totalMin, totalPrice, discountCents = 0 }: { selected: Service[]; staff: Staff | null; dateStr: string; timeStr: string; totalMin: number; totalPrice: number; discountCents?: number }) {
+function Summary({
+  selected,
+  staff,
+  dateStr,
+  timeStr,
+  totalMin,
+  totalPrice,
+  discountCents = 0,
+}: {
+  selected: Service[];
+  staff: Staff | null;
+  dateStr: string;
+  timeStr: string;
+  totalMin: number;
+  totalPrice: number;
+  discountCents?: number;
+}) {
   const d = dateStr ? new Date(dateStr + "T00:00:00") : null;
   const final = Math.max(0, totalPrice - discountCents / 100);
-  return <div className="rounded-xl bg-muted/40 p-3 text-sm space-y-1"><p className="font-semibold">Resumo</p>{selected.map((s) => <div key={s.id} className="flex justify-between text-xs"><span>{s.name}</span><span>{brl(s.price_cents / 100)}</span></div>)}<div className="text-xs text-muted-foreground pt-1">{staff ? `Com ${staff.name}` : "Qualquer profissional"} · {d ? d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) : "—"}{timeStr ? ` às ${timeStr}` : ""} · {totalMin} min</div>{discountCents > 0 && <div className="flex justify-between text-xs text-green-700"><span>Desconto</span><span>-{brl(discountCents / 100)}</span></div>}<div className="flex justify-between font-semibold border-t pt-1 mt-1"><span>Total</span><span>{brl(final)}</span></div></div>;
+  return (
+    <div className="rounded-xl bg-muted/40 p-3 text-sm space-y-1">
+      <p className="font-semibold">Resumo</p>
+      {selected.map((s) => (
+        <div key={s.id} className="flex justify-between text-xs">
+          <span>{s.name}</span>
+          <span>{brl(s.price_cents / 100)}</span>
+        </div>
+      ))}
+      <div className="text-xs text-muted-foreground pt-1">
+        {staff ? `Com ${staff.name}` : "Qualquer profissional"} ·{" "}
+        {d ? d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) : "—"}
+        {timeStr ? ` às ${timeStr}` : ""} · {totalMin} min
+      </div>
+      {discountCents > 0 && (
+        <div className="flex justify-between text-xs text-green-700">
+          <span>Desconto</span>
+          <span>-{brl(discountCents / 100)}</span>
+        </div>
+      )}
+      <div className="flex justify-between font-semibold border-t pt-1 mt-1">
+        <span>Total</span>
+        <span>{brl(final)}</span>
+      </div>
+    </div>
+  );
 }
 
-function PortalInfo({ company, hours, primary, accent }: { company: any; hours: Hours[]; primary: string; accent: string }) {
-  const waDigits = (company.whatsapp || "").replace(/\D/g, "");
-  const wa = waDigits ? (waDigits.startsWith("55") ? waDigits : `55${waDigits}`) : "";
-  const socials = [company.instagram_url && { icon: Instagram, url: company.instagram_url, label: "Instagram" }, company.facebook_url && { icon: Facebook, url: company.facebook_url, label: "Facebook" }, company.tiktok_url && { icon: MessageCircle, url: company.tiktok_url, label: "TikTok" }, company.website_url && { icon: Globe, url: company.website_url, label: "Site" }].filter(Boolean) as { icon: any; url: string; label: string }[];
+function PortalInfo({
+  company,
+  hours,
+  primary,
+  accent,
+}: {
+  company: any;
+  hours: Hours[];
+  primary: string;
+  accent: string;
+}) {
+  const wa = waNumber(company.whatsapp);
+  const socials = [
+    company.instagram_url && { icon: Instagram, url: company.instagram_url, label: "Instagram" },
+    company.facebook_url && { icon: Facebook, url: company.facebook_url, label: "Facebook" },
+    company.tiktok_url && { icon: MessageCircle, url: company.tiktok_url, label: "TikTok" },
+    company.website_url && { icon: Globe, url: company.website_url, label: "Site" },
+  ].filter(Boolean) as { icon: any; url: string; label: string }[];
   const orderedHours = [...(hours ?? [])].sort((a, b) => a.weekday - b.weekday);
   const amenities = getAmenities(company.amenities);
-  return <Card className="h-full border-border/70 shadow-sm"><CardContent className="p-5 md:p-6 space-y-5"><div><p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Conheça a empresa</p><h2 className="mt-1 text-xl font-semibold tracking-tight">Informações para sua visita</h2></div>{company.welcome_message && <p className="text-sm rounded-lg p-3" style={{ background: `${accent}15`, borderLeft: `3px solid ${accent}` }}>{company.welcome_message}</p>}{company.description && <p className="text-sm text-muted-foreground whitespace-pre-line">{company.description}</p>}{amenities.length > 0 && <div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Comodidades</p><div className="flex flex-wrap gap-2">{amenities.map((a) => <span key={a.key} title={a.description} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border" style={{ background: `${accent}12`, borderColor: `${accent}40`, color: primary }}><a.icon className="h-3.5 w-3.5" style={{ color: accent }} />{a.label}</span>)}</div></div>}<div className="flex flex-wrap gap-2">{wa && <a href={`https://api.whatsapp.com/send?phone=${wa}&text=${encodeURIComponent(`✨ Olá, *${company.name}*! 👋\n\nGostaria de mais informações sobre agendamentos. 📅`)}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[140px]"><Button className="w-full" style={{ background: "#25D366", color: "white" }}><Phone className="h-4 w-4 mr-2" /> Falar no WhatsApp</Button></a>}{company.phone && <a href={`tel:${company.phone.replace(/\D/g, "")}`} className="flex-1 min-w-[140px]"><Button variant="outline" className="w-full"><Phone className="h-4 w-4 mr-2" /> Ligar</Button></a>}</div>{orderedHours.length > 0 && <div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Horário</p><div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">{orderedHours.map((h) => <div key={h.weekday} className="flex justify-between px-3 py-2 rounded-xl bg-muted/40"><span>{WEEKDAYS[h.weekday]}</span><span className="text-muted-foreground">{h.closed ? "Fechado" : `${h.start_time?.slice(0, 5)} – ${h.end_time?.slice(0, 5)}`}</span></div>)}</div></div>}{socials.length > 0 && <div className="flex gap-2 pt-1">{socials.map((s) => <a key={s.url} href={s.url} target="_blank" rel="noreferrer" className="h-9 w-9 rounded-full grid place-items-center border hover:bg-muted" title={s.label} style={{ borderColor: `${primary}33` }}><s.icon className="h-4 w-4" /></a>)}</div>}</CardContent></Card>;
+  return (
+    <Card className="h-full border-border/70 shadow-sm">
+      <CardContent className="p-5 md:p-6 space-y-5">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Conheça a empresa
+          </p>
+          <h2 className="mt-1 text-xl font-semibold tracking-tight">Informações para sua visita</h2>
+        </div>
+        {company.welcome_message && (
+          <p
+            className="text-sm rounded-lg p-3"
+            style={{ background: `${accent}15`, borderLeft: `3px solid ${accent}` }}
+          >
+            {company.welcome_message}
+          </p>
+        )}
+        {company.description && (
+          <p className="text-sm text-muted-foreground whitespace-pre-line">{company.description}</p>
+        )}
+        {amenities.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+              Comodidades
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {amenities.map((a) => (
+                <span
+                  key={a.key}
+                  title={a.description}
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border"
+                  style={{ background: `${accent}12`, borderColor: `${accent}40`, color: primary }}
+                >
+                  <a.icon className="h-3.5 w-3.5" style={{ color: accent }} />
+                  {a.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2">
+          {wa && (
+            <a
+              href={waLink(
+                wa,
+                `✨ Olá, *${company.name}*! 👋\n\nGostaria de mais informações sobre agendamentos. 📅`,
+              )}
+              target="_blank"
+              rel="noreferrer"
+              className="flex-1 min-w-[140px]"
+            >
+              <Button className="w-full" style={{ background: "#25D366", color: "white" }}>
+                <Phone className="h-4 w-4 mr-2" /> Falar no WhatsApp
+              </Button>
+            </a>
+          )}
+          {company.phone && (
+            <a href={`tel:${company.phone.replace(/\D/g, "")}`} className="flex-1 min-w-[140px]">
+              <Button variant="outline" className="w-full">
+                <Phone className="h-4 w-4 mr-2" /> Ligar
+              </Button>
+            </a>
+          )}
+        </div>
+        {orderedHours.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+              Horário
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              {orderedHours.map((h) => (
+                <div
+                  key={h.weekday}
+                  className="flex justify-between px-3 py-2 rounded-xl bg-muted/40"
+                >
+                  <span>{WEEKDAYS[h.weekday]}</span>
+                  <span className="text-muted-foreground">
+                    {h.closed
+                      ? "Fechado"
+                      : `${h.start_time?.slice(0, 5)} – ${h.end_time?.slice(0, 5)}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {socials.length > 0 && (
+          <div className="flex gap-2 pt-1">
+            {socials.map((s) => (
+              <a
+                key={s.url}
+                href={s.url}
+                target="_blank"
+                rel="noreferrer"
+                className="h-9 w-9 rounded-full grid place-items-center border hover:bg-muted"
+                title={s.label}
+                style={{ borderColor: `${primary}33` }}
+              >
+                <s.icon className="h-4 w-4" />
+              </a>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 function ReviewsSection({ companyId, accent }: { companyId: string; accent: string }) {
-  const { data } = useQuery({ queryKey: ["pub_reviews", companyId], queryFn: async () => { const { data } = await supabase.from("reviews").select("id,rating,comment,created_at,customer_name,customers(name)").eq("company_id", companyId).eq("published", true).order("created_at", { ascending: false }).limit(10); return data ?? []; } });
+  const { data } = useQuery({
+    queryKey: ["pub_reviews", companyId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("reviews")
+        .select("id,rating,comment,created_at,customer_name,customers(name)")
+        .eq("company_id", companyId)
+        .eq("published", true)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      return data ?? [];
+    },
+  });
   const reviews = (data ?? []) as any[];
   if (!reviews.length) return null;
   const avg = reviews.reduce((a, r) => a + r.rating, 0) / reviews.length;
-  return <Card className="border-border/70 shadow-sm"><CardContent className="p-5 md:p-6 space-y-4"><div className="flex items-center justify-between"><h2 className="font-semibold text-xl tracking-tight">Avaliações de clientes</h2><div className="flex items-center gap-1 text-sm"><Star className="h-4 w-4 fill-current" style={{ color: accent }} /><span className="font-semibold">{avg.toFixed(1)}</span><span className="text-xs text-muted-foreground">({reviews.length})</span></div></div><div className="grid gap-3 md:grid-cols-3">{reviews.slice(0, 3).map((r) => <div key={r.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm"><div className="flex items-center gap-1 mb-1">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className={`h-3.5 w-3.5 ${i < r.rating ? "fill-current" : ""}`} style={{ color: i < r.rating ? accent : "#ccc" }} />)}<span className="text-xs text-muted-foreground ml-1">{r.customers?.name ?? r.customer_name ?? "Cliente"}</span></div>{r.comment && <p className="text-xs text-muted-foreground">{r.comment}</p>}</div>)}</div></CardContent></Card>;
+  return (
+    <Card className="border-border/70 shadow-sm">
+      <CardContent className="p-5 md:p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-xl tracking-tight">Avaliações de clientes</h2>
+          <div className="flex items-center gap-1 text-sm">
+            <Star className="h-4 w-4 fill-current" style={{ color: accent }} />
+            <span className="font-semibold">{avg.toFixed(1)}</span>
+            <span className="text-xs text-muted-foreground">({reviews.length})</span>
+          </div>
+        </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          {reviews.slice(0, 3).map((r) => (
+            <div key={r.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm">
+              <div className="flex items-center gap-1 mb-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`h-3.5 w-3.5 ${i < r.rating ? "fill-current" : ""}`}
+                    style={{ color: i < r.rating ? accent : "#ccc" }}
+                  />
+                ))}
+                <span className="text-xs text-muted-foreground ml-1">
+                  {r.customers?.name ?? r.customer_name ?? "Cliente"}
+                </span>
+              </div>
+              {r.comment && <p className="text-xs text-muted-foreground">{r.comment}</p>}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
-type GalleryPhoto = { id: string; category: string | null; title: string | null; description: string | null; image_url: string; featured: boolean; created_at: string };
-function GallerySection({ companyId, company, primary, accent }: { companyId: string; company: any; primary: string; accent: string }) {
-  const { data } = useQuery({ queryKey: ["pub_gallery", companyId], queryFn: async () => { const { data } = await supabase.from("gallery_photos" as any).select("id,category,title,description,image_url,featured,created_at").eq("company_id", companyId).order("featured", { ascending: false }).order("created_at", { ascending: false }).limit(60); return ((data ?? []) as unknown) as GalleryPhoto[]; } });
+type GalleryPhoto = {
+  id: string;
+  category: string | null;
+  title: string | null;
+  description: string | null;
+  image_url: string;
+  featured: boolean;
+  created_at: string;
+};
+function GallerySection({
+  companyId,
+  company,
+  primary,
+  accent,
+}: {
+  companyId: string;
+  company: any;
+  primary: string;
+  accent: string;
+}) {
+  const { data } = useQuery({
+    queryKey: ["pub_gallery", companyId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("gallery_photos" as any)
+        .select("id,category,title,description,image_url,featured,created_at")
+        .eq("company_id", companyId)
+        .order("featured", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(60);
+      return (data ?? []) as unknown as GalleryPhoto[];
+    },
+  });
   const photos = data ?? [];
   const [cat, setCat] = useState<string>("all");
   const [lightbox, setLightbox] = useState<GalleryPhoto | null>(null);
   if (!photos.length) return null;
   const categories = Array.from(new Set(photos.map((p) => p.category).filter(Boolean))) as string[];
   const visible = cat === "all" ? photos : photos.filter((p) => (p.category ?? "") === cat);
-  const waDigitsG = (company.whatsapp || "").replace(/\D/g, "");
-  const wa = waDigitsG ? (waDigitsG.startsWith("55") ? waDigitsG : `55${waDigitsG}`) : "";
-  const requestQuote = (p: GalleryPhoto) => { if (!wa) return; const parts = [`✨ Olá, *${company.name}*! 👋`, ``, `Vi este trabalho no site e gostaria de solicitar um orçamento:`, p.title ? `📌 *${p.title}*` : null, p.category ? `🗂️ Categoria: ${p.category}` : null, p.description ? `📝 ${p.description}` : null, ``, `Pode me passar mais informações? 🙏`].filter(Boolean).join("\n"); window.open(`https://api.whatsapp.com/send?phone=${wa}&text=${encodeURIComponent(parts)}`, "_blank"); };
-  return <><Card className="h-full overflow-hidden border-border/70 shadow-sm"><CardContent className="p-5 md:p-6 space-y-4"><div className="flex items-center justify-between"><h2 className="font-semibold text-xl tracking-tight flex items-center gap-2"><ImageIcon className="h-5 w-5" style={{ color: accent }} /> Trabalhos da empresa</h2><span className="text-xs text-muted-foreground">{photos.length} fotos</span></div>{categories.length > 0 && <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1"><button onClick={() => setCat("all")} className={`shrink-0 px-3 py-1 rounded-full text-xs border ${cat === "all" ? "text-white border-transparent" : "border-border"}`} style={cat === "all" ? { background: primary } : undefined}>Todas</button>{categories.map((c) => <button key={c} onClick={() => setCat(c)} className={`shrink-0 px-3 py-1 rounded-full text-xs border ${cat === c ? "text-white border-transparent" : "border-border"}`} style={cat === c ? { background: primary } : undefined}>{c}</button>)}</div>}<div className="grid grid-cols-2 sm:grid-cols-3 gap-2">{visible.slice(0, 24).map((p) => <button key={p.id} onClick={() => setLightbox(p)} className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted group shadow-sm"><img src={p.image_url} alt={p.title ?? ""} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />{p.featured && <span className="absolute top-1 left-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold text-white flex items-center gap-0.5" style={{ background: accent }}><Star className="h-2.5 w-2.5 fill-current" /></span>}</button>)}</div></CardContent></Card>{lightbox && <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={() => setLightbox(null)}><button onClick={(e) => { e.stopPropagation(); setLightbox(null); }} className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 text-white grid place-items-center hover:bg-white/20"><XIcon className="h-5 w-5" /></button><div className="max-w-2xl w-full max-h-full flex flex-col" onClick={(e) => e.stopPropagation()}><img src={lightbox.image_url} alt={lightbox.title ?? ""} className="w-full max-h-[70vh] object-contain rounded-lg" /><div className="bg-card mt-3 rounded-lg p-4 space-y-2">{lightbox.title && <p className="font-semibold">{lightbox.title}</p>}{lightbox.category && <p className="text-xs text-muted-foreground">{lightbox.category}</p>}{lightbox.description && <p className="text-sm text-muted-foreground">{lightbox.description}</p>}{wa && <Button className="w-full mt-2" style={{ background: "#25D366", color: "white" }} onClick={() => requestQuote(lightbox)}><MessageCircle className="h-4 w-4 mr-2" /> Solicitar orçamento</Button>}</div></div></div>}</>;
+  const wa = waNumber(company.whatsapp);
+  const requestQuote = (p: GalleryPhoto) => {
+    if (!wa) return;
+    const parts = [
+      `✨ Olá, *${company.name}*! 👋`,
+      ``,
+      `Vi este trabalho no site e gostaria de solicitar um orçamento:`,
+      p.title ? `📌 *${p.title}*` : null,
+      p.category ? `🗂️ Categoria: ${p.category}` : null,
+      p.description ? `📝 ${p.description}` : null,
+      ``,
+      `Pode me passar mais informações? 🙏`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+    openWhatsAppLink(waLink(wa, parts));
+  };
+  return (
+    <>
+      <Card className="h-full overflow-hidden border-border/70 shadow-sm">
+        <CardContent className="p-5 md:p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-xl tracking-tight flex items-center gap-2">
+              <ImageIcon className="h-5 w-5" style={{ color: accent }} /> Trabalhos da empresa
+            </h2>
+            <span className="text-xs text-muted-foreground">{photos.length} fotos</span>
+          </div>
+          {categories.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+              <button
+                onClick={() => setCat("all")}
+                className={`shrink-0 px-3 py-1 rounded-full text-xs border ${cat === "all" ? "text-white border-transparent" : "border-border"}`}
+                style={cat === "all" ? { background: primary } : undefined}
+              >
+                Todas
+              </button>
+              {categories.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setCat(c)}
+                  className={`shrink-0 px-3 py-1 rounded-full text-xs border ${cat === c ? "text-white border-transparent" : "border-border"}`}
+                  style={cat === c ? { background: primary } : undefined}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {visible.slice(0, 24).map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setLightbox(p)}
+                className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted group shadow-sm"
+              >
+                <img
+                  src={p.image_url}
+                  alt={p.title ?? ""}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                />
+                {p.featured && (
+                  <span
+                    className="absolute top-1 left-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold text-white flex items-center gap-0.5"
+                    style={{ background: accent }}
+                  >
+                    <Star className="h-2.5 w-2.5 fill-current" />
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightbox(null);
+            }}
+            className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 text-white grid place-items-center hover:bg-white/20"
+          >
+            <XIcon className="h-5 w-5" />
+          </button>
+          <div
+            className="max-w-2xl w-full max-h-full flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={lightbox.image_url}
+              alt={lightbox.title ?? ""}
+              className="w-full max-h-[70vh] object-contain rounded-lg"
+            />
+            <div className="bg-card mt-3 rounded-lg p-4 space-y-2">
+              {lightbox.title && <p className="font-semibold">{lightbox.title}</p>}
+              {lightbox.category && (
+                <p className="text-xs text-muted-foreground">{lightbox.category}</p>
+              )}
+              {lightbox.description && (
+                <p className="text-sm text-muted-foreground">{lightbox.description}</p>
+              )}
+              {wa && (
+                <Button
+                  className="w-full mt-2"
+                  style={{ background: "#25D366", color: "white" }}
+                  onClick={() => requestQuote(lightbox)}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" /> Solicitar orçamento
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 
-function DepositPanel({ booking, phone, primary, accent }: { booking: any; phone: string; primary: string; accent: string }) {
-  const [ref, setRef] = useState(""); const [file, setFile] = useState<File | null>(null); const [sending, setSending] = useState(false); const [sent, setSent] = useState(false);
-  const deposit = Number(booking.deposit_required_cents ?? 0); const total = Number(booking.total_cents ?? 0); const balance = Math.max(0, total - deposit); const pix = booking.pix ?? {};
-  const toBase64 = (f: File) => new Promise<string>((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = reject; r.readAsDataURL(f); });
-  const send = async () => { if (!file && !ref.trim()) { toast.error("Anexe o comprovante ou informe o identificador da transação"); return; } setSending(true); try { if (file && file.size > 5 * 1024 * 1024) throw new Error("Arquivo acima de 5MB"); const res = await fetch("/api/public/deposit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ appointment_id: booking.appointment_id, phone, transaction_ref: ref.trim(), file_base64: file ? await toBase64(file) : "", file_name: file?.name ?? "" }) }); const json = await res.json(); if (!res.ok) throw new Error(json.error || "Falha ao enviar comprovante"); setSent(true); toast.success("Comprovante enviado! Aguarde a confirmação."); } catch (e: any) { toast.error(e.message); } finally { setSending(false); } };
-  return <Card><CardContent className="p-5 space-y-4"><div><h3 className="font-semibold text-lg">Garantia da Reserva</h3><p className="text-sm text-muted-foreground">Para confirmar este horário é necessário realizar um pagamento antecipado.</p></div><div className="rounded-xl border p-3 text-sm space-y-1"><div className="flex justify-between"><span>Valor do serviço</span><span className="font-medium">{brl(total / 100)}</span></div><div className="flex justify-between"><span>Valor do sinal</span><span className="font-semibold" style={{ color: primary }}>{brl(deposit / 100)}</span></div><div className="flex justify-between"><span>Saldo restante</span><span className="font-medium">{brl(balance / 100)}</span></div></div><div className="rounded-xl border p-3 text-sm space-y-2" style={{ borderColor: accent }}><p className="font-semibold">Pagamento via PIX</p>{pix.key ? <><div className="flex items-center gap-2"><code className="flex-1 break-all rounded bg-muted px-2 py-1 text-xs">{pix.key}</code><Button size="sm" variant="outline" onClick={() => { navigator.clipboard?.writeText(pix.key); toast.success("Chave PIX copiada"); }}>Copiar</Button></div>{pix.holder && <p className="text-xs text-muted-foreground">Recebedor: {pix.holder}</p>}{pix.bank && <p className="text-xs text-muted-foreground">Banco: {pix.bank}</p>}{pix.qr_url && <img src={pix.qr_url} alt="QR Code PIX" className="mx-auto h-44 w-44 object-contain rounded-lg border" />}</> : <p className="text-xs text-muted-foreground">Entre em contato com o estabelecimento para receber os dados de pagamento.</p>}<p className="text-xs text-muted-foreground">O pagamento é feito diretamente no seu banco. O sistema apenas informa os dados.</p></div>{sent ? <div className="rounded-xl border p-3 text-sm bg-emerald-50 text-emerald-800">Comprovante recebido! Assim que a equipe aprovar, sua reserva será confirmada.</div> : <div className="space-y-2"><Label className="text-sm">Comprovante (imagem ou PDF)</Label><Input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /><Label className="text-sm">Identificador da transação (opcional)</Label><Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Ex.: E1234567890" /><Button className="w-full" style={{ background: primary }} disabled={sending} onClick={send}>{sending ? "Enviando…" : "Enviar comprovante"}</Button></div>}</CardContent></Card>;
+function DepositPanel({
+  booking,
+  phone,
+  primary,
+  accent,
+}: {
+  booking: any;
+  phone: string;
+  primary: string;
+  accent: string;
+}) {
+  const [ref, setRef] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const deposit = Number(booking.deposit_required_cents ?? 0);
+  const total = Number(booking.total_cents ?? 0);
+  const balance = Math.max(0, total - deposit);
+  const pix = booking.pix ?? {};
+  const toBase64 = (f: File) =>
+    new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(f);
+    });
+  const send = async () => {
+    if (!file && !ref.trim()) {
+      toast.error("Anexe o comprovante ou informe o identificador da transação");
+      return;
+    }
+    setSending(true);
+    try {
+      if (file && file.size > 5 * 1024 * 1024) throw new Error("Arquivo acima de 5MB");
+      const res = await fetch("/api/public/deposit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          appointment_id: booking.appointment_id,
+          phone,
+          transaction_ref: ref.trim(),
+          file_base64: file ? await toBase64(file) : "",
+          file_name: file?.name ?? "",
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Falha ao enviar comprovante");
+      setSent(true);
+      toast.success("Comprovante enviado! Aguarde a confirmação.");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSending(false);
+    }
+  };
+  return (
+    <Card>
+      <CardContent className="p-5 space-y-4">
+        <div>
+          <h3 className="font-semibold text-lg">Garantia da Reserva</h3>
+          <p className="text-sm text-muted-foreground">
+            Para confirmar este horário é necessário realizar um pagamento antecipado.
+          </p>
+        </div>
+        <div className="rounded-xl border p-3 text-sm space-y-1">
+          <div className="flex justify-between">
+            <span>Valor do serviço</span>
+            <span className="font-medium">{brl(total / 100)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Valor do sinal</span>
+            <span className="font-semibold" style={{ color: primary }}>
+              {brl(deposit / 100)}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span>Saldo restante</span>
+            <span className="font-medium">{brl(balance / 100)}</span>
+          </div>
+        </div>
+        <div className="rounded-xl border p-3 text-sm space-y-2" style={{ borderColor: accent }}>
+          <p className="font-semibold">Pagamento via PIX</p>
+          {pix.key ? (
+            <>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 break-all rounded bg-muted px-2 py-1 text-xs">
+                  {pix.key}
+                </code>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(pix.key);
+                    toast.success("Chave PIX copiada");
+                  }}
+                >
+                  Copiar
+                </Button>
+              </div>
+              {pix.holder && (
+                <p className="text-xs text-muted-foreground">Recebedor: {pix.holder}</p>
+              )}
+              {pix.bank && <p className="text-xs text-muted-foreground">Banco: {pix.bank}</p>}
+              {pix.qr_url && (
+                <img
+                  src={pix.qr_url}
+                  alt="QR Code PIX"
+                  className="mx-auto h-44 w-44 object-contain rounded-lg border"
+                />
+              )}
+            </>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Entre em contato com o estabelecimento para receber os dados de pagamento.
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            O pagamento é feito diretamente no seu banco. O sistema apenas informa os dados.
+          </p>
+        </div>
+        {sent ? (
+          <div className="rounded-xl border p-3 text-sm bg-emerald-50 text-emerald-800">
+            Comprovante recebido! Assim que a equipe aprovar, sua reserva será confirmada.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Label className="text-sm">Comprovante (imagem ou PDF)</Label>
+            <Input
+              type="file"
+              accept="image/*,application/pdf"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
+            <Label className="text-sm">Identificador da transação (opcional)</Label>
+            <Input
+              value={ref}
+              onChange={(e) => setRef(e.target.value)}
+              placeholder="Ex.: E1234567890"
+            />
+            <Button
+              className="w-full"
+              style={{ background: primary }}
+              disabled={sending}
+              onClick={send}
+            >
+              {sending ? "Enviando…" : "Enviar comprovante"}
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }

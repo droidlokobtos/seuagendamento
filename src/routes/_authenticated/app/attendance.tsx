@@ -12,16 +12,46 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { brl, dateBR } from "@/lib/format";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { brl, dateBR, waLink, waNumber } from "@/lib/format";
 import { toast } from "sonner";
 import {
-  CalendarCheck, ShieldAlert, Users, TrendingDown, Search, Plus, Trash2, MessageCircle, CheckCircle2, Clock,
+  CalendarCheck,
+  ShieldAlert,
+  Users,
+  TrendingDown,
+  Search,
+  Plus,
+  Trash2,
+  MessageCircle,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 import {
-  ATTENDANCE_EVENTS, CLASSIFICATION, RISK_ACTIONS, WAITLIST_PERIODS, WAITLIST_STATUS,
-  useAttendanceSettings, useSaveAttendanceSettings, useReliability, useAttendanceEvents, useWaitlist,
+  ATTENDANCE_EVENTS,
+  CLASSIFICATION,
+  RISK_ACTIONS,
+  WAITLIST_PERIODS,
+  WAITLIST_STATUS,
+  useAttendanceSettings,
+  useSaveAttendanceSettings,
+  useReliability,
+  useAttendanceEvents,
+  useWaitlist,
   type AttendanceSettings,
 } from "@/lib/attendance";
 
@@ -30,7 +60,10 @@ export const Route = createFileRoute("/_authenticated/app/attendance")({
   head: () => ({
     meta: [
       { title: "Controle de Comparecimento | Painel" },
-      { name: "description", content: "Faltas, confiabilidade dos clientes e lista de espera do seu negócio." },
+      {
+        name: "description",
+        content: "Faltas, confiabilidade dos clientes e lista de espera do seu negócio.",
+      },
     ],
   }),
 });
@@ -64,7 +97,9 @@ function Attendance() {
     const lostCents = [...noShows, ...lateCancels].reduce((s, e) => s + (e.amount_cents ?? 0), 0);
 
     // Prejuízo evitado: valor dos atendimentos concluídos por clientes que já faltaram
-    const riskIds = new Set(rows.filter((r) => r.classification !== "reliable").map((r) => r.customer_id));
+    const riskIds = new Set(
+      rows.filter((r) => r.classification !== "reliable").map((r) => r.customer_id),
+    );
     const savedCents = completed
       .filter((e) => riskIds.has(e.customer_id))
       .reduce((s, e) => s + (e.amount_cents ?? 0), 0);
@@ -105,20 +140,46 @@ function Attendance() {
         {/* ---------------- Dashboard ---------------- */}
         <TabsContent value="dashboard" className="mt-4 space-y-4">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat label="Taxa de comparecimento" value={`${metrics.rate}%`} icon={<CheckCircle2 className="h-4 w-4" />} />
-            <Stat label="Faltas registradas" value={String(metrics.noShows)} icon={<ShieldAlert className="h-4 w-4" />} tone="danger" />
-            <Stat label="Prejuízo com faltas" value={brl(metrics.lostCents / 100)} icon={<TrendingDown className="h-4 w-4" />} tone="danger" />
-            <Stat label="Prejuízo evitado" value={brl(metrics.savedCents / 100)} icon={<Users className="h-4 w-4" />} tone="success" />
+            <Stat
+              label="Taxa de comparecimento"
+              value={`${metrics.rate}%`}
+              icon={<CheckCircle2 className="h-4 w-4" />}
+            />
+            <Stat
+              label="Faltas registradas"
+              value={String(metrics.noShows)}
+              icon={<ShieldAlert className="h-4 w-4" />}
+              tone="danger"
+            />
+            <Stat
+              label="Prejuízo com faltas"
+              value={brl(metrics.lostCents / 100)}
+              icon={<TrendingDown className="h-4 w-4" />}
+              tone="danger"
+            />
+            <Stat
+              label="Prejuízo evitado"
+              value={brl(metrics.savedCents / 100)}
+              icon={<Users className="h-4 w-4" />}
+              tone="success"
+            />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
             {(["reliable", "attention", "high_risk"] as const).map((k) => {
               const meta = CLASSIFICATION[k];
-              const count = k === "reliable" ? metrics.reliable : k === "attention" ? metrics.attention : metrics.highRisk;
+              const count =
+                k === "reliable"
+                  ? metrics.reliable
+                  : k === "attention"
+                    ? metrics.attention
+                    : metrics.highRisk;
               return (
                 <Card key={k}>
                   <CardContent className="p-4">
-                    <p className="text-sm font-medium">{meta.emoji} {meta.label}</p>
+                    <p className="text-sm font-medium">
+                      {meta.emoji} {meta.label}
+                    </p>
                     <p className="mt-1 text-2xl font-semibold">{count}</p>
                     <p className="mt-1 text-xs text-muted-foreground">{meta.description}</p>
                   </CardContent>
@@ -128,11 +189,19 @@ function Attendance() {
           </div>
 
           <Card>
-            <CardHeader><CardTitle className="text-base">Resumo do período analisado</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-base">Resumo do período analisado</CardTitle>
+            </CardHeader>
             <CardContent className="grid gap-3 text-sm sm:grid-cols-3">
-              <p>Atendimentos concluídos: <b>{metrics.completed}</b></p>
-              <p>Cancelamentos em cima da hora: <b>{metrics.lateCancels}</b></p>
-              <p>Janela considerada: <b>{settings?.lookback_days ?? 180} dias</b></p>
+              <p>
+                Atendimentos concluídos: <b>{metrics.completed}</b>
+              </p>
+              <p>
+                Cancelamentos em cima da hora: <b>{metrics.lateCancels}</b>
+              </p>
+              <p>
+                Janela considerada: <b>{settings?.lookback_days ?? 180} dias</b>
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -144,14 +213,23 @@ function Attendance() {
 
         {/* ---------------- Histórico ---------------- */}
         <TabsContent value="historico" className="mt-4 space-y-2">
-          {!events.length && <p className="py-10 text-center text-sm text-muted-foreground">Nenhum registro ainda.</p>}
+          {!events.length && (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              Nenhum registro ainda.
+            </p>
+          )}
           {events.slice(0, 200).map((e) => {
             const meta = ATTENDANCE_EVENTS[e.event] ?? { label: e.event, emoji: "•", tone: "" };
             const c: any = cmap.get(e.customer_id);
             return (
-              <div key={e.id} className="flex items-center justify-between rounded-md border p-3 text-sm">
+              <div
+                key={e.id}
+                className="flex items-center justify-between rounded-md border p-3 text-sm"
+              >
                 <div>
-                  <p className="font-medium">{meta.emoji} {c?.name ?? "Cliente"}</p>
+                  <p className="font-medium">
+                    {meta.emoji} {c?.name ?? "Cliente"}
+                  </p>
                   <p className={`text-xs ${meta.tone}`}>
                     {meta.label} · {dateBR(e.occurred_at)}
                     {e.hours_before != null && e.event !== "completed"
@@ -160,7 +238,9 @@ function Attendance() {
                   </p>
                 </div>
                 {e.amount_cents > 0 && (
-                  <Badge variant="secondary" className="text-[10px]">{brl(e.amount_cents / 100)}</Badge>
+                  <Badge variant="secondary" className="text-[10px]">
+                    {brl(e.amount_cents / 100)}
+                  </Badge>
                 )}
               </div>
             );
@@ -181,12 +261,30 @@ function Attendance() {
   );
 }
 
-function Stat({ label, value, icon, tone }: { label: string; value: string; icon?: React.ReactNode; tone?: "danger" | "success" }) {
-  const color = tone === "danger" ? "text-destructive" : tone === "success" ? "text-emerald-600" : "text-primary";
+function Stat({
+  label,
+  value,
+  icon,
+  tone,
+}: {
+  label: string;
+  value: string;
+  icon?: React.ReactNode;
+  tone?: "danger" | "success";
+}) {
+  const color =
+    tone === "danger"
+      ? "text-destructive"
+      : tone === "success"
+        ? "text-emerald-600"
+        : "text-primary";
   return (
     <Card>
       <CardContent className="p-4">
-        <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className={color}>{icon}</span>{label}</p>
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span className={color}>{icon}</span>
+          {label}
+        </p>
         <p className="mt-1 text-xl font-semibold">{value}</p>
       </CardContent>
     </Card>
@@ -195,7 +293,15 @@ function Stat({ label, value, icon, tone }: { label: string; value: string; icon
 
 /* ============================ Clientes ============================ */
 
-function ClientsTab({ rows, cmap, loading }: { rows: any[]; cmap: Map<string, any>; loading: boolean }) {
+function ClientsTab({
+  rows,
+  cmap,
+  loading,
+}: {
+  rows: any[];
+  cmap: Map<string, any>;
+  loading: boolean;
+}) {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("todos");
 
@@ -216,10 +322,17 @@ function ClientsTab({ rows, cmap, loading }: { rows: any[]; cmap: Map<string, an
       <div className="flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar cliente…" className="pl-9" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar cliente…"
+            className="pl-9"
+          />
         </div>
         <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-[190px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[190px]">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todas as classificações</SelectItem>
             <SelectItem value="reliable">🟢 Confiável</SelectItem>
@@ -247,18 +360,25 @@ function ClientsTab({ rows, cmap, loading }: { rows: any[]; cmap: Map<string, an
                   <div className="min-w-0">
                     <p className="font-medium">{c?.name ?? "Cliente"}</p>
                     <p className="text-xs text-muted-foreground">
-                      {r.completed} presenças · {r.no_shows} faltas · {r.late_cancels} cancelamentos em cima da hora
+                      {r.completed} presenças · {r.no_shows} faltas · {r.late_cancels} cancelamentos
+                      em cima da hora
                     </p>
                   </div>
-                  <Badge variant="outline" className={meta.badge}>{meta.emoji} {meta.label}</Badge>
+                  <Badge variant="outline" className={meta.badge}>
+                    {meta.emoji} {meta.label}
+                  </Badge>
                 </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div>
-                    <p className="mb-1 text-[11px] text-muted-foreground">Confiabilidade: {r.score}/100</p>
+                    <p className="mb-1 text-[11px] text-muted-foreground">
+                      Confiabilidade: {r.score}/100
+                    </p>
                     <Progress value={r.score} className="h-2" />
                   </div>
                   <div>
-                    <p className="mb-1 text-[11px] text-muted-foreground">Taxa de comparecimento: {r.attendance_rate}%</p>
+                    <p className="mb-1 text-[11px] text-muted-foreground">
+                      Taxa de comparecimento: {r.attendance_rate}%
+                    </p>
                     <Progress value={Number(r.attendance_rate)} className="h-2" />
                   </div>
                 </div>
@@ -278,14 +398,23 @@ function WaitlistTab({ companyId }: { companyId?: string }) {
   const { data: entries = [] } = useWaitlist(companyId);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    customer_name: "", phone: "", service_id: "", preferred_date: "", preferred_period: "any", notes: "",
+    customer_name: "",
+    phone: "",
+    service_id: "",
+    preferred_date: "",
+    preferred_period: "any",
+    notes: "",
   });
 
   const { data: services = [] } = useQuery({
     enabled: !!companyId,
     queryKey: ["waitlist-services", companyId],
     queryFn: async () => {
-      const { data } = await supabase.from("services").select("id,name").eq("company_id", companyId!).eq("active", true);
+      const { data } = await supabase
+        .from("services")
+        .select("id,name")
+        .eq("company_id", companyId!)
+        .eq("active", true);
       return data ?? [];
     },
   });
@@ -306,7 +435,14 @@ function WaitlistTab({ companyId }: { companyId?: string }) {
     },
     onSuccess: () => {
       toast.success("Cliente adicionado à lista de espera.");
-      setForm({ customer_name: "", phone: "", service_id: "", preferred_date: "", preferred_period: "any", notes: "" });
+      setForm({
+        customer_name: "",
+        phone: "",
+        service_id: "",
+        preferred_date: "",
+        preferred_period: "any",
+        notes: "",
+      });
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["waitlist", companyId] });
     },
@@ -317,7 +453,10 @@ function WaitlistTab({ companyId }: { companyId?: string }) {
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase
         .from("waitlist_entries")
-        .update({ status, notified_at: status === "notified" ? new Date().toISOString() : null } as any)
+        .update({
+          status,
+          notified_at: status === "notified" ? new Date().toISOString() : null,
+        } as any)
         .eq("id", id);
       if (error) throw error;
     },
@@ -333,10 +472,10 @@ function WaitlistTab({ companyId }: { companyId?: string }) {
   });
 
   const waUrl = (e: any) => {
-    const digits = (e.phone ?? "").replace(/\D/g, "");
-    if (!digits) return null;
+    const phone = waNumber(e.phone);
+    if (!phone) return null;
     const msg = `Oi ${e.customer_name}! 👋 Abriu um horário aqui na agenda${e.services?.name ? ` para *${e.services.name}*` : ""}. Quer garantir? 😊`;
-    return `https://api.whatsapp.com/send?phone=${digits.startsWith("55") ? digits : "55" + digits}&text=${encodeURIComponent(msg)}`;
+    return waLink(phone, msg);
   };
 
   return (
@@ -347,49 +486,105 @@ function WaitlistTab({ companyId }: { companyId?: string }) {
         </p>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm"><Plus className="mr-1.5 h-4 w-4" /> Adicionar</Button>
+            <Button size="sm">
+              <Plus className="mr-1.5 h-4 w-4" /> Adicionar
+            </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Novo cliente na lista de espera</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Novo cliente na lista de espera</DialogTitle>
+            </DialogHeader>
             <div className="space-y-3">
-              <div><Label>Nome</Label><Input value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} /></div>
-              <div><Label>WhatsApp</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" /></div>
+              <div>
+                <Label>Nome</Label>
+                <Input
+                  value={form.customer_name}
+                  onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>WhatsApp</Label>
+                <Input
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
               <div>
                 <Label>Serviço desejado</Label>
-                <Select value={form.service_id || "none"} onValueChange={(v) => setForm({ ...form, service_id: v === "none" ? "" : v })}>
-                  <SelectTrigger><SelectValue placeholder="Qualquer" /></SelectTrigger>
+                <Select
+                  value={form.service_id || "none"}
+                  onValueChange={(v) => setForm({ ...form, service_id: v === "none" ? "" : v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Qualquer" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Qualquer serviço</SelectItem>
-                    {services.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    {services.map((s: any) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><Label>Data preferida</Label><Input type="date" value={form.preferred_date} onChange={(e) => setForm({ ...form, preferred_date: e.target.value })} /></div>
+                <div>
+                  <Label>Data preferida</Label>
+                  <Input
+                    type="date"
+                    value={form.preferred_date}
+                    onChange={(e) => setForm({ ...form, preferred_date: e.target.value })}
+                  />
+                </div>
                 <div>
                   <Label>Período</Label>
-                  <Select value={form.preferred_period} onValueChange={(v) => setForm({ ...form, preferred_period: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={form.preferred_period}
+                    onValueChange={(v) => setForm({ ...form, preferred_period: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(WAITLIST_PERIODS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                      {Object.entries(WAITLIST_PERIODS).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>
+                          {v}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-              <div><Label>Observações</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
+              <div>
+                <Label>Observações</Label>
+                <Textarea
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  rows={2}
+                />
+              </div>
             </div>
             <DialogFooter>
-              <Button onClick={() => create.mutate()} disabled={create.isPending}>Salvar</Button>
+              <Button onClick={() => create.mutate()} disabled={create.isPending}>
+                Salvar
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      {!entries.length && <p className="py-10 text-center text-sm text-muted-foreground">Lista de espera vazia.</p>}
+      {!entries.length && (
+        <p className="py-10 text-center text-sm text-muted-foreground">Lista de espera vazia.</p>
+      )}
 
       <div className="space-y-2">
         {entries.map((e: any) => (
-          <div key={e.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3 text-sm">
+          <div
+            key={e.id}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3 text-sm"
+          >
             <div className="min-w-0">
               <p className="font-medium">{e.customer_name}</p>
               <p className="text-xs text-muted-foreground">
@@ -400,16 +595,27 @@ function WaitlistTab({ companyId }: { companyId?: string }) {
               {e.notes && <p className="mt-1 text-xs italic text-muted-foreground">"{e.notes}"</p>}
             </div>
             <div className="flex items-center gap-1.5">
-              <Badge variant="secondary" className="text-[10px]">{WAITLIST_STATUS[e.status]}</Badge>
+              <Badge variant="secondary" className="text-[10px]">
+                {WAITLIST_STATUS[e.status]}
+              </Badge>
               {waUrl(e) && (
                 <Button size="sm" variant="outline" asChild>
-                  <a href={waUrl(e)!} target="_blank" rel="noopener noreferrer" onClick={() => setStatus.mutate({ id: e.id, status: "notified" })}>
+                  <a
+                    href={waUrl(e)!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setStatus.mutate({ id: e.id, status: "notified" })}
+                  >
                     <MessageCircle className="h-4 w-4" />
                   </a>
                 </Button>
               )}
               {e.status !== "converted" && (
-                <Button size="sm" variant="outline" onClick={() => setStatus.mutate({ id: e.id, status: "converted" })}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setStatus.mutate({ id: e.id, status: "converted" })}
+                >
                   <CheckCircle2 className="h-4 w-4" />
                 </Button>
               )}
@@ -426,7 +632,13 @@ function WaitlistTab({ companyId }: { companyId?: string }) {
 
 /* ============================ Regras ============================ */
 
-function SettingsTab({ companyId, settings }: { companyId?: string; settings: AttendanceSettings | null }) {
+function SettingsTab({
+  companyId,
+  settings,
+}: {
+  companyId?: string;
+  settings: AttendanceSettings | null;
+}) {
   const save = useSaveAttendanceSettings(companyId);
   const [f, setF] = useState<Partial<AttendanceSettings>>({});
   const [reminders, setReminders] = useState("24, 3");
@@ -445,41 +657,87 @@ function SettingsTab({ companyId, settings }: { companyId?: string; settings: At
       .split(",")
       .map((x) => parseInt(x.trim(), 10))
       .filter((n) => Number.isFinite(n) && n > 0 && n <= 720);
-    save.mutate(
-      { ...f, reminder_offsets_hours: offsets.length ? offsets : [24, 3] } as any,
-      {
-        onSuccess: () => toast.success("Regras salvas."),
-        onError: (e: any) => toast.error(e.message ?? "Erro ao salvar."),
-      },
-    );
+    save.mutate({ ...f, reminder_offsets_hours: offsets.length ? offsets : [24, 3] } as any, {
+      onSuccess: () => toast.success("Regras salvas."),
+      onError: (e: any) => toast.error(e.message ?? "Erro ao salvar."),
+    });
   };
 
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader><CardTitle className="text-base">Cálculo da confiabilidade</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base">Cálculo da confiabilidade</CardTitle>
+        </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">
-          <Num label="Período analisado (dias)" value={v("lookback_days", 180)} onChange={(n) => setF({ ...f, lookback_days: n })} />
-          <Num label="Cancelamento é 'em cima da hora' abaixo de (horas)" value={v("late_cancel_hours", 24)} onChange={(n) => setF({ ...f, late_cancel_hours: n })} />
-          <Num label="Pontos por presença" value={v("weight_completed", 4)} onChange={(n) => setF({ ...f, weight_completed: n })} />
-          <Num label="Pontos por falta" value={v("weight_no_show", -25)} onChange={(n) => setF({ ...f, weight_no_show: n })} />
-          <Num label="Pontos por cancelamento em cima da hora" value={v("weight_late_cancel", -12)} onChange={(n) => setF({ ...f, weight_late_cancel: n })} />
-          <Num label="Pontos por cancelamento com antecedência" value={v("weight_cancel", -4)} onChange={(n) => setF({ ...f, weight_cancel: n })} />
-          <Num label="Abaixo desta pontuação = Atenção" value={v("attention_score", 70)} onChange={(n) => setF({ ...f, attention_score: n })} />
-          <Num label="Abaixo desta pontuação = Alto risco" value={v("risk_score", 40)} onChange={(n) => setF({ ...f, risk_score: n })} />
+          <Num
+            label="Período analisado (dias)"
+            value={v("lookback_days", 180)}
+            onChange={(n) => setF({ ...f, lookback_days: n })}
+          />
+          <Num
+            label="Cancelamento é 'em cima da hora' abaixo de (horas)"
+            value={v("late_cancel_hours", 24)}
+            onChange={(n) => setF({ ...f, late_cancel_hours: n })}
+          />
+          <Num
+            label="Pontos por presença"
+            value={v("weight_completed", 4)}
+            onChange={(n) => setF({ ...f, weight_completed: n })}
+          />
+          <Num
+            label="Pontos por falta"
+            value={v("weight_no_show", -25)}
+            onChange={(n) => setF({ ...f, weight_no_show: n })}
+          />
+          <Num
+            label="Pontos por cancelamento em cima da hora"
+            value={v("weight_late_cancel", -12)}
+            onChange={(n) => setF({ ...f, weight_late_cancel: n })}
+          />
+          <Num
+            label="Pontos por cancelamento com antecedência"
+            value={v("weight_cancel", -4)}
+            onChange={(n) => setF({ ...f, weight_cancel: n })}
+          />
+          <Num
+            label="Abaixo desta pontuação = Atenção"
+            value={v("attention_score", 70)}
+            onChange={(n) => setF({ ...f, attention_score: n })}
+          />
+          <Num
+            label="Abaixo desta pontuação = Alto risco"
+            value={v("risk_score", 40)}
+            onChange={(n) => setF({ ...f, risk_score: n })}
+          />
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Regra para clientes com muitas faltas</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base">Regra para clientes com muitas faltas</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-3">
-          <Num label="Faltas necessárias para aplicar a regra" value={v("min_no_shows_for_action", 2)} onChange={(n) => setF({ ...f, min_no_shows_for_action: n })} />
+          <Num
+            label="Faltas necessárias para aplicar a regra"
+            value={v("min_no_shows_for_action", 2)}
+            onChange={(n) => setF({ ...f, min_no_shows_for_action: n })}
+          />
           <div>
             <Label>O que fazer</Label>
-            <Select value={v("risk_action", "require_confirmation")} onValueChange={(val) => setF({ ...f, risk_action: val })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select
+              value={v("risk_action", "require_confirmation")}
+              onValueChange={(val) => setF({ ...f, risk_action: val })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {Object.entries(RISK_ACTIONS).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
+                {Object.entries(RISK_ACTIONS).map(([k, label]) => (
+                  <SelectItem key={k} value={k}>
+                    {label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -490,33 +748,60 @@ function SettingsTab({ companyId, settings }: { companyId?: string; settings: At
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Lembretes e lista de espera</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base">Lembretes e lista de espera</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-3">
           <div>
-            <Label className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> Lembretes antes do atendimento (horas)</Label>
-            <Input value={reminders} onChange={(e) => setReminders(e.target.value)} placeholder="24, 3" />
+            <Label className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" /> Lembretes antes do atendimento (horas)
+            </Label>
+            <Input
+              value={reminders}
+              onChange={(e) => setReminders(e.target.value)}
+              placeholder="24, 3"
+            />
             <p className="mt-1 text-xs text-muted-foreground">Separe por vírgula. Ex.: 48, 24, 3</p>
           </div>
           <div className="flex items-center justify-between rounded-md border p-3">
             <div>
               <p className="text-sm font-medium">Lista de espera automática</p>
-              <p className="text-xs text-muted-foreground">Avisar quando um horário for liberado.</p>
+              <p className="text-xs text-muted-foreground">
+                Avisar quando um horário for liberado.
+              </p>
             </div>
-            <Switch checked={v("waitlist_enabled", true)} onCheckedChange={(c) => setF({ ...f, waitlist_enabled: c })} />
+            <Switch
+              checked={v("waitlist_enabled", true)}
+              onCheckedChange={(c) => setF({ ...f, waitlist_enabled: c })}
+            />
           </div>
         </CardContent>
       </Card>
 
-      <Button onClick={submit} disabled={save.isPending}>Salvar regras</Button>
+      <Button onClick={submit} disabled={save.isPending}>
+        Salvar regras
+      </Button>
     </div>
   );
 }
 
-function Num({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
+function Num({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (n: number) => void;
+}) {
   return (
     <div>
       <Label>{label}</Label>
-      <Input type="number" value={value} onChange={(e) => onChange(parseInt(e.target.value || "0", 10))} />
+      <Input
+        type="number"
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value || "0", 10))}
+      />
     </div>
   );
 }
