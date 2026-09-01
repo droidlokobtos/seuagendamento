@@ -223,7 +223,11 @@ function Agenda() {
       const price = svc?.price_cents ?? (edit?.id ? edit.total_cents : 0) ?? 0;
       const starts = new Date(v.starts_at);
       const ends = new Date(starts.getTime() + dur * 60_000);
-      const err = validate(starts, ends, v.staff_id || null, edit?.id || undefined);
+      if (!v.customer_id) throw new Error("Selecione o cliente.");
+      if (!v.staff_id) throw new Error("Selecione o profissional.");
+      if (!edit?.id && !v.service_id) throw new Error("Selecione o serviço.");
+      if (!v.starts_at || Number.isNaN(starts.getTime())) throw new Error("Informe uma data e horário válidos.");
+      const err = validate(starts, ends, v.staff_id, edit?.id || undefined);
       if (err) throw new Error(err);
       const payload = {
         company_id: companyId,
@@ -236,22 +240,28 @@ function Agenda() {
         notes: v.notes || null,
       };
       if (edit?.id) {
-        const { error } = await supabase.from("appointments").update(payload).eq("id", edit.id);
+        const { error } = await supabase.from("appointments").update(payload).eq("id", edit.id).eq("company_id", companyId);
         if (error) throw error;
         if (v.service_id) {
-          await supabase.from("appointment_services").delete().eq("appointment_id", edit.id);
-          await supabase.from("appointment_services").insert({
+          const { error: deleteServiceError } = await supabase.from("appointment_services").delete().eq("appointment_id", edit.id);
+          if (deleteServiceError) throw deleteServiceError;
+          const { error: serviceError } = await supabase.from("appointment_services").insert({
             appointment_id: edit.id, service_id: v.service_id, price_cents: price, duration_min: dur,
           });
+          if (serviceError) throw serviceError;
         }
         return { id: edit.id, isNew: false, ...payload };
       }
       const { data: appt, error } = await supabase.from("appointments").insert(payload).select("id").single();
       if (error) throw error;
       if (v.service_id) {
-        await supabase.from("appointment_services").insert({
+        const { error: serviceError } = await supabase.from("appointment_services").insert({
           appointment_id: appt!.id, service_id: v.service_id, price_cents: price, duration_min: dur,
         });
+        if (serviceError) {
+          await supabase.from("appointments").delete().eq("id", appt!.id).eq("company_id", companyId);
+          throw serviceError;
+        }
       }
       return { id: appt!.id, isNew: true, ...payload, service_name: svc?.name };
     },
@@ -697,7 +707,10 @@ function ApptDialog({ edit, seedDate, customers, staff, services, defaultStaff, 
         <div><Label>Observações</Label><Textarea value={f.notes} onChange={(e) => setF((prev: any) => ({ ...prev, notes: e.target.value }))} /></div>
       </div>
       <DialogFooter>
-        <Button onClick={() => { try { onSave(f); } catch (err) { console.error("[agenda] erro ao salvar agendamento:", err); toast.error("Não foi possível salvar. Tente novamente."); } }} disabled={loading}>Salvar</Button>
+        <Button
+          onClick={() => onSave(f)}
+          disabled={loading || !f.customer_id || !f.staff_id || (!edit && !f.service_id) || !f.starts_at}
+        >{loading ? "Salvando..." : "Salvar"}</Button>
       </DialogFooter>
     </DialogContent>
   );
