@@ -1,0 +1,47 @@
+name: Smart agenda gap insights
+on:
+  push:
+    paths: ['.github/workflows/smart-agenda-gaps.yml']
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/routes/_authenticated/app/agenda.tsx')
+          s=p.read_text()
+          s=s.replace('ChevronLeft, ChevronRight, Plus, MessageCircle, Calendar as CalIcon, Check, CheckCheck, X, Play', 'ChevronLeft, ChevronRight, Plus, MessageCircle, Calendar as CalIcon, Check, CheckCheck, X, Play, Sparkles, Clock3')
+          needle='''  const activeStaffName = useMemo(\n    () => (staffFilter ? (staff as any[]).find((s) => s.id === staffFilter)?.name : null),\n    [staff, staffFilter],\n  );'''
+          insert=needle+'''\n\n  const smartGaps = useMemo(() => {\n    if (view !== "day") return [] as { start: Date; end: Date; minutes: number }[];\n    const h = (hours as any[]).find((x) => x.weekday === anchor.getDay());\n    if (!h || h.closed) return [];\n    const [sh, sm] = String(h.start_time).split(":").map(Number);\n    const [eh, em] = String(h.end_time).split(":").map(Number);\n    const open = new Date(anchor); open.setHours(sh, sm, 0, 0);\n    const close = new Date(anchor); close.setHours(eh, em, 0, 0);\n    const busy = (appts as any[]).filter((a) => !FREED_STATUSES.includes(a.status)).map((a) => ({ start: new Date(a.starts_at), end: new Date(a.ends_at) })).sort((a,b) => a.start.getTime()-b.start.getTime());\n    const gaps: { start: Date; end: Date; minutes: number }[] = [];\n    let cursor = open;\n    for (const b of busy) {\n      if (b.end <= open || b.start >= close) continue;\n      const bs = b.start < open ? open : b.start;\n      if (bs.getTime() > cursor.getTime()) {\n        const minutes = Math.floor((bs.getTime()-cursor.getTime())/60000);\n        if (minutes >= 30) gaps.push({ start: new Date(cursor), end: new Date(bs), minutes });\n      }\n      if (b.end.getTime() > cursor.getTime()) cursor = b.end;\n    }\n    if (cursor.getTime() < close.getTime()) {\n      const minutes = Math.floor((close.getTime()-cursor.getTime())/60000);\n      if (minutes >= 30) gaps.push({ start: new Date(cursor), end: new Date(close), minutes });\n    }\n    return gaps.slice(0, 6);\n  }, [view, anchor, hours, appts]);'''
+          if needle not in s: raise SystemExit('activeStaffName anchor not found')
+          s=s.replace(needle,insert,1)
+          marker='''  const validate = (starts: Date, ends: Date, staff_id: string | null, ignoreId?: string) => {'''
+          helper='''  const openGapBooking = (start: Date) => {\n    setEdit(null);\n    setOpen(true);\n    setTimeout(() => {\n      const input = document.querySelector<HTMLInputElement>('input[name="starts_at"]');\n      if (input) { input.value = toLocalInput(start); input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); }\n    }, 0);\n  };\n\n'''
+          s=s.replace(marker,helper+marker,1)
+          # Insert insight before first major agenda content card by locating return and first grid/container marker conservatively.
+          target='''      <div className="flex flex-wrap items-center justify-between gap-3">'''
+          panel='''      {view === "day" && smartGaps.length > 0 && (\n        <Card className="border-dashed">\n          <CardContent className="p-4">\n            <div className="mb-3 flex items-center gap-2"><Sparkles className="h-4 w-4"/><div><p className="font-medium">Agenda inteligente</p><p className="text-xs text-muted-foreground">Horários livres de pelo menos 30 minutos encontrados neste dia.</p></div></div>\n            <div className="flex flex-wrap gap-2">{smartGaps.map((g,i)=><Button key={i} type="button" variant="outline" size="sm" onClick={()=>openGapBooking(g.start)}><Clock3 className="mr-1 h-3.5 w-3.5"/>{fmtTime(g.start)}–{fmtTime(g.end)} · {g.minutes} min</Button>)}</div>\n          </CardContent>\n        </Card>\n      )}\n'''
+          # Find JSX return section and place panel after heading controls if exact target exists; otherwise before first Card after return.
+          if target in s:
+            s=s.replace(target,panel+target,1)
+          else:
+            idx=s.find('return (')
+            if idx<0: raise SystemExit('return not found')
+            pos=s.find('<Card',idx)
+            if pos<0: raise SystemExit('card not found')
+            s=s[:pos]+panel+s[pos:]
+          p.write_text(s)
+          PY
+          bun install --frozen-lockfile
+          bun run build
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/_authenticated/app/agenda.tsx
+          git commit -m 'feat: surface smart agenda gaps'
+          git push
