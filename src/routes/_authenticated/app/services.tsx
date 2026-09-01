@@ -22,14 +22,14 @@ export const Route = createFileRoute("/_authenticated/app/services")({ component
 type S = {
   id: string; name: string; description: string | null;
   duration_min: number; price_cents: number; category: string | null;
-  color: string | null; active: boolean; photo_url: string | null;
+  color: string | null; active: boolean; show_on_booking: boolean; photo_url: string | null;
   photo_position: string | null; sort_order: number;
   has_commission: boolean; commission_type: string; commission_value: number;
 };
 
 const EMPTY: Partial<S> = {
   name: "", description: "", duration_min: 30, price_cents: 0,
-  category: "", color: "#8b7355", active: true, photo_url: null,
+  category: "", color: "#8b7355", active: true, show_on_booking: true, photo_url: null,
   photo_position: "center center", sort_order: 0,
   has_commission: false, commission_type: "percent", commission_value: 0,
 };
@@ -227,7 +227,7 @@ function Services() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Serviços</h1>
-          <p className="text-sm text-muted-foreground">Cadastre os serviços oferecidos.</p>
+          <p className="text-sm text-muted-foreground">Cadastre os serviços oferecidos e escolha quais aparecem no link do cliente.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {canReorder && (
@@ -299,6 +299,7 @@ function Services() {
                           <p className="font-medium truncate">{s.name}</p>
                         </div>
                         {s.category && <p className="text-xs text-muted-foreground mt-0.5">{s.category}</p>}
+                        <p className={`text-xs mt-1 ${s.show_on_booking === false ? "text-amber-600" : "text-muted-foreground"}`}>{s.show_on_booking === false ? "Oculto no link do cliente" : "Visível no link do cliente"}</p>
                       </div>
                     </div>
                     <div className="flex gap-1">
@@ -373,7 +374,7 @@ function ServiceDialog({ edit, onSave, loading, categories, staffOptions, select
   staffOptions: { id: string; name: string; active: boolean }[];
   selectedStaffIds: string[];
 }) {
-  const [f, setF] = useState<Partial<S>>(edit ? { ...edit } : { ...EMPTY });
+  const [f, setF] = useState<Partial<S>>(edit ? { ...edit, show_on_booking: edit.show_on_booking !== false } : { ...EMPTY });
   const [reposition, setReposition] = useState(false);
   const [staffIds, setStaffIds] = useState<string[]>(selectedStaffIds);
   const toggleStaff = (id: string) => setStaffIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
@@ -409,6 +410,10 @@ function ServiceDialog({ edit, onSave, loading, categories, staffOptions, select
           <Label>Profissionais que realizam este serviço</Label>
           <p className="text-xs text-muted-foreground">No agendamento online o cliente só verá os profissionais marcados aqui.</p>
           {!staffOptions.length ? <p className="text-xs text-muted-foreground">Cadastre funcionários primeiro.</p> : <div className="max-h-44 overflow-y-auto space-y-1">{staffOptions.map((s) => <label key={s.id} className="flex items-center gap-2 text-sm py-1 cursor-pointer"><input type="checkbox" className="h-4 w-4" checked={staffIds.includes(s.id)} onChange={() => toggleStaff(s.id)} /><span className={s.active ? "" : "text-muted-foreground line-through"}>{s.name}</span></label>)}</div>}
+        </div>
+        <div className="rounded-lg border p-3 flex items-center justify-between gap-4">
+          <div><Label>Exibir no link de agendamento</Label><p className="text-xs text-muted-foreground">Desative para manter o serviço no sistema, mas escondê-lo do cliente.</p></div>
+          <Switch checked={f.show_on_booking !== false} onCheckedChange={(v) => setF({ ...f, show_on_booking: v })} />
         </div>
         <div className="flex items-center justify-between"><Label>Ativo</Label><Switch checked={f.active ?? true} onCheckedChange={(v) => setF({ ...f, active: v })} /></div>
       </div>
