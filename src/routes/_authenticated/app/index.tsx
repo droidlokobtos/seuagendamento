@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/lib/company";
+import { getBusinessIntelligence } from "@/lib/ai.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Users, TrendingUp, Clock, Link2, Copy, DollarSign, XCircle, UserPlus, Repeat, Scissors, Trophy, ArrowUpRight } from "lucide-react";
+import { Calendar, Users, TrendingUp, Clock, Link2, Copy, DollarSign, XCircle, UserPlus, Repeat, Scissors, Trophy, ArrowUpRight, BrainCircuit, Radar, AlertTriangle, ShieldAlert, Sparkles } from "lucide-react";
 import { brl } from "@/lib/format";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useMemo } from "react";
 import { usePermissions } from "@/lib/use-permissions";
 import { ProfessionalDashboard } from "@/components/app/ProfessionalDashboard";
@@ -22,6 +25,7 @@ function RoleDashboard() {
 
 function Dashboard() {
   const { activeCompany } = useCompany();
+  const getIntel = useServerFn(getBusinessIntelligence);
   const companyId = activeCompany!.id;
   const today = new Date();
   const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
@@ -30,6 +34,17 @@ function Dashboard() {
   const startMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
   const endMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1).toISOString();
   const monthStartDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+
+  const { data: intelligence } = useQuery({
+    queryKey: ["dashboard-intelligence", companyId],
+    queryFn: () => getIntel({ data: { company_id: companyId } }),
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: true,
+  });
+  const intel = intelligence?.intelligence as any;
+  const radarItems = (intel?.radar ?? []).slice(0, 3);
+  const intelSummary = intel?.proactive_summary;
+  const forecast = intel?.forecast;
 
   const { data: stats } = useQuery({
     queryKey: ["app-dashboard", companyId],
@@ -96,38 +111,22 @@ function Dashboard() {
 
   return <div className="space-y-7 pb-8">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Painel de gestão</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Visão geral</h1>
-        <p className="mt-1 text-sm text-muted-foreground capitalize">{dateLabel} · {activeCompany?.name}</p>
-      </div>
+      <div><p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Painel de gestão</p><h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Visão geral</h1><p className="mt-1 text-sm text-muted-foreground capitalize">{dateLabel} · {activeCompany?.name}</p></div>
       <Button asChild className="w-full sm:w-auto"><Link to="/app/agenda"><Calendar className="mr-2 h-4 w-4" />Abrir agenda</Link></Button>
     </div>
 
-    <Card className="overflow-hidden border-border/70 shadow-sm">
-      <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
-        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border bg-muted/40"><Link2 className="h-4 w-4" /></div>
-        <div className="min-w-0 flex-1"><p className="text-xs font-medium text-muted-foreground">Página pública de agendamento</p><p className="mt-1 truncate text-sm font-medium">{bookingUrl}</p></div>
-        <div className="flex gap-2"><Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(bookingUrl)}><Copy className="mr-2 h-4 w-4" />Copiar</Button><Button asChild size="sm" variant="secondary"><a href={bookingUrl} target="_blank" rel="noreferrer">Visualizar<ArrowUpRight className="ml-2 h-4 w-4" /></a></Button></div>
-      </CardContent>
-    </Card>
+    {intel && <Card className="overflow-hidden border-primary/20 bg-primary/[0.02] shadow-sm"><CardHeader className="flex flex-row items-start justify-between gap-4 border-b p-5"><div className="flex gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><BrainCircuit className="h-5 w-5" /></div><div><CardTitle className="text-base">Inteligência ativa</CardTitle><p className="mt-1 text-xs text-muted-foreground">Análise automática do seu negócio com base nos dados mais recentes.</p></div></div><Button asChild variant="outline" size="sm"><Link to="/app/ai">Abrir Central IA<ArrowUpRight className="ml-2 h-4 w-4" /></Link></Button></CardHeader><CardContent className="p-5 space-y-5"><div className="grid gap-3 sm:grid-cols-3"><IntelMini label="Clientes em risco" value={intelSummary?.customers_at_risk_count ?? 0} icon={Users} /><IntelMini label="Oportunidades" value={intelSummary?.opportunity_count ?? 0} icon={Sparkles} /><IntelMini label="Previsão 30 dias" value={forecast ? brl(forecast.faturamento_previsto_brl ?? 0) : "Sem base"} icon={TrendingUp} /></div>{radarItems.length > 0 ? <div className="space-y-2"><div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[.12em] text-muted-foreground"><Radar className="h-3.5 w-3.5" />O que merece sua atenção</div>{radarItems.map((item: any) => <div key={item.id} className="flex flex-col gap-2 rounded-xl border bg-background/70 p-4 sm:flex-row sm:items-center"><div className="flex flex-1 gap-3"><div className="mt-0.5">{item.severity === "critical" ? <ShieldAlert className="h-4 w-4 text-destructive" /> : item.severity === "attention" ? <AlertTriangle className="h-4 w-4 text-amber-600" /> : <Sparkles className="h-4 w-4 text-primary" />}</div><div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-medium">{item.title}</p>{item.metric && <Badge variant="secondary">{item.metric}</Badge>}</div><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.description}</p></div></div><Button asChild variant="ghost" size="sm"><Link to="/app/ai">Ver análise</Link></Button></div>)}</div> : <p className="text-sm text-muted-foreground">Nenhum alerta relevante detectado neste momento.</p>}</CardContent></Card>}
 
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {cards.map((c) => <Card key={c.label} className="border-border/70 shadow-sm transition-shadow hover:shadow-md"><CardContent className="p-5"><div className="mb-5 flex items-center justify-between"><div className="grid h-9 w-9 place-items-center rounded-lg border bg-muted/30"><c.icon className="h-4 w-4 text-foreground/70" /></div><span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Indicador</span></div><p className="text-sm text-muted-foreground">{c.label}</p><p className="mt-1 text-2xl font-semibold tracking-tight">{c.value}</p></CardContent></Card>)}
-    </div>
+    <Card className="overflow-hidden border-border/70 shadow-sm"><CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border bg-muted/40"><Link2 className="h-4 w-4" /></div><div className="min-w-0 flex-1"><p className="text-xs font-medium text-muted-foreground">Página pública de agendamento</p><p className="mt-1 truncate text-sm font-medium">{bookingUrl}</p></div><div className="flex gap-2"><Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(bookingUrl)}><Copy className="mr-2 h-4 w-4" />Copiar</Button><Button asChild size="sm" variant="secondary"><a href={bookingUrl} target="_blank" rel="noreferrer">Visualizar<ArrowUpRight className="ml-2 h-4 w-4" /></a></Button></div></CardContent></Card>
 
-    <div className="grid gap-4 lg:grid-cols-2">
-      <RankingCard title="Serviços mais procurados" subtitle="Desempenho no mês atual" icon={Scissors} empty="Sem serviços registrados neste mês.">{topServices.map((s, i) => <div key={i} className="flex items-center gap-3 border-t px-5 py-3.5"><span className="w-6 text-xs font-semibold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span><span className="min-w-0 flex-1 truncate text-sm font-medium">{s.name}</span><span className="text-sm font-semibold tabular-nums">{s.count}</span></div>)}</RankingCard>
-      <RankingCard title="Desempenho da equipe" subtitle="Faturamento por profissional" icon={Trophy} empty="Sem faturamento registrado neste mês.">{topStaff.map((s, i) => <div key={i} className="flex items-center gap-3 border-t px-5 py-3.5"><span className="w-6 text-xs font-semibold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span><span className="min-w-0 flex-1 truncate text-sm font-medium">{s.name}</span><span className="text-sm font-semibold tabular-nums">{brl(s.revenue / 100)}</span></div>)}</RankingCard>
-    </div>
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{cards.map((c) => <Card key={c.label} className="border-border/70 shadow-sm transition-shadow hover:shadow-md"><CardContent className="p-5"><div className="mb-5 flex items-center justify-between"><div className="grid h-9 w-9 place-items-center rounded-lg border bg-muted/30"><c.icon className="h-4 w-4 text-foreground/70" /></div><span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Indicador</span></div><p className="text-sm text-muted-foreground">{c.label}</p><p className="mt-1 text-2xl font-semibold tracking-tight">{c.value}</p></CardContent></Card>)}</div>
+
+    <div className="grid gap-4 lg:grid-cols-2"><RankingCard title="Serviços mais procurados" subtitle="Desempenho no mês atual" icon={Scissors} empty="Sem serviços registrados neste mês.">{topServices.map((s, i) => <div key={i} className="flex items-center gap-3 border-t px-5 py-3.5"><span className="w-6 text-xs font-semibold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span><span className="min-w-0 flex-1 truncate text-sm font-medium">{s.name}</span><span className="text-sm font-semibold tabular-nums">{s.count}</span></div>)}</RankingCard><RankingCard title="Desempenho da equipe" subtitle="Faturamento por profissional" icon={Trophy} empty="Sem faturamento registrado neste mês.">{topStaff.map((s, i) => <div key={i} className="flex items-center gap-3 border-t px-5 py-3.5"><span className="w-6 text-xs font-semibold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span><span className="min-w-0 flex-1 truncate text-sm font-medium">{s.name}</span><span className="text-sm font-semibold tabular-nums">{brl(s.revenue / 100)}</span></div>)}</RankingCard></div>
 
     <Card className="border-border/70 shadow-sm"><CardHeader className="flex flex-row items-center justify-between space-y-0 border-b p-5"><div><CardTitle className="text-base">Agenda de hoje</CardTitle><p className="mt-1 text-xs text-muted-foreground">Próximos compromissos e situação dos atendimentos</p></div><Button asChild size="sm" variant="ghost"><Link to="/app/agenda">Ver agenda<ArrowUpRight className="ml-2 h-4 w-4" /></Link></Button></CardHeader><CardContent className="p-0">{!stats?.today.length ? <p className="py-12 text-center text-sm text-muted-foreground">Nenhum agendamento para hoje.</p> : <div>{stats.today.map((a: any) => <div key={a.id} className="flex items-center justify-between gap-4 border-b px-5 py-4 last:border-0"><div className="flex min-w-0 items-center gap-4"><div className="w-12 shrink-0 text-sm font-semibold tabular-nums">{new Date(a.starts_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div><div className="min-w-0"><p className="truncate text-sm font-medium">{a.customers?.name ?? "Sem cliente"}</p><p className="truncate text-xs text-muted-foreground">{a.staff?.name ?? "Sem profissional"} · {statusMap[a.status] ?? a.status}</p></div></div><span className="shrink-0 text-sm font-semibold tabular-nums">{brl((a.total_cents ?? 0) / 100)}</span></div>)}</div>}</CardContent></Card>
   </div>;
 }
 
-function RankingCard({ title, subtitle, icon: Icon, empty, children }: any) {
-  const hasChildren = Array.isArray(children) ? children.length > 0 : !!children;
-  return <Card className="overflow-hidden border-border/70 shadow-sm"><CardHeader className="p-5"><div className="flex items-center gap-3"><div className="grid h-9 w-9 place-items-center rounded-lg border bg-muted/30"><Icon className="h-4 w-4 text-foreground/70" /></div><div><CardTitle className="text-base">{title}</CardTitle><p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p></div></div></CardHeader><CardContent className="p-0">{hasChildren ? children : <p className="border-t px-5 py-10 text-center text-sm text-muted-foreground">{empty}</p>}</CardContent></Card>;
-}
-
+function IntelMini({ label, value, icon: Icon }: any) { return <div className="rounded-xl border bg-background/70 p-4"><div className="flex items-center justify-between gap-3"><p className="text-xs text-muted-foreground">{label}</p><Icon className="h-4 w-4 text-primary" /></div><p className="mt-2 text-xl font-semibold tracking-tight">{value}</p></div>; }
+function RankingCard({ title, subtitle, icon: Icon, empty, children }: any) { const hasChildren = Array.isArray(children) ? children.length > 0 : !!children; return <Card className="overflow-hidden border-border/70 shadow-sm"><CardHeader className="p-5"><div className="flex items-center gap-3"><div className="grid h-9 w-9 place-items-center rounded-lg border bg-muted/30"><Icon className="h-4 w-4 text-foreground/70" /></div><div><CardTitle className="text-base">{title}</CardTitle><p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p></div></div></CardHeader><CardContent className="p-0">{hasChildren ? children : <p className="border-t px-5 py-10 text-center text-sm text-muted-foreground">{empty}</p>}</CardContent></Card>; }
 const statusMap: Record<string, string> = { scheduled: "Agendado", confirmed: "Confirmado", in_progress: "Em atendimento", completed: "Concluído", cancelled: "Cancelado", no_show: "Faltou", reminder_sent: "Lembrete enviado", cancelled_by_customer: "Cancelado pelo cliente", cancelled_by_company: "Cancelado pela empresa" };
