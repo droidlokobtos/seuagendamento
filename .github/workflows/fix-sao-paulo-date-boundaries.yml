@@ -1,0 +1,43 @@
+name: Fix Sao Paulo date boundaries
+on:
+  push:
+    paths: ['.github/workflows/fix-sao-paulo-date-boundaries.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/lib/format.ts')
+          s=p.read_text()
+          insert='''\nexport const SAO_PAULO_TIME_ZONE = "America/Sao_Paulo";\n\n/** Data civil YYYY-MM-DD no horário oficial de Brasília. */\nexport const saoPauloDate = (d: Date = new Date()) => {\n  const parts = new Intl.DateTimeFormat("en-CA", {\n    timeZone: SAO_PAULO_TIME_ZONE,\n    year: "numeric",\n    month: "2-digit",\n    day: "2-digit",\n  }).formatToParts(d);\n  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";\n  return `${get("year")}-${get("month")}-${get("day")}`;\n};\n'''
+          if 'SAO_PAULO_TIME_ZONE' not in s:
+            s=s.replace('export const brl',insert+'\nexport const brl')
+          p.write_text(s)
+
+          replacements={
+            'src/routes/_authenticated/app/expenses.tsx': [('import { brl } from "@/lib/format";','import { brl, saoPauloDate } from "@/lib/format";'),('const today=new Date().toISOString().slice(0,10);','const today=saoPauloDate();')],
+            'src/routes/_authenticated/app/reports.tsx': [('import { brl } from "@/lib/format";','import { brl, saoPauloDate } from "@/lib/format";'),('const today = new Date().toISOString().slice(0, 10);','const today = saoPauloDate();')],
+            'src/routes/_authenticated/app/confirmations.tsx': [('import { brl } from "@/lib/format";','import { brl, saoPauloDate } from "@/lib/format";'),('const today = new Date().toISOString().slice(0, 10);','const today = saoPauloDate();')],
+            'src/routes/b.$slug.index.tsx': [('import { brl } from "@/lib/format";','import { brl, saoPauloDate } from "@/lib/format";'),('useState<string>(new Date().toISOString().slice(0, 10))','useState<string>(() => saoPauloDate())')],
+          }
+          for path,repls in replacements.items():
+            p=Path(path); s=p.read_text()
+            for old,new in repls:
+              if old in s: s=s.replace(old,new)
+              elif new not in s: print(f'warning target missing: {path}: {old[:40]}')
+            p.write_text(s)
+          PY
+          bun install --frozen-lockfile
+          bun run build
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/lib/format.ts src/routes/_authenticated/app/expenses.tsx src/routes/_authenticated/app/reports.tsx src/routes/_authenticated/app/confirmations.tsx 'src/routes/b.$slug.index.tsx'
+          git commit -m 'fix: use Sao Paulo dates for operational boundaries'
+          git push
