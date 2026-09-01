@@ -8,6 +8,12 @@ import {
   isExpired,
   sectionsForServices,
 } from "@/lib/anamnesis-core";
+import {
+  guardPublicRequest,
+  hashPublicValue,
+  newVerificationToken,
+  rateLimitResponse,
+} from "@/lib/public-api-protection.server";
 
 const postSchema = z.object({
   slug: z.string().min(1),
@@ -84,10 +90,17 @@ export const Route = createFileRoute("/api/public/anamnesis")({
         const url = new URL(request.url);
         const slug = url.searchParams.get("slug") ?? "";
         const phone = (url.searchParams.get("phone") ?? "").trim();
+        const name = (url.searchParams.get("name") ?? "").trim();
         const serviceIds = (url.searchParams.get("service_ids") ?? "").split(",").filter(Boolean);
         if (!slug) return Response.json({ error: "slug obrigatório" }, { status: 400 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const guard = await guardPublicRequest(supabaseAdmin, request, {
+          scope: "anamnesis:get",
+          limit: 30,
+          windowSeconds: 300,
+        });
+        if (!guard.allowed) return rateLimitResponse(guard.retryAfter);
         const company = await loadCompany(supabaseAdmin, slug);
         if (!company) return Response.json({ error: "Empresa não encontrada" }, { status: 404 });
         if (company.status === "suspended")
@@ -105,6 +118,7 @@ export const Route = createFileRoute("/api/public/anamnesis")({
         }
 
         let lastFilledAt: string | null = null;
+        let verificationToken: string | null = null;
         if (phone) {
           const cust = await findCustomerByPhone(supabaseAdmin, company.id, phone);
           if (cust) {
@@ -122,6 +136,16 @@ export const Route = createFileRoute("/api/public/anamnesis")({
               const prev: string[] = (rec.sections as string[]) ?? [];
               if (sections.some((s) => !prev.includes(s))) lastFilledAt = null;
             }
+            if (name && normalizeIdentityName(cust.name ?? "") === normalizeIdentityName(name)) {
+              verificationToken = newVerificationToken();
+              await supabaseAdmin.from("public_client_verifications").insert({
+                token_hash: hashPublicValue(verificationToken),
+                company_id: company.id,
+                customer_id: cust.id,
+                phone_hash: hashPublicValue(phone.replace(/\D/g, "")),
+                expires_at: new Date(Date.now() + 30 * 60_000).toISOString(),
+              });
+            }
           }
         }
 
@@ -132,6 +156,7 @@ export const Route = createFileRoute("/api/public/anamnesis")({
           last_filled_at: lastFilledAt,
           sections,
           questionnaire: required ? buildQuestionnaire(sections) : [],
+          verification_token: verificationToken,
         });
       },
 
@@ -151,6 +176,12 @@ export const Route = createFileRoute("/api/public/anamnesis")({
           return Response.json({ error: "Consentimentos obrigatórios" }, { status: 400 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const guard = await guardPublicRequest(supabaseAdmin, request, {
+          scope: "anamnesis:post",
+          limit: 6,
+          windowSeconds: 900,
+        });
+        if (!guard.allowed) return rateLimitResponse(guard.retryAfter);
         const company = await loadCompany(supabaseAdmin, d.slug);
         if (!company) return Response.json({ error: "Empresa não encontrada" }, { status: 404 });
         if (company.status === "suspended")
@@ -234,7 +265,16 @@ export const Route = createFileRoute("/api/public/anamnesis")({
           } as any);
         }
 
-        return Response.json({ ok: true });
+        const verificationToken = newVerificationToken();
+        await supabaseAdmin.from("public_client_verifications").insert({
+          token_hash: hashPublicValue(verificationToken),
+          company_id: company.id,
+          customer_id: customerId,
+          phone_hash: hashPublicValue(d.phone.replace(/\D/g, "")),
+          expires_at: new Date(Date.now() + 30 * 60_000).toISOString(),
+        });
+
+        return Response.json({ ok: true, verification_token: verificationToken });
       },
     },
   },
