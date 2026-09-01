@@ -1,0 +1,37 @@
+name: Smart agenda prefill
+on:
+  push:
+    paths: ['.github/workflows/smart-agenda-prefill.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/routes/_authenticated/app/agenda.tsx')
+          s=p.read_text()
+          old='''  const openGapBooking = (start: Date) => {\n    setEdit(null);\n    setOpen(true);\n    setTimeout(() => {\n      const input = document.querySelector<HTMLInputElement>('input[name="starts_at"]');\n      if (input) { input.value = toLocalInput(start); input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); }\n    }, 0);\n  };'''
+          new='''  const openGapBooking = (start: Date) => {\n    setEdit({ starts_at: start.toISOString() });\n    setOpen(true);\n  };'''
+          if old not in s:
+              raise SystemExit('openGapBooking block not found')
+          s=s.replace(old,new,1)
+          old_initial='''    : { customer_id: "", staff_id: defaultStaff, service_id: "", starts_at: toLocalInput(new Date(seedDate.getFullYear(), seedDate.getMonth(), seedDate.getDate(), 9)), status: "scheduled", notes: "" };'''
+          new_initial='''    : { customer_id: "", staff_id: defaultStaff, service_id: "", starts_at: toLocalInput(seedDate.getHours() || seedDate.getMinutes() ? seedDate : new Date(seedDate.getFullYear(), seedDate.getMonth(), seedDate.getDate(), 9)), status: "scheduled", notes: "" };'''
+          if old_initial not in s:
+              raise SystemExit('ApptDialog initial state not found')
+          s=s.replace(old_initial,new_initial,1)
+          p.write_text(s)
+          PY
+          bun install --frozen-lockfile
+          bun run build
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/_authenticated/app/agenda.tsx
+          git commit -m 'fix: make smart agenda prefill reliable'
+          git push
