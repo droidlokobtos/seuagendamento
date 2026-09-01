@@ -63,7 +63,8 @@ function Companies() {
   });
 
   const filtered = companies.filter((c: any) => {
-    const matchQ = !q || c.name.toLowerCase().includes(q.toLowerCase()) || c.slug?.toLowerCase().includes(q.toLowerCase());
+    const term = q.toLowerCase();
+    const matchQ = !q || c.name.toLowerCase().includes(term) || c.slug?.toLowerCase().includes(term) || c.email?.toLowerCase().includes(term);
     const matchS = statusFilter === "all" || c.status === statusFilter;
     return matchQ && matchS;
   });
@@ -100,7 +101,7 @@ function Companies() {
         <CardContent className="p-4 flex flex-wrap gap-3 items-center">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar por nome ou slug…" className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} />
+            <Input placeholder="Buscar por nome, e-mail ou slug…" className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
@@ -130,6 +131,7 @@ function Companies() {
                 <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                   <tr>
                     <th className="text-left p-3 pl-6">Empresa</th>
+                    <th className="text-left p-3">E-mail</th>
                     <th className="text-left p-3">Nicho</th>
                     <th className="text-left p-3">Plano</th>
                     <th className="text-left p-3">Status</th>
@@ -146,6 +148,11 @@ function Companies() {
                         <td className="p-3 pl-6">
                           <p className="font-medium">{c.name}</p>
                           <p className="text-xs text-muted-foreground">/{c.slug}</p>
+                        </td>
+                        <td className="p-3 text-muted-foreground">
+                          {c.email ? (
+                            <a href={`mailto:${c.email}`} className="hover:text-foreground hover:underline whitespace-nowrap">{c.email}</a>
+                          ) : "—"}
                         </td>
                         <td className="p-3 text-muted-foreground">{c.niches?.name ?? "—"}</td>
                         <td className="p-3">
@@ -248,8 +255,6 @@ function Companies() {
           />
         )}
       </Dialog>
-
-
 
       <Dialog open={!!delOpen} onOpenChange={(o) => !o && setDelOpen(null)}>
         {delOpen && (
