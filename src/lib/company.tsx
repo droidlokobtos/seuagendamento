@@ -13,6 +13,10 @@ export type Company = {
   status: string | null;
   niche_id: string | null;
   plan_code: string | null;
+  is_trial: boolean;
+  trial_days: number | null;
+  trial_started_at: string | null;
+  trial_ends_at: string | null;
 };
 
 type CompanyCtx = {
@@ -27,9 +31,7 @@ const KEY = "beauty:activeCompanyId";
 
 export function CompanyProvider({ children }: { children: ReactNode }) {
   const { user, isSuperAdmin, companyIds } = useAuth();
-  const [activeId, setActiveId] = useState<string | null>(
-    () => (typeof window !== "undefined" ? localStorage.getItem(KEY) : null),
-  );
+  const [activeId, setActiveId] = useState<string | null>(() => (typeof window !== "undefined" ? localStorage.getItem(KEY) : null));
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["my-companies", user?.id, isSuperAdmin, companyIds.join(",")],
@@ -37,14 +39,14 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       let q = supabase
         .from("companies")
-        .select("id,name,slug,logo_url,primary_color,secondary_color,status,niche_id,plan_code")
+        .select("id,name,slug,logo_url,primary_color,secondary_color,status,niche_id,plan_code,is_trial,trial_days,trial_started_at,trial_ends_at")
         .order("name");
       if (!isSuperAdmin) q = q.in("id", companyIds.length ? companyIds : ["00000000-0000-0000-0000-000000000000"]);
       const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Company[];
     },
-    staleTime: 5 * 60_000,
+    staleTime: 60_000,
   });
 
   useEffect(() => {
@@ -56,19 +58,12 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     }
   }, [companies, activeId]);
 
-  const activeCompany = useMemo(
-    () => companies.find((c) => c.id === activeId) ?? null,
-    [companies, activeId],
-  );
-
+  const activeCompany = useMemo(() => companies.find((c) => c.id === activeId) ?? null, [companies, activeId]);
   const value: CompanyCtx = {
     companies,
     activeCompany,
     loading: isLoading,
-    setActiveCompanyId: (id) => {
-      setActiveId(id);
-      localStorage.setItem(KEY, id);
-    },
+    setActiveCompanyId: (id) => { setActiveId(id); localStorage.setItem(KEY, id); },
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
