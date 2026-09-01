@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { canLinkCustomerIdentity } from "@/lib/public-security";
 import { computeDepositCents, depositConfigFromCompany } from "@/lib/finance";
 import { isExpired, sectionsForServices } from "@/lib/anamnesis-core";
 
@@ -20,25 +21,36 @@ const schema = z.object({
 function phoneCandidates(phone: string) {
   const digits = phone.replace(/\D/g, "");
   const local = digits.startsWith("55") ? digits.slice(2) : digits;
-  const formatted = local.length === 11
-    ? `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`
-    : local.length === 10
-      ? `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`
-      : "";
-  return Array.from(new Set([
-    phone.trim(),
-    digits,
-    local,
-    formatted,
-    local.length === 11 ? `55${local}` : "",
-  ].filter(Boolean)));
+  const formatted =
+    local.length === 11
+      ? `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`
+      : local.length === 10
+        ? `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`
+        : "";
+  return Array.from(
+    new Set(
+      [phone.trim(), digits, local, formatted, local.length === 11 ? `55${local}` : ""].filter(
+        Boolean,
+      ),
+    ),
+  );
 }
 
 async function findCustomerByPhone(admin: any, companyId: string, phone: string) {
   const candidates = phoneCandidates(phone);
   const [{ data: byPhone }, { data: byWhatsapp }] = await Promise.all([
-    admin.from("customers").select("id,user_id").eq("company_id", companyId).in("phone", candidates).limit(1),
-    admin.from("customers").select("id,user_id").eq("company_id", companyId).in("whatsapp", candidates).limit(1),
+    admin
+      .from("customers")
+      .select("id,user_id,email")
+      .eq("company_id", companyId)
+      .in("phone", candidates)
+      .limit(1),
+    admin
+      .from("customers")
+      .select("id,user_id,email")
+      .eq("company_id", companyId)
+      .in("whatsapp", candidates)
+      .limit(1),
   ]);
   return byPhone?.[0] ?? byWhatsapp?.[0] ?? null;
 }
@@ -48,11 +60,17 @@ export const Route = createFileRoute("/api/public/book")({
     handlers: {
       POST: async ({ request }) => {
         let body: unknown;
-        try { body = await request.json(); }
-        catch { return Response.json({ error: "Invalid JSON" }, { status: 400 }); }
+        try {
+          body = await request.json();
+        } catch {
+          return Response.json({ error: "Invalid JSON" }, { status: 400 });
+        }
         const parsed = schema.safeParse(body);
         if (!parsed.success) {
-          return Response.json({ error: "Dados inválidos", details: parsed.error.flatten() }, { status: 400 });
+          return Response.json(
+            { error: "Dados inválidos", details: parsed.error.flatten() },
+            { status: 400 },
+          );
         }
         const { slug, service_ids, staff_id, starts_at, customer, coupon_code } = parsed.data;
 
@@ -60,8 +78,11 @@ export const Route = createFileRoute("/api/public/book")({
 
         const { data: company } = await supabaseAdmin
           .from("companies")
-          .select("id,name,status,online_booking_enabled,min_advance_min,max_advance_days,deposit_enabled,deposit_type,deposit_value,pix_key,pix_holder,pix_bank,pix_qr_url")
-          .eq("slug", slug).maybeSingle();
+          .select(
+            "id,name,status,online_booking_enabled,min_advance_min,max_advance_days,deposit_enabled,deposit_type,deposit_value,pix_key,pix_holder,pix_bank,pix_qr_url",
+          )
+          .eq("slug", slug)
+          .maybeSingle();
         if (!company) return Response.json({ error: "Empresa não encontrada" }, { status: 404 });
         if (company.status === "suspended")
           return Response.json({ error: "Agendamentos indisponíveis no momento" }, { status: 403 });
@@ -69,7 +90,8 @@ export const Route = createFileRoute("/api/public/book")({
           return Response.json({ error: "Agendamento online desativado" }, { status: 403 });
 
         const { data: services } = await supabaseAdmin
-          .from("services").select("id,name,category,anamnesis_section,duration_min,price_cents,active,company_id")
+          .from("services")
+          .select("id,name,category,anamnesis_section,duration_min,price_cents,active,company_id")
           .in("id", service_ids);
         if (!services?.length || services.length !== service_ids.length)
           return Response.json({ error: "Serviço inválido" }, { status: 400 });
@@ -85,7 +107,9 @@ export const Route = createFileRoute("/api/public/book")({
         let discountCents = 0;
         if (coupon_code && coupon_code.trim()) {
           const { data: v } = await supabaseAdmin.rpc("validate_coupon", {
-            _company: company.id, _code: coupon_code.trim(), _subtotal_cents: totalCents,
+            _company: company.id,
+            _code: coupon_code.trim(),
+            _subtotal_cents: totalCents,
           });
           const row = Array.isArray(v) ? v[0] : v;
           if (!row || row.message !== "ok") {
@@ -102,52 +126,78 @@ export const Route = createFileRoute("/api/public/book")({
         const minAdv = (company as any).min_advance_min ?? 0;
         const maxAdv = (company as any).max_advance_days ?? 60;
         if (start.getTime() < Date.now() + minAdv * 60_000)
-          return Response.json({ error: `Agende com ao menos ${minAdv} min de antecedência` }, { status: 400 });
+          return Response.json(
+            { error: `Agende com ao menos ${minAdv} min de antecedência` },
+            { status: 400 },
+          );
         if (start.getTime() > Date.now() + maxAdv * 86_400_000)
-          return Response.json({ error: `Agende com no máximo ${maxAdv} dias de antecedência` }, { status: 400 });
+          return Response.json(
+            { error: `Agende com no máximo ${maxAdv} dias de antecedência` },
+            { status: 400 },
+          );
         const end = new Date(start.getTime() + totalMin * 60_000);
 
         // Capacidade global: qualquer atendimento ativo ocupa o intervalo da empresa.
         const { data: conflicts } = await supabaseAdmin
-          .from("appointments").select("id")
+          .from("appointments")
+          .select("id")
           .eq("company_id", company.id)
-          .not("status", "in", '(cancelled,cancelled_by_customer,cancelled_by_company,no_show)')
-          .lt("starts_at", end.toISOString()).gt("ends_at", start.toISOString())
+          .not("status", "in", "(cancelled,cancelled_by_customer,cancelled_by_company,no_show)")
+          .lt("starts_at", end.toISOString())
+          .gt("ends_at", start.toISOString())
           .limit(1);
         if (conflicts && conflicts.length > 0)
-          return Response.json({ error: "Este horário já está ocupado. Escolha outro horário." }, { status: 409 });
+          return Response.json(
+            { error: "Este horário já está ocupado. Escolha outro horário." },
+            { status: 409 },
+          );
 
         // Bloqueios de agenda (feriados, folgas, etc.)
         const { data: blocks } = await supabaseAdmin
-          .from("time_blocks").select("id,staff_id")
+          .from("time_blocks")
+          .select("id,staff_id")
           .eq("company_id", company.id)
-          .lt("starts_at", end.toISOString()).gt("ends_at", start.toISOString());
+          .lt("starts_at", end.toISOString())
+          .gt("ends_at", start.toISOString());
         if ((blocks ?? []).some((b) => !b.staff_id || b.staff_id === staff_id))
           return Response.json({ error: "Horário indisponível" }, { status: 409 });
 
-
         // Optional: identify signed-in customer via bearer token
         let authUserId: string | null = null;
-        const authHeader = request.headers.get("authorization") ?? request.headers.get("Authorization");
+        let authUserEmail: string | null = null;
+        const authHeader =
+          request.headers.get("authorization") ?? request.headers.get("Authorization");
         if (authHeader?.startsWith("Bearer ")) {
           const token = authHeader.slice(7);
           const { data: u } = await supabaseAdmin.auth.getUser(token);
           authUserId = u?.user?.id ?? null;
+          authUserEmail = u?.user?.email ?? null;
         }
 
         let customerId: string | null = null;
         if (authUserId) {
           const { data: byUser } = await supabaseAdmin
-            .from("customers").select("id")
-            .eq("company_id", company.id).eq("user_id", authUserId).maybeSingle();
+            .from("customers")
+            .select("id")
+            .eq("company_id", company.id)
+            .eq("user_id", authUserId)
+            .maybeSingle();
           customerId = byUser?.id ?? null;
         }
         if (!customerId) {
           const byPhone = await findCustomerByPhone(supabaseAdmin, company.id, customer.phone);
           if (byPhone) {
             customerId = byPhone.id;
-            if (authUserId && !byPhone.user_id) {
-              await supabaseAdmin.from("customers").update({ user_id: authUserId } as any).eq("id", byPhone.id);
+            if (
+              authUserId &&
+              !byPhone.user_id &&
+              canLinkCustomerIdentity(byPhone.email, authUserEmail)
+            ) {
+              await supabaseAdmin
+                .from("customers")
+                .update({ user_id: authUserId } as any)
+                .eq("id", byPhone.id)
+                .is("user_id", null);
             }
           }
         }
@@ -156,7 +206,10 @@ export const Route = createFileRoute("/api/public/book")({
         const requiredSections = sectionsForServices(services ?? []);
         if (!customerId) {
           return Response.json(
-            { error: "Preencha a ficha de anamnese antes de confirmar o agendamento.", anamnesis_required: true },
+            {
+              error: "Preencha a ficha de anamnese antes de confirmar o agendamento.",
+              anamnesis_required: true,
+            },
             { status: 409 },
           );
         }
@@ -168,11 +221,20 @@ export const Route = createFileRoute("/api/public/book")({
           .order("filled_at", { ascending: false })
           .limit(1)
           .maybeSingle();
-        const previousSections = ((lastAnamnesis?.sections as string[] | null) ?? []);
-        const hasNewSection = requiredSections.some((section) => !previousSections.includes(section));
-        if (!lastAnamnesis || isExpired(lastAnamnesis.filled_at as string | null) || hasNewSection) {
+        const previousSections = (lastAnamnesis?.sections as string[] | null) ?? [];
+        const hasNewSection = requiredSections.some(
+          (section) => !previousSections.includes(section),
+        );
+        if (
+          !lastAnamnesis ||
+          isExpired(lastAnamnesis.filled_at as string | null) ||
+          hasNewSection
+        ) {
           return Response.json(
-            { error: "Preencha a ficha de anamnese antes de confirmar o agendamento.", anamnesis_required: true },
+            {
+              error: "Preencha a ficha de anamnese antes de confirmar o agendamento.",
+              anamnesis_required: true,
+            },
             { status: 409 },
           );
         }
@@ -200,21 +262,26 @@ export const Route = createFileRoute("/api/public/book")({
           depositCents = Math.round(dueCents * 0.5);
         }
 
-
         // Isenção automática de sinal: cliente com plano/pacote ativo cobrindo o serviço
         let planWaived: { plan: string; service: string } | null = null;
         if (depositCents > 0) {
           const { data: covered } = await supabaseAdmin
             .from("customer_plan_services")
-            .select("service_id,sessions_total,sessions_used,service_name,customer_plans!inner(id,plan_name,status,expires_at,waive_deposit,customer_id,company_id)")
-            .in("service_id", services.map((s) => s.id))
+            .select(
+              "service_id,sessions_total,sessions_used,service_name,customer_plans!inner(id,plan_name,status,expires_at,waive_deposit,customer_id,company_id)",
+            )
+            .in(
+              "service_id",
+              services.map((s) => s.id),
+            )
             .eq("customer_plans.customer_id", customerId)
             .eq("customer_plans.company_id", company.id)
             .eq("customer_plans.status", "active")
             .eq("customer_plans.waive_deposit", true);
           const hit = ((covered ?? []) as any[]).find((row) => {
             const cp = row.customer_plans;
-            const validDate = !cp?.expires_at || new Date(cp.expires_at) >= new Date(new Date().toDateString());
+            const validDate =
+              !cp?.expires_at || new Date(cp.expires_at) >= new Date(new Date().toDateString());
             return validDate && row.sessions_used < row.sessions_total;
           });
           if (hit) {
@@ -245,9 +312,11 @@ export const Route = createFileRoute("/api/public/book")({
         const { data: appt, error: aErr } = await supabaseAdmin
           .from("appointments")
           .insert({
-            company_id: company.id, customer_id: customerId,
+            company_id: company.id,
+            customer_id: customerId,
             staff_id: staff_id ?? null,
-            starts_at: start.toISOString(), ends_at: end.toISOString(),
+            starts_at: start.toISOString(),
+            ends_at: end.toISOString(),
             status: "scheduled",
             total_cents: totalCents,
             coupon_id: couponId,
@@ -255,7 +324,9 @@ export const Route = createFileRoute("/api/public/book")({
             discount_cents: discountCents,
             deposit_required_cents: depositCents,
             notes: customer.notes || null,
-          } as any).select("id").single();
+          } as any)
+          .select("id")
+          .single();
         if (aErr) {
           const msg = String(aErr.message ?? "");
           if ((aErr as any).code === "23P01" || /exclus|overlap|conflit/i.test(msg)) {
@@ -268,10 +339,14 @@ export const Route = createFileRoute("/api/public/book")({
         }
 
         const rows = services.map((s) => ({
-          appointment_id: appt.id, service_id: s.id,
-          price_cents: s.price_cents, duration_min: s.duration_min,
+          appointment_id: appt.id,
+          service_id: s.id,
+          price_cents: s.price_cents,
+          duration_min: s.duration_min,
         }));
-        const { error: asErr } = await supabaseAdmin.from("appointment_services").insert(rows as any);
+        const { error: asErr } = await supabaseAdmin
+          .from("appointment_services")
+          .insert(rows as any);
         if (asErr) return Response.json({ error: asErr.message }, { status: 500 });
 
         if (planWaived) {
@@ -297,7 +372,8 @@ export const Route = createFileRoute("/api/public/book")({
           if (/^https?:\/\//.test(raw)) pixQr = raw;
           else {
             const { data: signed } = await supabaseAdmin.storage
-              .from("company-assets").createSignedUrl(raw, 60 * 60);
+              .from("company-assets")
+              .createSignedUrl(raw, 60 * 60);
             pixQr = signed?.signedUrl ?? null;
           }
         }
@@ -319,14 +395,15 @@ export const Route = createFileRoute("/api/public/book")({
               }
             : null,
           balance_cents: Math.max(0, dueCents - depositCents),
-          pix: depositCents > 0
-            ? {
-                key: (company as any).pix_key ?? null,
-                holder: (company as any).pix_holder ?? null,
-                bank: (company as any).pix_bank ?? null,
-                qr_url: pixQr,
-              }
-            : null,
+          pix:
+            depositCents > 0
+              ? {
+                  key: (company as any).pix_key ?? null,
+                  holder: (company as any).pix_holder ?? null,
+                  bank: (company as any).pix_bank ?? null,
+                  qr_url: pixQr,
+                }
+              : null,
         });
       },
     },
