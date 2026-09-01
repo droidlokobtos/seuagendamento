@@ -1,5 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { bearerToken, fileSignatureMatchesMime, sameBrazilianPhone } from "./public-security";
+import {
+  bearerToken,
+  canLinkCustomerIdentity,
+  fileSignatureMatchesMime,
+  sameBrazilianPhone,
+} from "./public-security";
+
+describe("canLinkCustomerIdentity", () => {
+  it("vincula somente quando os e-mails correspondem", () => {
+    expect(canLinkCustomerIdentity("Cliente@Email.com", " cliente@email.com ")).toBe(true);
+    expect(canLinkCustomerIdentity("cliente@email.com", "outra@email.com")).toBe(false);
+    expect(canLinkCustomerIdentity(null, "cliente@email.com")).toBe(false);
+    expect(canLinkCustomerIdentity("", "")).toBe(false);
+  });
+});
 
 describe("bearerToken", () => {
   it("aceita somente o formato Bearer", () => {
