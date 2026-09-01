@@ -1167,6 +1167,7 @@ export type Database = {
           amenities: string[]
           app_icon_url: string | null
           banner_url: string | null
+          booking_slot_interval_min: number
           buffer_min: number
           city: string | null
           contracted_plan: string | null
@@ -1240,6 +1241,7 @@ export type Database = {
           amenities?: string[]
           app_icon_url?: string | null
           banner_url?: string | null
+          booking_slot_interval_min?: number
           buffer_min?: number
           city?: string | null
           contracted_plan?: string | null
@@ -1313,6 +1315,7 @@ export type Database = {
           amenities?: string[]
           app_icon_url?: string | null
           banner_url?: string | null
+          booking_slot_interval_min?: number
           buffer_min?: number
           city?: string | null
           contracted_plan?: string | null
@@ -5354,6 +5357,7 @@ export type Database = {
           amenities: string[] | null
           app_icon_url: string | null
           banner_url: string | null
+          booking_slot_interval_min: number | null
           buffer_min: number | null
           city: string | null
           deposit_enabled: boolean | null
@@ -5400,6 +5404,7 @@ export type Database = {
           amenities?: string[] | null
           app_icon_url?: string | null
           banner_url?: string | null
+          booking_slot_interval_min?: number | null
           buffer_min?: number | null
           city?: string | null
           deposit_enabled?: boolean | null
@@ -5446,6 +5451,7 @@ export type Database = {
           amenities?: string[] | null
           app_icon_url?: string | null
           banner_url?: string | null
+          booking_slot_interval_min?: number | null
           buffer_min?: number | null
           city?: string | null
           deposit_enabled?: boolean | null
