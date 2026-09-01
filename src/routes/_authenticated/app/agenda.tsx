@@ -55,6 +55,7 @@ function Agenda() {
   const { activeCompany } = useCompany();
   const companyId = activeCompany!.id;
   const bufferMin = (activeCompany as any)?.buffer_min ?? 0;
+  const slotMin = Math.max(5, Number((activeCompany as any)?.booking_slot_interval_min ?? 30));
   const view = search.view ?? "day";
   const staffFilter = search.staff ?? "";
 
@@ -147,24 +148,39 @@ function Agenda() {
     const [eh, em] = String(h.end_time).split(":").map(Number);
     const open = new Date(anchor); open.setHours(sh, sm, 0, 0);
     const close = new Date(anchor); close.setHours(eh, em, 0, 0);
-    const busy = (appts as any[]).filter((a) => !FREED_STATUSES.includes(a.status)).map((a) => ({ start: new Date(a.starts_at), end: new Date(a.ends_at) })).sort((a,b) => a.start.getTime()-b.start.getTime());
+    const now = new Date();
+    const isToday = startOfDay(now).getTime() === startOfDay(anchor).getTime();
+    let cursor = new Date(open);
+    if (isToday && now > cursor) {
+      const rounded = new Date(now);
+      rounded.setSeconds(0,0);
+      const remainder = rounded.getMinutes() % slotMin;
+      if (remainder) rounded.setMinutes(rounded.getMinutes() + (slotMin - remainder));
+      cursor = rounded > open ? rounded : open;
+    }
+    if (cursor >= close) return [];
+    const buf = bufferMin * 60_000;
+    const busy = [
+      ...(appts as any[]).filter((a) => !FREED_STATUSES.includes(a.status)).map((a) => ({ start: new Date(new Date(a.starts_at).getTime()-buf), end: new Date(new Date(a.ends_at).getTime()+buf) })),
+      ...(blocks as any[]).filter((b) => !b.staff_id || (staffFilter && b.staff_id === staffFilter)).map((b) => ({ start: new Date(b.starts_at), end: new Date(b.ends_at) })),
+    ].sort((a,b) => a.start.getTime()-b.start.getTime());
     const gaps: { start: Date; end: Date; minutes: number }[] = [];
-    let cursor = open;
     for (const b of busy) {
-      if (b.end <= open || b.start >= close) continue;
+      if (b.end <= cursor || b.start >= close) continue;
       const bs = b.start < open ? open : b.start;
       if (bs.getTime() > cursor.getTime()) {
         const minutes = Math.floor((bs.getTime()-cursor.getTime())/60000);
-        if (minutes >= 30) gaps.push({ start: new Date(cursor), end: new Date(bs), minutes });
+        if (minutes >= slotMin) gaps.push({ start: new Date(cursor), end: new Date(bs), minutes });
       }
-      if (b.end.getTime() > cursor.getTime()) cursor = b.end;
+      if (b.end.getTime() > cursor.getTime()) cursor = new Date(b.end);
+      if (cursor >= close) break;
     }
     if (cursor.getTime() < close.getTime()) {
       const minutes = Math.floor((close.getTime()-cursor.getTime())/60000);
-      if (minutes >= 30) gaps.push({ start: new Date(cursor), end: new Date(close), minutes });
+      if (minutes >= slotMin) gaps.push({ start: new Date(cursor), end: new Date(close), minutes });
     }
     return gaps.slice(0, 6);
-  }, [view, anchor, hours, appts]);
+  }, [view, anchor, hours, appts, blocks, staffFilter, bufferMin, slotMin]);
 
   const openGapBooking = (start: Date) => {
     setEdit(null);
