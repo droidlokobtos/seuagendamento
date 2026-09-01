@@ -133,12 +133,24 @@ function WhatsAppQueue() {
 
   const runNow = async () => {
     try {
-      const res = await fetch("/api/public/hooks/reminders", { method: "POST" });
+      if (!companyId) throw new Error("Selecione uma empresa");
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Sua sessão expirou. Entre novamente.");
+      const res = await fetch("/api/public/hooks/reminders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ company_id: companyId }),
+      });
       const j = await res.json();
+      if (!res.ok) throw new Error(j.error || "Falha ao processar lembretes");
       toast.success(`${j.processed ?? 0} lembretes gerados`);
       refetch();
-    } catch {
-      toast.error("Falha ao processar");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Falha ao processar");
     }
   };
 

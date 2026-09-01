@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { fileSignatureMatchesMime, sameBrazilianPhone } from "./public-security";
+import { bearerToken, fileSignatureMatchesMime, sameBrazilianPhone } from "./public-security";
+
+describe("bearerToken", () => {
+  it("aceita somente o formato Bearer", () => {
+    expect(bearerToken("Bearer abc.def")).toBe("abc.def");
+    expect(bearerToken("bearer token123")).toBe("token123");
+    expect(bearerToken("Basic token123")).toBe("");
+    expect(bearerToken(null)).toBe("");
+  });
+});
 
 describe("sameBrazilianPhone", () => {
   it("exige o telefone brasileiro completo", () => {
