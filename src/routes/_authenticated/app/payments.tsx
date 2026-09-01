@@ -41,6 +41,7 @@ type Appt = {
   total_cents: number; discount_cents: number; surcharge_cents: number;
   paid_cents: number; deposit_required_cents: number; payment_status: AppointmentPaymentStatus;
   customers: { name: string } | null; staff: { name: string } | null;
+  default_payment_kind?: "deposit" | "final" | "extra" | "refund";
 };
 
 type Pay = {
@@ -130,12 +131,13 @@ function PaymentsPage() {
       } as any);
       if (error) throw error;
     },
-    onSuccess: () => {
-      toast.success("Pagamento registrado no caixa");
+    onSuccess: (_d, v) => {
+      toast.success(v.kind === "deposit" ? "Sinal antecipado registrado" : "Pagamento registrado no caixa");
       setPayFor(null);
       qc.invalidateQueries({ queryKey: ["fin_payments", companyId] });
       qc.invalidateQueries({ queryKey: ["fin_appts", companyId] });
       qc.invalidateQueries({ queryKey: ["finances", companyId] });
+      qc.invalidateQueries({ queryKey: ["appts", companyId] });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -289,7 +291,20 @@ function PaymentsPage() {
                     )}
 
                     <div className="flex gap-2 flex-wrap">
-                      <Button size="sm" variant="outline" onClick={() => setPayFor(a)}>
+                      {f.depositDueCents > 0 && f.balanceCents > 0 && (
+                        <Button
+                          size="sm"
+                          onClick={() => setPayFor({ ...a, default_payment_kind: "deposit" })}
+                        >
+                          <Wallet className="h-4 w-4 mr-1" /> Registrar sinal antecipado
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={f.balanceCents <= 0}
+                        onClick={() => setPayFor({ ...a, default_payment_kind: "final" })}
+                      >
                         <Plus className="h-4 w-4 mr-1" /> Registrar pagamento
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => setAuditFor(a)}>
@@ -351,23 +366,46 @@ function PaymentDialog({ appt, onClose, onSave, loading }: {
     surchargeCents: appt.surcharge_cents, paidCents: appt.paid_cents,
     depositRequiredCents: appt.deposit_required_cents,
   });
-  const [kind, setKind] = useState<"deposit" | "final" | "extra" | "refund">("final");
-  const [amount, setAmount] = useState((f.balanceCents / 100).toFixed(2));
+  const defaultKind = appt.default_payment_kind ?? "final";
+  const initialCents = defaultKind === "deposit" && f.depositDueCents > 0 ? f.depositDueCents : f.balanceCents;
+  const [kind, setKind] = useState<"deposit" | "final" | "extra" | "refund">(defaultKind);
+  const [amount, setAmount] = useState((initialCents / 100).toFixed(2));
   const [method, setMethod] = useState("pix");
+
+  const changeKind = (v: "deposit" | "final" | "extra" | "refund") => {
+    setKind(v);
+    if (v === "deposit") {
+      const suggested = f.depositDueCents > 0 ? f.depositDueCents : Math.min(f.depositRequiredCents || f.balanceCents, f.balanceCents);
+      if (suggested > 0) setAmount((suggested / 100).toFixed(2));
+    } else if (v === "final") {
+      setAmount((f.balanceCents / 100).toFixed(2));
+    }
+  };
+
+  const parsedCents = Math.round((parseFloat(amount) || 0) * 100);
+  const exceedsBalance = kind !== "refund" && kind !== "extra" && parsedCents > f.balanceCents;
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>Registrar pagamento</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>{kind === "deposit" ? "Registrar sinal antecipado" : "Registrar pagamento"}</DialogTitle>
+        </DialogHeader>
         <div className="space-y-3">
           <div className="rounded-lg border p-3 text-sm space-y-1">
             <div className="flex justify-between"><span>Total</span><span>{brl(f.totalCents / 100)}</span></div>
+            <div className="flex justify-between"><span>Sinal exigido</span><span>{brl(f.depositRequiredCents / 100)}</span></div>
             <div className="flex justify-between"><span>Já pago</span><span>{brl(f.paidCents / 100)}</span></div>
             <div className="flex justify-between font-semibold"><span>Saldo restante</span><span>{brl(f.balanceCents / 100)}</span></div>
           </div>
+          {kind === "deposit" && f.depositDueCents > 0 && (
+            <p className="rounded-md bg-muted px-3 py-2 text-xs">
+              Valor sugerido do sinal ainda pendente: <strong>{brl(f.depositDueCents / 100)}</strong>. A administradora pode alterar o valor abaixo.
+            </p>
+          )}
           <div>
             <Label>Tipo</Label>
-            <Select value={kind} onValueChange={(v) => setKind(v as any)}>
+            <Select value={kind} onValueChange={(v) => changeKind(v as any)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="deposit">Sinal (antecipado)</SelectItem>
@@ -380,6 +418,7 @@ function PaymentDialog({ appt, onClose, onSave, loading }: {
           <div>
             <Label>Valor (R$)</Label>
             <Input type="number" step="0.01" min="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            {exceedsBalance && <p className="mt-1 text-xs text-destructive">O valor não pode ser maior que o saldo restante.</p>}
           </div>
           <div>
             <Label>Forma de pagamento</Label>
@@ -396,15 +435,15 @@ function PaymentDialog({ appt, onClose, onSave, loading }: {
             </Select>
           </div>
           <p className="text-xs text-muted-foreground">
-            O lançamento entra automaticamente no caixa e nos relatórios — sem duplicidade.
+            O valor registrado será somado ao total já pago e o saldo restante será recalculado automaticamente para o fechamento do atendimento.
           </p>
         </div>
         <DialogFooter>
           <Button
-            disabled={loading || !(parseFloat(amount) > 0)}
-            onClick={() => onSave({ kind, amount_cents: Math.round(parseFloat(amount) * 100), method })}
+            disabled={loading || parsedCents <= 0 || exceedsBalance}
+            onClick={() => onSave({ kind, amount_cents: parsedCents, method })}
           >
-            Salvar
+            {loading ? "Registrando..." : kind === "deposit" ? "Registrar sinal" : "Salvar"}
           </Button>
         </DialogFooter>
       </DialogContent>
