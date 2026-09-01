@@ -1,0 +1,39 @@
+name: Fix anamnesis customer safety
+on:
+  push:
+    paths: ['.github/workflows/fix-anamnesis-customer-safety.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('src/routes/_authenticated/app/customers.tsx')
+          s=p.read_text()
+          old='''    mutationFn: async (v: Partial<C>) => {\n      if (edit) {\n        const { error } = await supabase.from("customers").update(v).eq("id", edit.id);\n        if (error) throw error;\n      } else {\n        const { error } = await supabase.from("customers").insert({ ...v, company_id: companyId } as any);\n        if (error) throw error;\n      }\n    },'''
+          new='''    mutationFn: async (v: Partial<C>) => {\n      const payload = Object.fromEntries(\n        Object.entries(v).filter(([key, value]) => key !== "id" && key !== "created_at" && value !== undefined),\n      ) as Partial<C>;\n      if (edit) {\n        const { error } = await supabase.from("customers").update(payload).eq("id", edit.id).eq("company_id", companyId);\n        if (error) throw error;\n      } else {\n        const { error } = await supabase.from("customers").insert({ ...payload, company_id: companyId } as any);\n        if (error) throw error;\n      }\n    },'''
+          if old not in s: raise SystemExit('customer mutation target not found')
+          s=s.replace(old,new)
+          p.write_text(s)
+
+          p=Path('src/routes/api/public/anamnesis.ts')
+          s=p.read_text()
+          s=s.replace('''        const company = await loadCompany(supabaseAdmin, slug);\n        if (!company) return Response.json({ error: "Empresa não encontrada" }, { status: 404 });\n\n        let sections: string[] = [];''','''        const company = await loadCompany(supabaseAdmin, slug);\n        if (!company) return Response.json({ error: "Empresa não encontrada" }, { status: 404 });\n        if (company.status === "suspended") return Response.json({ error: "Indisponível" }, { status: 403 });\n\n        let sections: string[] = [];''',1)
+          s=s.replace('''.from("anamnesis_records").select("filled_at,sections")\n              .eq("customer_id", cust.id).order''','''.from("anamnesis_records").select("filled_at,sections")\n              .eq("company_id", company.id).eq("customer_id", cust.id).order''')
+          s=s.replace('''          .from("anamnesis_records")\n          .insert({''','''          .from("anamnesis_records")\n          .insert({''')
+          p.write_text(s)
+          PY
+          bun install --frozen-lockfile
+          bun run build
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/_authenticated/app/customers.tsx src/routes/api/public/anamnesis.ts
+          git commit -m 'fix: harden anamnesis and customer update flow'
+          git push
