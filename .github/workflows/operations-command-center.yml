@@ -1,0 +1,37 @@
+name: Evolve operations command center
+on:
+  push:
+    paths: ['.github/workflows/operations-command-center.yml']
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - shell: bash
+        run: |
+          cat > src/routes/_authenticated/app/operations.tsx <<'EOF'
+          import { createFileRoute, Link } from '@tanstack/react-router';
+          import { useQuery } from '@tanstack/react-query';
+          import { supabase } from '@/integrations/supabase/client';
+          import { useCompany } from '@/lib/company';
+          import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+          import { Button } from '@/components/ui/button';
+          import { Badge } from '@/components/ui/badge';
+          import { CalendarCheck,Clock3,UserRound,Wallet,CheckCircle2,CircleDollarSign,PackageCheck,AlertCircle } from 'lucide-react';
+          import { brl } from '@/lib/format';
+          export const Route=createFileRoute('/_authenticated/app/operations')({component:Operations});
+          const terminal=['completed','cancelled','cancelled_by_customer','cancelled_by_company','no_show'];
+          const labels:any={scheduled:'Agendado',confirmed:'Confirmado',in_progress:'Em atendimento',completed:'Concluído',cancelled:'Cancelado',cancelled_by_customer:'Cancelado pelo cliente',cancelled_by_company:'Cancelado pela empresa',no_show:'Não compareceu'};
+          function Operations(){const {activeCompany}=useCompany();const id=activeCompany?.id;const {data:rows=[]}=useQuery({queryKey:['operations-today',id],enabled:!!id,refetchInterval:30000,queryFn:async()=>{const a=new Date();a.setHours(0,0,0,0);const b=new Date(a);b.setDate(b.getDate()+1);const {data,error}=await supabase.from('appointments').select('id,starts_at,ends_at,status,total_cents,paid_cents,payment_status,customer:customers(name),staff:staff(name),appointment_services(service:services(name))').eq('company_id',id!).gte('starts_at',a.toISOString()).lt('starts_at',b.toISOString()).order('starts_at');if(error)throw error;return data??[]}});const active=rows.filter((x:any)=>!terminal.includes(x.status));const done=rows.filter((x:any)=>x.status==='completed');const pendingPayment=rows.filter((x:any)=>x.status==='completed'&&Number(x.paid_cents||0)<Number(x.total_cents||0));const forecast=rows.filter((x:any)=>!String(x.status).startsWith('cancelled')&&x.status!=='no_show').reduce((n:number,x:any)=>n+Number(x.total_cents||0),0);const received=rows.reduce((n:number,x:any)=>n+Number(x.paid_cents||0),0);return <div className="space-y-6"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs uppercase tracking-[.18em] text-muted-foreground">Operação em tempo real</p><h1 className="text-2xl font-semibold">Central de Atendimento</h1><p className="text-muted-foreground">Da chegada do cliente ao pagamento e conclusão do atendimento.</p></div><div className="flex gap-2"><Button variant="outline" asChild><Link to="/app/agenda">Abrir agenda</Link></Button><Button asChild><Link to="/app/payments">Pagamentos</Link></Button></div></div><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Stat icon={CalendarCheck} value={rows.length} label="agendamentos hoje"/><Stat icon={Clock3} value={active.length} label="aguardando ou em atendimento"/><Stat icon={CheckCircle2} value={done.length} label="atendimentos concluídos"/><Stat icon={CircleDollarSign} value={pendingPayment.length} label="concluídos com saldo pendente"/></div><div className="grid gap-3 md:grid-cols-2"><Card><CardContent className="p-5"><Wallet className="mb-3 h-4 w-4"/><p className="text-2xl font-semibold">{brl(forecast)}</p><p className="text-sm text-muted-foreground">faturamento previsto do dia</p></CardContent></Card><Card><CardContent className="p-5"><PackageCheck className="mb-3 h-4 w-4"/><p className="text-2xl font-semibold">{brl(received)}</p><p className="text-sm text-muted-foreground">valor já recebido nos atendimentos</p></CardContent></Card></div><Card><CardHeader><CardTitle>Fluxo operacional de hoje</CardTitle></CardHeader><CardContent className="space-y-3">{rows.map((x:any)=>{const services=(x.appointment_services||[]).map((s:any)=>s.service?.name).filter(Boolean).join(', ');const balance=Math.max(0,Number(x.total_cents||0)-Number(x.paid_cents||0));const completed=x.status==='completed';return <div key={x.id} className="flex flex-wrap items-center gap-3 rounded-2xl border p-4"><div className="grid h-10 w-10 place-items-center rounded-xl bg-muted"><UserRound className="h-4 w-4"/></div><div className="min-w-52 flex-1"><div className="flex flex-wrap items-center gap-2"><p className="font-medium">{x.customer?.name||'Cliente'}</p><Badge variant={completed?'secondary':'outline'}>{labels[x.status]||x.status}</Badge></div><p className="text-xs text-muted-foreground">{new Date(x.starts_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · {x.staff?.name||'Sem profissional'}{services?` · ${services}`:''}</p></div><div className="text-right"><p className="font-semibold">{brl(x.total_cents||0)}</p>{balance>0&&<p className="text-xs text-muted-foreground">Saldo {brl(balance)}</p>}</div>{completed&&balance>0?<Button asChild size="sm"><Link to="/app/payments">Receber saldo</Link></Button>:completed?<Badge variant="secondary"><CheckCircle2 className="mr-1 h-3 w-3"/>Finalizado</Badge>:<Button asChild size="sm" variant="outline"><Link to="/app/agenda">Gerenciar</Link></Button>}</div>})}{!rows.length&&<div className="flex items-center justify-center gap-2 py-10 text-muted-foreground"><AlertCircle className="h-4 w-4"/>Nenhum atendimento para hoje.</div>}</CardContent></Card></div>}
+          function Stat({icon:Icon,value,label}:any){return <Card><CardContent className="p-5"><Icon className="mb-3 h-4 w-4"/><p className="text-2xl font-semibold">{value}</p><p className="text-sm text-muted-foreground">{label}</p></CardContent></Card>}
+          EOF
+          bun install --frozen-lockfile
+          bun run build
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/_authenticated/app/operations.tsx
+          git commit -m 'feat: evolve operations command center'
+          git push
