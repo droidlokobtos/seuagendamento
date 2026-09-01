@@ -1,22 +1,54 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 import { waLink, waNumber } from "@/lib/format";
+import { bearerToken } from "@/lib/public-security";
+
+const requestSchema = z.object({ company_id: z.string().uuid() });
 
 /**
  * Processes appointment reminders (24h, 1h, review) due for delivery.
- * Called by pg_cron every 15 min. Turns due reminders into in-app
- * notifications carrying a ready-to-send wa.me link, so staff can click
- * "Enviar no WhatsApp" and the message opens pre-filled.
+ * Acionado manualmente por um membro autenticado da empresa. Converte apenas
+ * os lembretes do tenant solicitado em notificações com link wa.me.
  */
 export const Route = createFileRoute("/api/public/hooks/reminders")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const parsed = requestSchema.safeParse(await request.json().catch(() => null));
+        if (!parsed.success) return Response.json({ error: "Empresa inválida" }, { status: 400 });
+        const companyId = parsed.data.company_id;
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const accessToken = bearerToken(request.headers.get("authorization"));
+        if (!accessToken) return Response.json({ error: "Não autenticado" }, { status: 401 });
+
+        const { data: authData } = await supabaseAdmin.auth.getUser(accessToken);
+        const userId = authData.user?.id;
+        if (!userId) return Response.json({ error: "Sessão inválida" }, { status: 401 });
+
+        const [{ data: membership }, { data: superRole }] = await Promise.all([
+          supabaseAdmin
+            .from("company_users")
+            .select("company_id")
+            .eq("company_id", companyId)
+            .eq("user_id", userId)
+            .eq("active", true)
+            .maybeSingle(),
+          supabaseAdmin
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", userId)
+            .eq("role", "super_admin")
+            .maybeSingle(),
+        ]);
+        if (!membership && !superRole)
+          return Response.json({ error: "Sem acesso à empresa" }, { status: 403 });
+
         const now = new Date().toISOString();
 
         const { data: due } = await supabaseAdmin
           .from("appointment_reminders")
           .select("id, appointment_id, company_id, kind, scheduled_for")
+          .eq("company_id", companyId)
           .is("sent_at", null)
           .lte("scheduled_for", now)
           .limit(500);
@@ -26,11 +58,10 @@ export const Route = createFileRoute("/api/public/hooks/reminders")({
         }
 
         // Preload companies for name / slug / whatsapp signature
-        const companyIds = Array.from(new Set(due.map((r) => r.company_id)));
         const { data: companies } = await supabaseAdmin
           .from("companies")
           .select("id, name, slug")
-          .in("id", companyIds);
+          .eq("id", companyId);
         const cmap = new Map((companies ?? []).map((c: any) => [c.id, c]));
 
         let processed = 0;
