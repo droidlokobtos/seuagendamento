@@ -4,20 +4,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
- */
-
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -63,17 +49,14 @@
 
 :root {
   --radius: 0.75rem;
-  /* Warm neutral base */
   --background: oklch(0.985 0.005 80);
   --foreground: oklch(0.22 0.015 60);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.22 0.015 60);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.22 0.015 60);
-  /* Deep espresso primary */
   --primary: oklch(0.28 0.03 45);
   --primary-foreground: oklch(0.98 0.01 80);
-  /* Champagne gold accent */
   --secondary: oklch(0.94 0.03 80);
   --secondary-foreground: oklch(0.3 0.04 55);
   --muted: oklch(0.955 0.008 80);
@@ -136,9 +119,7 @@
 }
 
 @layer base {
-  * {
-    border-color: var(--color-border);
-  }
+  * { border-color: var(--color-border); }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -146,3 +127,60 @@
   }
 }
 
+/* Premium treatment for the public booking experience only. */
+body:has(a[href*="/b/"][href$="/entrar"]),
+body:has(a[href*="/b/"][href$="/minha-conta"]) {
+  background:
+    radial-gradient(circle at 50% -10%, oklch(0.94 0.035 80 / 55%), transparent 38rem),
+    linear-gradient(180deg, oklch(0.99 0.004 80), oklch(0.965 0.009 75));
+}
+
+body:has(a[href*="/b/"][href$="/entrar"]) .max-w-lg,
+body:has(a[href*="/b/"][href$="/minha-conta"]) .max-w-lg {
+  max-width: 44rem;
+}
+
+body:has(a[href*="/b/"][href$="/entrar"]) [data-slot="card"],
+body:has(a[href*="/b/"][href$="/minha-conta"]) [data-slot="card"] {
+  border-color: oklch(0.87 0.012 75 / 72%);
+  border-radius: 1.15rem;
+  box-shadow: 0 1px 2px oklch(0.2 0.01 60 / 4%), 0 16px 42px -28px oklch(0.2 0.02 55 / 28%);
+  background: oklch(1 0 0 / 92%);
+  backdrop-filter: blur(14px);
+}
+
+body:has(a[href*="/b/"][href$="/entrar"]) button,
+body:has(a[href*="/b/"][href$="/minha-conta"]) button {
+  letter-spacing: -0.01em;
+}
+
+body:has(a[href*="/b/"][href$="/entrar"]) input,
+body:has(a[href*="/b/"][href$="/entrar"]) textarea,
+body:has(a[href*="/b/"][href$="/minha-conta"]) input,
+body:has(a[href*="/b/"][href$="/minha-conta"]) textarea {
+  background: oklch(1 0 0 / 82%);
+  border-color: oklch(0.86 0.012 75);
+  box-shadow: inset 0 1px 1px oklch(0.2 0.01 60 / 3%);
+}
+
+body:has(a[href*="/b/"][href$="/entrar"]) .fixed.bottom-0,
+body:has(a[href*="/b/"][href$="/minha-conta"]) .fixed.bottom-0 {
+  background: oklch(1 0 0 / 88%);
+  border-color: oklch(0.86 0.012 75 / 75%);
+  box-shadow: 0 -12px 36px -28px oklch(0.2 0.02 55 / 35%);
+  backdrop-filter: blur(20px) saturate(140%);
+}
+
+body:has(a[href*="/b/"][href$="/entrar"]) h1,
+body:has(a[href*="/b/"][href$="/entrar"]) h2,
+body:has(a[href*="/b/"][href$="/minha-conta"]) h1,
+body:has(a[href*="/b/"][href$="/minha-conta"]) h2 {
+  letter-spacing: -0.025em;
+}
+
+@media (min-width: 640px) {
+  body:has(a[href*="/b/"][href$="/entrar"]) [data-slot="card"],
+  body:has(a[href*="/b/"][href$="/minha-conta"]) [data-slot="card"] {
+    border-radius: 1.35rem;
+  }
+}
