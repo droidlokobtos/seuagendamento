@@ -924,6 +924,121 @@ export type Database = {
           },
         ]
       }
+      audit_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          company_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: number
+          metadata: Json
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: never
+          metadata?: Json
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: never
+          metadata?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_expenses: {
+        Row: {
+          amount_cents: number
+          category: string
+          company_id: string
+          created_at: string
+          created_by: string | null
+          description: string
+          due_date: string | null
+          financial_transaction_id: string | null
+          id: string
+          paid_at: string | null
+          payment_method: string | null
+          status: string
+        }
+        Insert: {
+          amount_cents: number
+          category?: string
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          due_date?: string | null
+          financial_transaction_id?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+        }
+        Update: {
+          amount_cents?: number
+          category?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_date?: string | null
+          financial_transaction_id?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_expenses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_expenses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_expenses_financial_transaction_id_fkey"
+            columns: ["financial_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "financial_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
           audience: string
@@ -977,6 +1092,66 @@ export type Database = {
           },
           {
             foreignKeyName: "campaigns_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cash_sessions: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          company_id: string
+          counted_cents: number | null
+          difference_cents: number | null
+          expected_cents: number | null
+          id: string
+          notes: string | null
+          opened_at: string
+          opened_by: string
+          opening_cents: number
+          status: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          company_id: string
+          counted_cents?: number | null
+          difference_cents?: number | null
+          expected_cents?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opened_by: string
+          opening_cents?: number
+          status?: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          company_id?: string
+          counted_cents?: number | null
+          difference_cents?: number | null
+          expected_cents?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opened_by?: string
+          opening_cents?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_sessions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_sessions_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "public_companies"
@@ -5562,6 +5737,16 @@ export type Database = {
         Args: { _company: string; _keys: string[]; _staff: string }
         Returns: boolean
       }
+      checkout_appointment_with_products: {
+        Args: {
+          _appointment_id: string
+          _payment_amount_cents: number
+          _payment_kind: string
+          _payment_method: string
+          _products: Json
+        }
+        Returns: Json
+      }
       company_features: { Args: { _company: string }; Returns: Json }
       create_company_for_user_as_super_admin: {
         Args: {
@@ -5632,6 +5817,10 @@ export type Database = {
       is_company_blocked: { Args: { _company: string }; Returns: boolean }
       is_company_member: { Args: { _company: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      mark_business_expense_paid: {
+        Args: { p_expense_id: string; p_payment_method_id: string }
+        Returns: string
+      }
       plan_mark_expired: { Args: never; Returns: undefined }
       recalc_appointment_finance: {
         Args: { _appt: string }
