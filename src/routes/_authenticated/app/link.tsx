@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Copy, Share2, Download, QrCode, Link as LinkIcon, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { slugify } from "@/lib/format";
+import { openWhatsAppLink, slugify, waLink } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/app/link")({
   component: LinkPage,
@@ -28,7 +28,9 @@ function LinkPage() {
   const [minAdv, setMinAdv] = useState<number>(c?.min_advance_min ?? 0);
   const [maxAdv, setMaxAdv] = useState<number>(c?.max_advance_days ?? 60);
   const [bufferMin, setBufferMin] = useState<number>(c?.buffer_min ?? 0);
-  const [slotIntervalMin, setSlotIntervalMin] = useState<number>(c?.booking_slot_interval_min ?? 30);
+  const [slotIntervalMin, setSlotIntervalMin] = useState<number>(
+    c?.booking_slot_interval_min ?? 30,
+  );
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -47,7 +49,8 @@ function LinkPage() {
   useEffect(() => {
     if (!url) return;
     QRCode.toDataURL(url, { width: 512, margin: 2, color: { dark: "#000000", light: "#ffffff" } })
-      .then(setQrDataUrl).catch(() => {});
+      .then(setQrDataUrl)
+      .catch(() => {});
     if (canvasRef.current) {
       QRCode.toCanvas(canvasRef.current, url, { width: 240, margin: 1 }).catch(() => {});
     }
@@ -58,14 +61,17 @@ function LinkPage() {
       const cleanSlug = slugify(slug);
       if (!cleanSlug) throw new Error("Slug obrigatório");
       const normalizedSlotInterval = Math.min(240, Math.max(5, Math.round(slotIntervalMin || 30)));
-      const { error } = await supabase.from("companies").update({
-        slug: cleanSlug,
-        online_booking_enabled: enabled,
-        min_advance_min: Math.max(0, minAdv | 0),
-        max_advance_days: Math.max(1, maxAdv | 0),
-        buffer_min: Math.max(0, bufferMin | 0),
-        booking_slot_interval_min: normalizedSlotInterval,
-      } as any).eq("id", companyId);
+      const { error } = await supabase
+        .from("companies")
+        .update({
+          slug: cleanSlug,
+          online_booking_enabled: enabled,
+          min_advance_min: Math.max(0, minAdv | 0),
+          max_advance_days: Math.max(1, maxAdv | 0),
+          buffer_min: Math.max(0, bufferMin | 0),
+          booking_slot_interval_min: normalizedSlotInterval,
+        } as any)
+        .eq("id", companyId);
       if (error) throw error;
       setSlotIntervalMin(normalizedSlotInterval);
     },
@@ -78,14 +84,21 @@ function LinkPage() {
   });
 
   const copy = async () => {
-    try { await navigator.clipboard.writeText(url); toast.success("Link copiado"); }
-    catch { toast.error("Não foi possível copiar"); }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copiado");
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
   };
 
   const share = async () => {
     const text = `Agende comigo: ${activeCompany?.name}\n${url}`;
     if ((navigator as any).share) {
-      try { await (navigator as any).share({ title: activeCompany?.name, text, url }); return; } catch {}
+      try {
+        await (navigator as any).share({ title: activeCompany?.name, text, url });
+        return;
+      } catch {}
     }
     copy();
   };
@@ -115,14 +128,16 @@ function LinkPage() {
 
   const shareWhats = () => {
     const text = `Olá! Agende seu horário em ${activeCompany?.name}: ${url}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    openWhatsAppLink(waLink(null, text));
   };
 
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
         <h1 className="text-2xl font-semibold">Link de agendamento</h1>
-        <p className="text-sm text-muted-foreground">Compartilhe seu link exclusivo e receba agendamentos online.</p>
+        <p className="text-sm text-muted-foreground">
+          Compartilhe seu link exclusivo e receba agendamentos online.
+        </p>
       </div>
 
       <Card>
@@ -133,12 +148,25 @@ function LinkPage() {
           </div>
           <div className="flex gap-2 items-center">
             <Input readOnly value={url} className="font-mono text-sm" />
-            <Button variant="outline" size="icon" onClick={copy} title="Copiar"><Copy className="h-4 w-4" /></Button>
-            <Button variant="outline" size="icon" onClick={() => window.open(url, "_blank")} title="Abrir"><ExternalLink className="h-4 w-4" /></Button>
+            <Button variant="outline" size="icon" onClick={copy} title="Copiar">
+              <Copy className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => window.open(url, "_blank")}
+              title="Abrir"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={share}><Share2 className="h-4 w-4 mr-2" /> Compartilhar</Button>
-            <Button variant="outline" onClick={shareWhats}>WhatsApp</Button>
+            <Button onClick={share}>
+              <Share2 className="h-4 w-4 mr-2" /> Compartilhar
+            </Button>
+            <Button variant="outline" onClick={shareWhats}>
+              WhatsApp
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -158,8 +186,12 @@ function LinkPage() {
                 Baixe e use em cartões, panfletos, balcão ou redes sociais.
               </p>
               <div className="flex flex-wrap gap-2">
-                <Button onClick={downloadPng} disabled={!qrDataUrl}><Download className="h-4 w-4 mr-2" /> Baixar PNG</Button>
-                <Button variant="outline" onClick={printQr} disabled={!qrDataUrl}>Imprimir / PDF</Button>
+                <Button onClick={downloadPng} disabled={!qrDataUrl}>
+                  <Download className="h-4 w-4 mr-2" /> Baixar PNG
+                </Button>
+                <Button variant="outline" onClick={printQr} disabled={!qrDataUrl}>
+                  Imprimir / PDF
+                </Button>
               </div>
             </div>
           </div>
@@ -172,7 +204,9 @@ function LinkPage() {
           <div className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2">
             <div>
               <p className="text-sm font-medium">Agendamento online ativo</p>
-              <p className="text-xs text-muted-foreground">Quando desativado, o link mostra a página mas bloqueia novos agendamentos.</p>
+              <p className="text-xs text-muted-foreground">
+                Quando desativado, o link mostra a página mas bloqueia novos agendamentos.
+              </p>
             </div>
             <Switch checked={enabled} onCheckedChange={setEnabled} />
           </div>
@@ -184,35 +218,71 @@ function LinkPage() {
                 <span className="text-xs text-muted-foreground whitespace-nowrap">{origin}/b/</span>
                 <Input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Somente letras, números e hífens. Precisa ser único.</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Somente letras, números e hífens. Precisa ser único.
+              </p>
             </div>
             <div>
               <Label>Intervalo dos horários disponíveis (min)</Label>
-              <Input type="number" min={5} max={240} step={5} value={slotIntervalMin} onChange={(e) => setSlotIntervalMin(Number(e.target.value))} />
-              <p className="text-xs text-muted-foreground mt-1">Define de quantos em quantos minutos os horários aparecem para o cliente. Padrão: 30 min.</p>
+              <Input
+                type="number"
+                min={5}
+                max={240}
+                step={5}
+                value={slotIntervalMin}
+                onChange={(e) => setSlotIntervalMin(Number(e.target.value))}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Define de quantos em quantos minutos os horários aparecem para o cliente. Padrão: 30
+                min.
+              </p>
             </div>
             <div>
               <Label>Intervalo entre atendimentos (min)</Label>
-              <Input type="number" min={0} value={bufferMin} onChange={(e) => setBufferMin(Number(e.target.value))} />
-              <p className="text-xs text-muted-foreground mt-1">Tempo de respiro entre o fim de um atendimento e o próximo.</p>
+              <Input
+                type="number"
+                min={0}
+                value={bufferMin}
+                onChange={(e) => setBufferMin(Number(e.target.value))}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Tempo de respiro entre o fim de um atendimento e o próximo.
+              </p>
             </div>
             <div>
               <Label>Antecedência mínima (min)</Label>
-              <Input type="number" min={0} value={minAdv} onChange={(e) => setMinAdv(Number(e.target.value))} />
-              <p className="text-xs text-muted-foreground mt-1">Ex.: 60 = clientes só agendam pelo menos 1h antes.</p>
+              <Input
+                type="number"
+                min={0}
+                value={minAdv}
+                onChange={(e) => setMinAdv(Number(e.target.value))}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Ex.: 60 = clientes só agendam pelo menos 1h antes.
+              </p>
             </div>
             <div>
               <Label>Antecedência máxima (dias)</Label>
-              <Input type="number" min={1} value={maxAdv} onChange={(e) => setMaxAdv(Number(e.target.value))} />
-              <p className="text-xs text-muted-foreground mt-1">Ex.: 30 = agenda aberta pelos próximos 30 dias.</p>
+              <Input
+                type="number"
+                min={1}
+                value={maxAdv}
+                onChange={(e) => setMaxAdv(Number(e.target.value))}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Ex.: 30 = agenda aberta pelos próximos 30 dias.
+              </p>
             </div>
           </div>
 
           <div className="pt-2">
-            <Button onClick={() => save.mutate()} disabled={save.isPending}>Salvar configurações</Button>
+            <Button onClick={() => save.mutate()} disabled={save.isPending}>
+              Salvar configurações
+            </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Configure horários, folgas e bloqueios em <b>Configurações</b> e <b>Bloqueios</b>. A duração de cada serviço é definida em <b>Serviços</b>.
+            Configure horários, folgas e bloqueios em <b>Configurações</b> e <b>Bloqueios</b>. A
+            duração de cada serviço é definida em <b>Serviços</b>.
           </p>
         </CardContent>
       </Card>
