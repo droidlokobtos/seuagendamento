@@ -51,6 +51,7 @@ const GROUPS: NavGroup[] = [
   { id: "financeiro", label: "Financeiro", icon: Wallet, items: [
     { to: "/app/finances", label: "Dashboard financeiro", icon: Wallet, perm: "financeiro" },
     { to: "/app/cash", label: "Fechamento de caixa", icon: CircleDollarSign, perm: "financeiro" },
+    { to: "/app/expenses", label: "Despesas e contas", icon: ReceiptText, perm: "financeiro" },
     { to: "/app/expenses", label: "Despesas e contas a pagar", icon: ReceiptText, perm: "financeiro" },
     { to: "/app/audit", label: "Auditoria", icon: History, perm: "financeiro" },
     { to: "/app/payments", label: "Pagamentos", icon: Wallet, perm: "financeiro" },

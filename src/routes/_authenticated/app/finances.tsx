@@ -92,11 +92,24 @@ function Finances() {
     },
   });
 
+  const { data: operationalExpenses = [] } = useQuery({
+    queryKey: ["operational_expenses_finance", companyId, month],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("business_expenses")
+        .select("amount_cents,status,due_date,paid_at,created_at").eq("company_id", companyId)
+        .neq("status", "cancelled").gte("created_at", `${from}T00:00:00`).lt("created_at", `${to}T00:00:00`);
+      if (error) throw error; return data ?? [];
+    },
+  });
+  const operationalExpensePaid = operationalExpenses.filter((x:any)=>x.status === "paid").reduce((n:number,x:any)=>n + Number(x.amount_cents||0)/100,0);
+  const operationalExpensePending = operationalExpenses.filter((x:any)=>x.status === "pending").reduce((n:number,x:any)=>n + Number(x.amount_cents||0)/100,0);
+
   const totals = useMemo(() => {
     const income = txs.filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount), 0);
     const expense = txs.filter((t) => t.type === "expense").reduce((s, t) => s + Number(t.amount), 0);
-    return { income, expense, balance: income - expense };
-  }, [txs]);
+    const expenseWithOperational = expense + operationalExpensePaid;
+    return { income, expense: expenseWithOperational, balance: income - expenseWithOperational };
+  }, [txs, operationalExpensePaid]);
 
   const byCategory = useMemo(() => {
     const map = new Map<string, number>();
@@ -168,8 +181,8 @@ function Finances() {
 
       <div className="grid gap-3 md:grid-cols-3">
         <StatCard label="Entradas" value={totals.income} icon={<TrendingUp className="h-5 w-5" />} tone="text-emerald-600" />
-        <StatCard label="Saídas" value={totals.expense} icon={<TrendingDown className="h-5 w-5" />} tone="text-rose-600" />
-        <StatCard label="Saldo do mês" value={totals.balance} icon={<Wallet className="h-5 w-5" />} tone={totals.balance >= 0 ? "text-primary" : "text-rose-600"} />
+        <StatCard label="Saídas pagas" value={totals.expense} icon={<TrendingDown className="h-5 w-5" />} tone="text-rose-600" />
+        <StatCard label={`Saldo do mês · ${brl(operationalExpensePending)} a pagar`} value={totals.balance} icon={<Wallet className="h-5 w-5" />} tone={totals.balance >= 0 ? "text-primary" : "text-rose-600"} />
       </div>
 
       <Tabs defaultValue="entries">
