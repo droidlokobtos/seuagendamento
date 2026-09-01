@@ -60,7 +60,14 @@ import { getImpersonation, stopImpersonation } from "@/lib/impersonation";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 
-type NavItem = { to: string; label: string; icon: LucideIcon; end?: boolean; perm?: PermissionKey };
+type NavItem = {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+  end?: boolean;
+  perm?: PermissionKey;
+  external?: boolean;
+};
 type NavGroup = { id: string; label: string; icon: LucideIcon; items: NavItem[] };
 
 const GROUPS: NavGroup[] = [
@@ -191,7 +198,15 @@ const GROUPS: NavGroup[] = [
     id: "ajuda",
     label: "Ajuda",
     icon: BookOpen,
-    items: [{ to: "/app/help", label: "Central de Ajuda", icon: BookOpen }],
+    items: [
+      { to: "/app/help", label: "Central de Ajuda", icon: BookOpen },
+      {
+        to: "https://wa.me/5517992816108",
+        label: "Suporte",
+        icon: MessageCircle,
+        external: true,
+      },
+    ],
   },
 ];
 
@@ -269,7 +284,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
     <nav className="flex flex-col gap-1.5 p-3">
       {groups.map((group) => {
         const expanded = openGroups.includes(group.id);
-        const groupActive = group.items.some((i) => isActive(i.to, i.end));
+        const groupActive = group.items.some((i) => !i.external && isActive(i.to, i.end));
         return (
           <div key={group.id} className="rounded-xl">
             <button
@@ -286,18 +301,40 @@ export function AppLayout({ children }: { children?: ReactNode }) {
             {expanded && (
               <div className="mt-1 mb-2 ml-4 flex flex-col gap-0.5 border-l border-border/70 pl-3">
                 {group.items.map((item) => {
-                  const active = isActive(item.to, item.end);
+                  const active = !item.external && isActive(item.to, item.end);
+                  const itemClassName = `group flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all ${active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"}`;
+                  const content = (
+                    <>
+                      <item.icon
+                        className={`h-4 w-4 shrink-0 ${active ? "opacity-100" : "opacity-70 group-hover:opacity-100"}`}
+                      />
+                      <span className="truncate">{item.label}</span>
+                    </>
+                  );
+
+                  if (item.external) {
+                    return (
+                      <a
+                        key={group.id + item.to}
+                        href={item.to}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setOpen(false)}
+                        className={itemClassName}
+                      >
+                        {content}
+                      </a>
+                    );
+                  }
+
                   return (
                     <Link
                       key={group.id + item.to}
                       to={item.to}
                       onClick={() => setOpen(false)}
-                      className={`group flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all ${active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"}`}
+                      className={itemClassName}
                     >
-                      <item.icon
-                        className={`h-4 w-4 shrink-0 ${active ? "opacity-100" : "opacity-70 group-hover:opacity-100"}`}
-                      />
-                      <span className="truncate">{item.label}</span>
+                      {content}
                     </Link>
                   );
                 })}
