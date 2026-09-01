@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, Plus, MessageCircle, Calendar as CalIcon, Check, CheckCheck, X, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, MessageCircle, Calendar as CalIcon, Check, CheckCheck, X, Play, Sparkles, Clock3 } from "lucide-react";
 import { computeFinance, PAYMENT_STATUS_META, type AppointmentPaymentStatus } from "@/lib/finance";
 import { brl } from "@/lib/format";
 import { APPOINTMENT_STATUS, FREED_STATUSES } from "@/lib/appointment-status";
@@ -138,6 +138,42 @@ function Agenda() {
     () => (staffFilter ? (staff as any[]).find((s) => s.id === staffFilter)?.name : null),
     [staff, staffFilter],
   );
+
+  const smartGaps = useMemo(() => {
+    if (view !== "day") return [] as { start: Date; end: Date; minutes: number }[];
+    const h = (hours as any[]).find((x) => x.weekday === anchor.getDay());
+    if (!h || h.closed) return [];
+    const [sh, sm] = String(h.start_time).split(":").map(Number);
+    const [eh, em] = String(h.end_time).split(":").map(Number);
+    const open = new Date(anchor); open.setHours(sh, sm, 0, 0);
+    const close = new Date(anchor); close.setHours(eh, em, 0, 0);
+    const busy = (appts as any[]).filter((a) => !FREED_STATUSES.includes(a.status)).map((a) => ({ start: new Date(a.starts_at), end: new Date(a.ends_at) })).sort((a,b) => a.start.getTime()-b.start.getTime());
+    const gaps: { start: Date; end: Date; minutes: number }[] = [];
+    let cursor = open;
+    for (const b of busy) {
+      if (b.end <= open || b.start >= close) continue;
+      const bs = b.start < open ? open : b.start;
+      if (bs.getTime() > cursor.getTime()) {
+        const minutes = Math.floor((bs.getTime()-cursor.getTime())/60000);
+        if (minutes >= 30) gaps.push({ start: new Date(cursor), end: new Date(bs), minutes });
+      }
+      if (b.end.getTime() > cursor.getTime()) cursor = b.end;
+    }
+    if (cursor.getTime() < close.getTime()) {
+      const minutes = Math.floor((close.getTime()-cursor.getTime())/60000);
+      if (minutes >= 30) gaps.push({ start: new Date(cursor), end: new Date(close), minutes });
+    }
+    return gaps.slice(0, 6);
+  }, [view, anchor, hours, appts]);
+
+  const openGapBooking = (start: Date) => {
+    setEdit(null);
+    setOpen(true);
+    setTimeout(() => {
+      const input = document.querySelector<HTMLInputElement>('input[name="starts_at"]');
+      if (input) { input.value = toLocalInput(start); input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); }
+    }, 0);
+  };
 
   const validate = (starts: Date, ends: Date, staff_id: string | null, ignoreId?: string) => {
     const h = (hours as any[]).find((x) => x.weekday === starts.getDay());
@@ -349,7 +385,15 @@ function Agenda() {
         </div>
       </div>
 
-      <Card>
+            {view === "day" && smartGaps.length > 0 && (
+        <Card className="border-dashed">
+          <CardContent className="p-4">
+            <div className="mb-3 flex items-center gap-2"><Sparkles className="h-4 w-4"/><div><p className="font-medium">Agenda inteligente</p><p className="text-xs text-muted-foreground">Horários livres de pelo menos 30 minutos encontrados neste dia.</p></div></div>
+            <div className="flex flex-wrap gap-2">{smartGaps.map((g,i)=><Button key={i} type="button" variant="outline" size="sm" onClick={()=>openGapBooking(g.start)}><Clock3 className="mr-1 h-3.5 w-3.5"/>{fmtTime(g.start)}–{fmtTime(g.end)} · {g.minutes} min</Button>)}</div>
+          </CardContent>
+        </Card>
+      )}
+<Card>
         <CardContent className="p-4 flex items-center justify-between gap-3">
           <Button variant="outline" size="icon" onClick={() => shift(-1)}><ChevronLeft className="h-4 w-4" /></Button>
           <div className="text-center">
