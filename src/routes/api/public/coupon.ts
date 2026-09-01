@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { guardPublicRequest, rateLimitResponse } from "@/lib/public-api-protection.server";
 
 /**
  * Validação de cupom para a página pública de agendamento.
@@ -23,12 +24,19 @@ export const Route = createFileRoute("/api/public/coupon")({
         const { company_id, code, subtotal_cents } = parsed.data;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const guard = await guardPublicRequest(supabaseAdmin, request, {
+          scope: "coupon:validate",
+          limit: 20,
+          windowSeconds: 300,
+        });
+        if (!guard.allowed) return rateLimitResponse(guard.retryAfter);
         const { data, error } = await supabaseAdmin.rpc("validate_coupon", {
           _company: company_id,
           _code: code,
           _subtotal_cents: subtotal_cents,
         });
-        if (error) return Response.json({ error: "Não foi possível validar o cupom" }, { status: 500 });
+        if (error)
+          return Response.json({ error: "Não foi possível validar o cupom" }, { status: 500 });
 
         const row = Array.isArray(data) ? data[0] : data;
         if (!row || row.message !== "ok") {
