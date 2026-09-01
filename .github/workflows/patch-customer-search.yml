@@ -1,0 +1,90 @@
+name: Apply customer partial search improvements
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-customer-search.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add partial text search to customer selectors
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'Pattern not found: {label} in {path}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          # Loyalty: add search state + partial matching and searchable selector.
+          replace_once(
+              'src/routes/_authenticated/app/loyalty.tsx',
+              '  const [open, setOpen] = useState(false);',
+              '  const [open, setOpen] = useState(false);\n  const [customerSearch, setCustomerSearch] = useState("");',
+              'loyalty state',
+          )
+          replace_once(
+              'src/routes/_authenticated/app/loyalty.tsx',
+              '  const customerName = (id: string) => customers.find((c) => c.id === id)?.name ?? "—";',
+              '  const filteredCustomers = useMemo(() => {\n    const term = customerSearch.trim().toLocaleLowerCase("pt-BR");\n    if (!term) return customers.slice(0, 50);\n    return customers.filter((c) => c.name.toLocaleLowerCase("pt-BR").includes(term)).slice(0, 50);\n  }, [customers, customerSearch]);\n\n  const customerName = (id: string) => customers.find((c) => c.id === id)?.name ?? "—";',
+              'loyalty filter',
+          )
+          replace_once(
+              'src/routes/_authenticated/app/loyalty.tsx',
+              '''                <div>\n                  <Label>Cliente</Label>\n                  <Select name="customer_id" required>\n                    <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>\n                    <SelectContent>\n                      {customers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}\n                    </SelectContent>\n                  </Select>\n                </div>''',
+              '''                <div>\n                  <Label>Cliente</Label>\n                  <Input\n                    value={customerSearch}\n                    onChange={(e) => setCustomerSearch(e.target.value)}\n                    placeholder="Digite o nome do cliente…"\n                    autoComplete="off"\n                    className="mb-2"\n                  />\n                  <Select name="customer_id" required>\n                    <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>\n                    <SelectContent>\n                      {filteredCustomers.length ? filteredCustomers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>) : <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado.</div>}\n                    </SelectContent>\n                  </Select>\n                </div>''',
+              'loyalty selector',
+          )
+
+          # Sales: add search state + filter and searchable customer selector.
+          replace_once(
+              'src/routes/_authenticated/app/sales.tsx',
+              '  const [customer, setCustomer] = useState<string>("");',
+              '  const [customer, setCustomer] = useState<string>("");\n  const [customerSearch, setCustomerSearch] = useState("");',
+              'sales state',
+          )
+          replace_once(
+              'src/routes/_authenticated/app/sales.tsx',
+              '''        <div>\n          <Label>Cliente (opcional)</Label>\n          <Select value={customer} onValueChange={setCustomer}>\n            <SelectTrigger><SelectValue placeholder="Consumidor final" /></SelectTrigger>\n            <SelectContent>\n              {customers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}\n            </SelectContent>\n          </Select>\n        </div>''',
+              '''        <div>\n          <Label>Cliente (opcional)</Label>\n          <Input\n            value={customerSearch}\n            onChange={(e) => setCustomerSearch(e.target.value)}\n            placeholder="Digite o nome do cliente…"\n            autoComplete="off"\n            className="mb-2"\n          />\n          <Select value={customer} onValueChange={(v) => { setCustomer(v); setCustomerSearch(""); }}>\n            <SelectTrigger><SelectValue placeholder="Consumidor final" /></SelectTrigger>\n            <SelectContent>\n              {(customers as any[]).filter((c) => c.name.toLocaleLowerCase("pt-BR").includes(customerSearch.trim().toLocaleLowerCase("pt-BR"))).slice(0, 50).map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}\n            </SelectContent>\n          </Select>\n        </div>''',
+              'sales selector',
+          )
+
+          # WhatsApp QuickSend: add search state/filter and searchable selector.
+          replace_once(
+              'src/routes/_authenticated/app/whatsapp.tsx',
+              '  const [customerId, setCustomerId] = useState<string>("");',
+              '  const [customerId, setCustomerId] = useState<string>("");\n  const [customerSearch, setCustomerSearch] = useState("");',
+              'whatsapp state',
+          )
+          replace_once(
+              'src/routes/_authenticated/app/whatsapp.tsx',
+              '''  const selectedCustomer = useMemo(\n    () => customers.find((c) => c.id === customerId) ?? null,\n    [customers, customerId],\n  );''',
+              '''  const filteredCustomers = useMemo(() => {\n    const term = customerSearch.trim().toLocaleLowerCase("pt-BR");\n    if (!term) return customers.slice(0, 50);\n    return customers.filter((c) => c.name.toLocaleLowerCase("pt-BR").includes(term)).slice(0, 50);\n  }, [customers, customerSearch]);\n\n  const selectedCustomer = useMemo(\n    () => customers.find((c) => c.id === customerId) ?? null,\n    [customers, customerId],\n  );''',
+              'whatsapp filter',
+          )
+          replace_once(
+              'src/routes/_authenticated/app/whatsapp.tsx',
+              '''          <div>\n            <Label>Cliente cadastrado</Label>\n            <Select value={customerId} onValueChange={setCustomerId}>\n              <SelectTrigger>\n                <SelectValue placeholder="Selecione um cliente" />\n              </SelectTrigger>\n              <SelectContent>\n                {customers.map((c) => (\n                  <SelectItem key={c.id} value={c.id}>\n                    {c.name} — {c.phone}\n                  </SelectItem>\n                ))}\n              </SelectContent>\n            </Select>\n          </div>''',
+              '''          <div>\n            <Label>Cliente cadastrado</Label>\n            <Input\n              value={customerSearch}\n              onChange={(e) => setCustomerSearch(e.target.value)}\n              placeholder="Digite o nome do cliente…"\n              autoComplete="off"\n              className="mb-2"\n            />\n            <Select value={customerId} onValueChange={(v) => { setCustomerId(v); setCustomerSearch(""); }}>\n              <SelectTrigger>\n                <SelectValue placeholder="Selecione um cliente" />\n              </SelectTrigger>\n              <SelectContent>\n                {filteredCustomers.length ? filteredCustomers.map((c) => (\n                  <SelectItem key={c.id} value={c.id}>\n                    {c.name} — {c.phone}\n                  </SelectItem>\n                )) : <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado.</div>}\n              </SelectContent>\n            </Select>\n          </div>''',
+              'whatsapp selector',
+          )
+          PY
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/routes/_authenticated/app/loyalty.tsx src/routes/_authenticated/app/sales.tsx src/routes/_authenticated/app/whatsapp.tsx
+          git commit -m 'feat: enable partial customer search across selectors'
+          git push
