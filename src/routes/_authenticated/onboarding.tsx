@@ -35,7 +35,7 @@ function Onboarding() {
 
   const { data: settings } = useQuery({
     queryKey: ["public-trial-settings"],
-    queryFn: async () => (await supabase.from("platform_settings").select("default_trial_days").eq("id", true).maybeSingle()).data as any,
+    queryFn: async () => (await supabase.from("platform_settings").select("*").eq("id", true).maybeSingle()).data as any,
   });
   const trialDays = Number(settings?.default_trial_days ?? 15);
 
