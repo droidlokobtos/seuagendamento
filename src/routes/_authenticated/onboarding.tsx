@@ -27,7 +27,7 @@ function Onboarding() {
   const { data: niches = [] } = useQuery({
     queryKey: ["onboarding-niches"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("niches").select("id,name").eq("active", true).order("name");
+      const { data, error } = await supabase.from("niches").select("id,name").order("name");
       if (error) throw error;
       return data ?? [];
     },
