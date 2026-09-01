@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { brl, dateBR } from "@/lib/format";
 import { toast } from "sonner";
 import {
-  BadgePercent, CheckCheck, Trash2, Pencil, Eye, FileDown, FileSpreadsheet, Printer, Wallet, Users,
+  BadgePercent, CheckCheck, Trash2, Pencil, Eye, FileDown, FileSpreadsheet, Printer, Wallet, Users, TrendingUp, Award,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/commissions")({
@@ -123,6 +123,18 @@ function Commissions() {
     const paid = rows.filter((c) => c.status === "paid").reduce((a, c) => a + c.commission_cents, 0);
     return { sold, comm, pending, paid, count: rows.length };
   }, [rows]);
+
+  const performance = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; sold: number; commission: number; count: number }>();
+    rows.filter((c) => c.status !== "cancelled").forEach((c) => {
+      const key = c.staff_id ?? c.staff_name ?? "unknown";
+      const current = map.get(key) ?? { id: key, name: c.staff_name ?? "Sem profissional", sold: 0, commission: 0, count: 0 };
+      current.sold += c.service_amount_cents; current.commission += c.commission_cents; current.count += 1; map.set(key, current);
+    });
+    return Array.from(map.values()).map((x) => ({ ...x, net: x.sold - x.commission, avg: x.count ? x.sold / x.count : 0, commissionRate: x.sold ? (x.commission / x.sold) * 100 : 0 })).sort((a,b) => b.net-a.net);
+  }, [rows]);
+  const best = performance[0];
+  const netAfterCommissions = totals.sold - totals.comm;
 
   const save = useMutation({
     mutationFn: async (v: C) => {
@@ -269,6 +281,17 @@ function Commissions() {
         <Kpi label="Pago" value={brl(totals.paid / 100)} icon={<CheckCheck className="h-4 w-4" />} />
         <Kpi label="Serviços" value={String(totals.count)} icon={<Users className="h-4 w-4" />} />
       </div>
+
+      {isAdmin && rows.length > 0 && (
+        <div className="grid gap-3 lg:grid-cols-3">
+          <Kpi label="Receita após comissões" value={brl(netAfterCommissions / 100)} icon={<TrendingUp className="h-4 w-4" />} />
+          <Kpi label="Peso das comissões" value={`${totals.sold ? ((totals.comm / totals.sold) * 100).toFixed(1) : "0.0"}%`} icon={<BadgePercent className="h-4 w-4" />} />
+          <Kpi label="Maior contribuição líquida" value={best ? `${best.name} · ${brl(best.net / 100)}` : "—"} icon={<Award className="h-4 w-4" />} />
+        </div>
+      )}
+      {isAdmin && performance.length > 0 && (
+        <Card><CardContent className="p-4"><div className="mb-3"><p className="font-medium">Rentabilidade por profissional</p><p className="text-xs text-muted-foreground">Receita de serviços menos comissões, conforme os filtros selecionados.</p></div><div className="space-y-2">{performance.slice(0,8).map((x)=><div key={x.id} className="grid gap-2 rounded-xl border p-3 text-sm sm:grid-cols-5 sm:items-center"><div className="font-medium">{x.name}</div><div><span className="text-xs text-muted-foreground">Vendido</span><p>{brl(x.sold/100)}</p></div><div><span className="text-xs text-muted-foreground">Comissão</span><p>{brl(x.commission/100)} · {x.commissionRate.toFixed(1)}%</p></div><div><span className="text-xs text-muted-foreground">Líquido</span><p className="font-medium">{brl(x.net/100)}</p></div><div><span className="text-xs text-muted-foreground">Ticket médio</span><p>{brl(x.avg/100)}</p></div></div>)}</div></CardContent></Card>
+      )}
 
       <Card className="print:hidden">
         <CardContent className="p-4 grid gap-3 md:grid-cols-3 lg:grid-cols-6">
