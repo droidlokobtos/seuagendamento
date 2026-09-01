@@ -148,9 +148,21 @@ export const ROUTE_PERMISSIONS: { prefix: string; key: PermissionKey }[] = [
   { prefix: "/app/link", key: "configuracoes" },
 ];
 
+const ROUTE_FEATURES: { prefix: string; feature: string }[] = [
+  { prefix: "/app/portal", feature: "personalizacao" },
+  { prefix: "/app/ai", feature: "relatorios_avancados" },
+];
+
 export function routePermission(pathname: string): PermissionKey | null {
   const match = ROUTE_PERMISSIONS.filter((r) => pathname.startsWith(r.prefix)).sort(
     (a, b) => b.prefix.length - a.prefix.length,
   )[0];
   return match?.key ?? null;
+}
+
+export function routeFeature(pathname: string): string | null {
+  const match = ROUTE_FEATURES.filter((r) => pathname.startsWith(r.prefix)).sort(
+    (a, b) => b.prefix.length - a.prefix.length,
+  )[0];
+  return match?.feature ?? null;
 }
