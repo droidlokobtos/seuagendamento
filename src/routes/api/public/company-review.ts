@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import {
-  GOOGLE_REDIRECT_MIN_RATING,
-  NEGATIVE_ALERT_MAX_RATING,
-} from "@/lib/reviews";
+import { GOOGLE_REDIRECT_MIN_RATING, NEGATIVE_ALERT_MAX_RATING } from "@/lib/reviews";
+import { guardPublicRequest, rateLimitResponse } from "@/lib/public-api-protection.server";
 
 /**
  * Link público de avaliação por empresa (não depende de agendamento).
@@ -28,15 +26,25 @@ export const Route = createFileRoute("/api/public/company-review")({
         if (!token) return Response.json({ error: "Token ausente" }, { status: 400 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const guard = await guardPublicRequest(supabaseAdmin, request, {
+          scope: "company-review:get",
+          limit: 40,
+          windowSeconds: 300,
+        });
+        if (!guard.allowed) return rateLimitResponse(guard.retryAfter);
         const { data: settings } = await supabaseAdmin
           .from("review_settings")
           .select("company_id, google_review_url, public_link_enabled")
           .eq("public_token", token)
           .maybeSingle();
 
-        if (!settings) return Response.json({ error: "Link de avaliação inválido" }, { status: 404 });
+        if (!settings)
+          return Response.json({ error: "Link de avaliação inválido" }, { status: 404 });
         if (settings.public_link_enabled === false)
-          return Response.json({ error: "Este link de avaliação está desativado" }, { status: 410 });
+          return Response.json(
+            { error: "Este link de avaliação está desativado" },
+            { status: 410 },
+          );
 
         const [{ data: company }, { data: services }, { data: staff }] = await Promise.all([
           supabaseAdmin
@@ -58,7 +66,8 @@ export const Route = createFileRoute("/api/public/company-review")({
             .order("name"),
         ]);
 
-        if (!company) return Response.json({ error: "Link de avaliação inválido" }, { status: 404 });
+        if (!company)
+          return Response.json({ error: "Link de avaliação inválido" }, { status: 404 });
 
         return Response.json({
           company: {
@@ -79,15 +88,25 @@ export const Route = createFileRoute("/api/public/company-review")({
         const { token, rating, comment, customerName, staffId, serviceName } = parsed.data;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const guard = await guardPublicRequest(supabaseAdmin, request, {
+          scope: "company-review:submit",
+          limit: 4,
+          windowSeconds: 1800,
+        });
+        if (!guard.allowed) return rateLimitResponse(guard.retryAfter);
         const { data: settings } = await supabaseAdmin
           .from("review_settings")
           .select("company_id, google_review_url, public_link_enabled")
           .eq("public_token", token)
           .maybeSingle();
 
-        if (!settings) return Response.json({ error: "Link de avaliação inválido" }, { status: 404 });
+        if (!settings)
+          return Response.json({ error: "Link de avaliação inválido" }, { status: 404 });
         if (settings.public_link_enabled === false)
-          return Response.json({ error: "Este link de avaliação está desativado" }, { status: 410 });
+          return Response.json(
+            { error: "Este link de avaliação está desativado" },
+            { status: 410 },
+          );
 
         const ip =
           request.headers.get("cf-connecting-ip") ??
@@ -118,7 +137,6 @@ export const Route = createFileRoute("/api/public/company-review")({
             .maybeSingle();
           validServiceName = svc?.name ?? null;
         }
-
 
         const { data: review, error: reviewError } = await supabaseAdmin
           .from("reviews")
@@ -164,7 +182,7 @@ export const Route = createFileRoute("/api/public/company-review")({
           ok: true,
           rating,
           googleReviewUrl:
-            rating >= GOOGLE_REDIRECT_MIN_RATING ? settings.google_review_url ?? null : null,
+            rating >= GOOGLE_REDIRECT_MIN_RATING ? (settings.google_review_url ?? null) : null,
         });
       },
     },
