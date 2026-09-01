@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-
 export const resetUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
@@ -11,41 +10,31 @@ export const resetUserPassword = createServerFn({ method: "POST" })
     new_password: z.string().min(8),
   }).parse(data))
   .handler(async ({ context, data }) => {
-    // Only super_admin can reset arbitrary passwords
-    const { data: isAdmin } = await context.supabase.rpc("is_super_admin");
-    if (!isAdmin) throw new Error("Apenas Admin Master pode redefinir senhas.");
+    const { data: isAdmin, error: adminError } = await context.supabase.rpc("is_super_admin");
+    if (adminError) throw new Error(adminError.message);
+    if (!isAdmin) throw new Error("Apenas Admin Master pode solicitar redefinição de senha.");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // Find user by email
-    const { findAuthUserByEmail } = await import("@/lib/admin-users.server");
-    const user = await findAuthUserByEmail(data.email);
-    if (!user) throw new Error("Usuário não encontrado com esse e-mail.");
-
-    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
-      password: data.new_password,
+    const email = data.email.toLowerCase();
+    const { error } = await context.supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: "https://seuagendamento.lovable.app/reset-password",
     });
-    if (updErr) throw updErr;
+    if (error) throw new Error(error.message);
 
-    // Force password change on next login
-    await supabaseAdmin.from("profiles").update({ must_change_password: true }).eq("id", user.id);
-
-    // Audit
     await context.supabase.from("admin_access_logs").insert({
       user_id: context.userId,
-      email: data.email,
-      event: "reset_password",
-      metadata: { target_user_id: user.id },
+      email,
+      event: "password_reset_email_requested",
+      metadata: { method: "recovery_email" },
     });
 
-    return { ok: true };
+    return { ok: true, mode: "recovery_email" };
   });
 
 export const deleteCompany = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ company_id: z.string().uuid() }).parse(data))
   .handler(async ({ context, data }) => {
-    const { data: isAdmin, error: adminError } = await context.supabase.rpc("is_super_admin");
-    if (adminError) throw new Error(adminError.message);
+    const { data: isAdmin } = await context.supabase.rpc("is_super_admin");
     if (!isAdmin) throw new Error("Apenas Admin Master pode excluir empresas.");
 
     const { data: result, error } = await (context.supabase as any).rpc(
@@ -53,7 +42,6 @@ export const deleteCompany = createServerFn({ method: "POST" })
       { _company: data.company_id },
     );
     if (error) throw new Error(error.message);
-
     return result ?? { ok: true };
   });
 
@@ -88,7 +76,6 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email = data.email.toLowerCase();
 
-    // Reuse existing auth user if the e-mail already exists, otherwise create one
     let userId: string | null = null;
     const { findAuthUserByEmail } = await import("@/lib/admin-users.server");
     const existing = await findAuthUserByEmail(email);
@@ -96,7 +83,6 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
 
     if (existing) {
       userId = existing.id;
-      // Ensure existing user is confirmed and set the shared temp password so admin can hand it over
       const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(existing.id, {
         password: tempPassword,
         email_confirm: true,
@@ -115,7 +101,6 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
       userId = created.user.id;
     }
 
-    // Force password change on first login
     if (!userId) throw new Error("Não foi possível configurar o administrador da empresa.");
     await supabaseAdmin.from("profiles").upsert({
       id: userId,
@@ -124,7 +109,6 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
       must_change_password: true,
     } as any, { onConflict: "id" });
 
-    // Create the company
     const { data: company, error: cErr } = await supabaseAdmin
       .from("companies")
       .insert({
@@ -148,7 +132,6 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
       .single();
     if (cErr) throw new Error(`Falha ao criar empresa: ${cErr.message}`);
 
-    // Wire admin membership + role (idempotent)
     await supabaseAdmin.from("company_users").upsert(
       { company_id: company.id, user_id: userId, role: "company_admin", active: true, permissions: {} },
       { onConflict: "company_id,user_id" },
@@ -158,7 +141,6 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
       { onConflict: "user_id,role" },
     );
 
-    // Audit
     await context.supabase.from("admin_access_logs").insert({
       user_id: context.userId,
       email,
@@ -175,62 +157,62 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
     };
   });
 
-/** Admin Master: define plano de assinatura e/ou período de teste de uma empresa. */
 export const setCompanyPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) =>
-    z
-      .object({
-        company_id: z.string().uuid(),
-        plan_code: z.string().min(1).max(50).nullable().optional(),
-        monthly_fee: z.number().min(0).nullable().optional(),
-        trial: z.boolean().optional(),
-        trial_days: z.number().int().min(1).max(365).optional(),
-      })
-      .parse(data),
+    z.object({
+      company_id: z.string().uuid(),
+      plan_code: z.string().min(1).max(50).nullable().optional(),
+      monthly_fee: z.number().min(0).nullable().optional(),
+      trial: z.boolean().optional(),
+      trial_days: z.number().int().min(1).max(365).optional(),
+    }).parse(data),
   )
   .handler(async ({ context, data }) => {
-    const { data: isAdmin } = await context.supabase.rpc("is_super_admin");
+    const { data: isAdmin, error: adminError } = await context.supabase.rpc("is_super_admin");
+    if (adminError) throw new Error(adminError.message);
     if (!isAdmin) throw new Error("Apenas Admin Master pode alterar planos.");
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const patch: Record<string, unknown> = {};
     if (data.plan_code !== undefined) {
       if (data.plan_code) {
-        const { data: plan } = await supabaseAdmin
+        const { data: plan, error: planError } = await context.supabase
           .from("subscription_plans")
           .select("code, monthly_cents")
           .eq("code", data.plan_code)
           .maybeSingle();
+        if (planError) throw new Error(planError.message);
         if (!plan) throw new Error("Plano inexistente.");
-        patch['plan_code'] = plan.code;
-        if (data.monthly_fee === undefined) patch['monthly_fee'] = (plan.monthly_cents ?? 0) / 100;
+        patch["plan_code"] = plan.code;
+        if (data.monthly_fee === undefined) patch["monthly_fee"] = (plan.monthly_cents ?? 0) / 100;
       } else {
-        patch['plan_code'] = null;
+        patch["plan_code"] = null;
       }
     }
-    if (data.monthly_fee !== undefined && data.monthly_fee !== null) patch['monthly_fee'] = data.monthly_fee;
+    if (data.monthly_fee !== undefined && data.monthly_fee !== null) patch["monthly_fee"] = data.monthly_fee;
 
     if (data.trial === true) {
       const days = data.trial_days ?? 14;
       const start = new Date();
       const end = new Date(start.getTime() + days * 86400000);
-      patch['is_trial'] = true;
-      patch['trial_days'] = days;
-      patch['trial_started_at'] = start.toISOString();
-      patch['trial_ends_at'] = end.toISOString();
-      patch['status'] = "trial";
-      patch['next_due_at'] = end.toISOString().slice(0, 10);
+      patch["is_trial"] = true;
+      patch["trial_days"] = days;
+      patch["trial_started_at"] = start.toISOString();
+      patch["trial_ends_at"] = end.toISOString();
+      patch["status"] = "trial";
+      patch["next_due_at"] = end.toISOString().slice(0, 10);
     } else if (data.trial === false) {
-      patch['is_trial'] = false;
-      patch['trial_ends_at'] = null;
-      patch['status'] = "active";
+      patch["is_trial"] = false;
+      patch["trial_ends_at"] = null;
+      patch["status"] = "active";
     }
 
     if (Object.keys(patch).length === 0) return { ok: true };
 
-    const { error } = await supabaseAdmin.from("companies").update(patch as never).eq("id", data.company_id);
+    const { error } = await context.supabase
+      .from("companies")
+      .update(patch as never)
+      .eq("id", data.company_id);
     if (error) throw new Error(error.message);
 
     await context.supabase.from("admin_access_logs").insert({
