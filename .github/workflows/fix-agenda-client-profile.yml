@@ -1,0 +1,44 @@
+name: Fix agenda client profile flow
+on:
+  push:
+    paths: ['.github/workflows/fix-agenda-client-profile.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/routes/_authenticated/app/agenda.tsx')
+          s=p.read_text()
+          s=s.replace('const dur = svc?.duration_min ?? (edit ? Math.round((new Date(edit.ends_at).getTime() - new Date(edit.starts_at).getTime()) / 60000) : 30);','const dur = svc?.duration_min ?? (edit?.id ? Math.round((new Date(edit.ends_at).getTime() - new Date(edit.starts_at).getTime()) / 60000) : 30);')
+          s=s.replace('const price = svc?.price_cents ?? edit?.total_cents ?? 0;','const price = svc?.price_cents ?? (edit?.id ? edit.total_cents : 0) ?? 0;')
+          s=s.replace('const err = validate(starts, ends, v.staff_id || null, edit?.id);','const err = validate(starts, ends, v.staff_id || null, edit?.id || undefined);')
+          s=s.replace('''      if (edit) {\n        const { error } = await supabase.from("appointments").update(payload).eq("id", edit.id);''','''      if (edit?.id) {\n        const { error } = await supabase.from("appointments").update(payload).eq("id", edit.id);''')
+          s=s.replace('toast.success(edit ? "Agendamento atualizado" : "Agendamento criado");','toast.success(edit?.id ? "Agendamento atualizado" : "Agendamento criado");')
+          s=s.replace('''  const openGapBooking = (start: Date) => {\n    setEdit({ starts_at: start.toISOString() });\n    setOpen(true);\n  };''','''  const openGapBooking = (start: Date) => {\n    setEdit({ starts_at: start.toISOString(), __new: true });\n    setOpen(true);\n  };''')
+          s=s.replace('''  const openNew = (at?: Date) => {\n    setEdit(at ? { starts_at: at.toISOString() } : null);\n    setOpen(true);\n  };''','''  const openNew = (at?: Date) => {\n    setEdit(at ? { starts_at: at.toISOString(), __new: true } : null);\n    setOpen(true);\n  };''')
+          s=s.replace('key={edit?.id ?? "new"}','key={edit?.id ?? edit?.starts_at ?? "new"}')
+          s=s.replace('edit={edit && edit.id ? edit : null}','edit={edit?.id ? edit : null}')
+          s=s.replace('seedDate={edit && !edit.id ? new Date(edit.starts_at) : anchor}','seedDate={edit?.__new && edit.starts_at ? new Date(edit.starts_at) : anchor}')
+          s=s.replace('''          <Select value={f.customer_id} onValueChange={(v) => { setF({ ...f, customer_id: v }); setCustomerSearch(""); }}>''','''          <Select value={f.customer_id} onValueChange={(v) => { setF((prev: any) => ({ ...prev, customer_id: v })); setCustomerSearch(""); }}>''')
+          s=s.replace('''            <Select value={f.staff_id} onValueChange={(v) => setF({ ...f, staff_id: v })}>''','''            <Select value={f.staff_id} onValueChange={(v) => setF((prev: any) => ({ ...prev, staff_id: v }))}>''')
+          s=s.replace('''            <Select value={f.service_id} onValueChange={(v) => setF({ ...f, service_id: v })}>''','''            <Select value={f.service_id} onValueChange={(v) => setF((prev: any) => ({ ...prev, service_id: v }))}>''')
+          s=s.replace('''<Input type="datetime-local" value={f.starts_at} onChange={(e) => setF({ ...f, starts_at: e.target.value })} />''','''<Input type="datetime-local" value={f.starts_at} onChange={(e) => setF((prev: any) => ({ ...prev, starts_at: e.target.value }))} />''')
+          s=s.replace('''          <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v })}>''','''          <Select value={f.status} onValueChange={(v) => setF((prev: any) => ({ ...prev, status: v }))}>''')
+          s=s.replace('''<Textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} />''','''<Textarea value={f.notes} onChange={(e) => setF((prev: any) => ({ ...prev, notes: e.target.value }))} />''')
+          s=s.replace('Horários livres de pelo menos 30 minutos encontrados neste dia.', 'Horários livres compatíveis com o intervalo configurado da empresa.')
+          p.write_text(s)
+          PY
+          bun install --frozen-lockfile
+          bun run build
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/_authenticated/app/agenda.tsx
+          git commit -m 'fix: stabilize client profile appointment flow'
+          git push
