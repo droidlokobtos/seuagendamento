@@ -1,0 +1,46 @@
+name: Fix permission route coverage
+on:
+  push:
+    paths: ['.github/workflows/fix-permission-route-coverage.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('src/lib/permissions.ts')
+          s=p.read_text()
+          s=s.replace('export const ROUTE_PERMISSIONS: { prefix: string; key: PermissionKey }[] = [\n', 'export const ROUTE_PERMISSIONS: { prefix: string; key: PermissionKey }[] = [\n  { prefix: "/app/operations", key: "agendamentos" },\n  { prefix: "/app/cash", key: "caixa" },\n  { prefix: "/app/expenses", key: "financeiro" },\n  { prefix: "/app/audit", key: "financeiro" },\n')
+          p.write_text(s)
+
+          p=Path('src/routes/_authenticated/app/route.tsx')
+          s=p.read_text()
+          old='  const isDashboard = path === "/app" || path === "/app/";\n  const permissionDenied = (!isDashboard && !key) || (key && !can(key));\n'
+          new='  const isDashboard = path === "/app" || path === "/app/";\n  const isHelp = path === "/app/help" || path.startsWith("/app/help/");\n  const permissionDenied = isDashboard ? !can("dashboard") : (!isHelp && ((!key) || !can(key)));\n'
+          if old not in s: raise SystemExit('permission gate target not found')
+          s=s.replace(old,new)
+          p.write_text(s)
+
+          p=Path('src/components/app/AppLayout.tsx')
+          s=p.read_text()
+          dup='    { to: "/app/expenses", label: "Despesas e contas", icon: ReceiptText, perm: "financeiro" },\n    { to: "/app/expenses", label: "Despesas e contas a pagar", icon: ReceiptText, perm: "financeiro" },'
+          repl='    { to: "/app/expenses", label: "Despesas e contas a pagar", icon: ReceiptText, perm: "financeiro" },'
+          if dup not in s: raise SystemExit('duplicate expenses nav target not found')
+          s=s.replace(dup,repl)
+          s=s.replace('{ to: "/app/cash", label: "Fechamento de caixa", icon: CircleDollarSign, perm: "financeiro" }','{ to: "/app/cash", label: "Fechamento de caixa", icon: CircleDollarSign, perm: "caixa" }')
+          p.write_text(s)
+          PY
+          bun install --frozen-lockfile
+          bun run build
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/lib/permissions.ts src/routes/_authenticated/app/route.tsx src/components/app/AppLayout.tsx
+          git commit -m 'fix: enforce route permissions consistently'
+          git push
