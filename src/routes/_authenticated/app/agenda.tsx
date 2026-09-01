@@ -183,12 +183,8 @@ function Agenda() {
   }, [view, anchor, hours, appts, blocks, staffFilter, bufferMin, slotMin]);
 
   const openGapBooking = (start: Date) => {
-    setEdit(null);
+    setEdit({ starts_at: start.toISOString() });
     setOpen(true);
-    setTimeout(() => {
-      const input = document.querySelector<HTMLInputElement>('input[name="starts_at"]');
-      if (input) { input.value = toLocalInput(start); input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); }
-    }, 0);
   };
 
   const validate = (starts: Date, ends: Date, staff_id: string | null, ignoreId?: string) => {
@@ -641,7 +637,7 @@ function ApptDialog({ edit, seedDate, customers, staff, services, defaultStaff, 
 }) {
   const initial = edit
     ? { customer_id: edit.customer_id ?? "", staff_id: edit.staff_id ?? "", service_id: "", starts_at: toLocalInput(new Date(edit.starts_at)), status: edit.status, notes: edit.notes ?? "" }
-    : { customer_id: "", staff_id: defaultStaff, service_id: "", starts_at: toLocalInput(new Date(seedDate.getFullYear(), seedDate.getMonth(), seedDate.getDate(), 9)), status: "scheduled", notes: "" };
+    : { customer_id: "", staff_id: defaultStaff, service_id: "", starts_at: toLocalInput(seedDate.getHours() || seedDate.getMinutes() ? seedDate : new Date(seedDate.getFullYear(), seedDate.getMonth(), seedDate.getDate(), 9)), status: "scheduled", notes: "" };
   const [f, setF] = useState<any>(initial);
   const [customerSearch, setCustomerSearch] = useState("");
   const filteredCustomers = useMemo(() => {
