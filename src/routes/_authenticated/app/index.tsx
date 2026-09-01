@@ -4,12 +4,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/lib/company";
 import { getBusinessIntelligence } from "@/lib/ai.functions";
+import { syncAiAlerts } from "@/lib/ai-alerts.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Users, TrendingUp, Clock, Link2, Copy, DollarSign, XCircle, UserPlus, Repeat, Scissors, Trophy, ArrowUpRight, BrainCircuit, Radar, AlertTriangle, ShieldAlert, Sparkles } from "lucide-react";
+import { Calendar, Users, TrendingUp, Clock, Link2, Copy, DollarSign, XCircle, UserPlus, Repeat, Scissors, Trophy, ArrowUpRight, BrainCircuit, Radar, AlertTriangle, ShieldAlert, Sparkles, History } from "lucide-react";
 import { brl } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { usePermissions } from "@/lib/use-permissions";
 import { ProfessionalDashboard } from "@/components/app/ProfessionalDashboard";
 import { ReceptionDashboard } from "@/components/app/ReceptionDashboard";
@@ -26,6 +27,7 @@ function RoleDashboard() {
 function Dashboard() {
   const { activeCompany } = useCompany();
   const getIntel = useServerFn(getBusinessIntelligence);
+  const syncAlerts = useServerFn(syncAiAlerts);
   const companyId = activeCompany!.id;
   const today = new Date();
   const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
@@ -45,6 +47,13 @@ function Dashboard() {
   const radarItems = (intel?.radar ?? []).slice(0, 3);
   const intelSummary = intel?.proactive_summary;
   const forecast = intel?.forecast;
+
+  useEffect(() => {
+    if (!intel?.generated_at || !Array.isArray(intel?.radar)) return;
+    void syncAlerts({ data: { company_id: companyId, alerts: intel.radar } }).catch((error) => {
+      console.warn("Não foi possível persistir o histórico de alertas IA", error);
+    });
+  }, [companyId, intel?.generated_at, syncAlerts]);
 
   const { data: stats } = useQuery({
     queryKey: ["app-dashboard", companyId],
@@ -115,7 +124,7 @@ function Dashboard() {
       <Button asChild className="w-full sm:w-auto"><Link to="/app/agenda"><Calendar className="mr-2 h-4 w-4" />Abrir agenda</Link></Button>
     </div>
 
-    {intel && <Card className="overflow-hidden border-primary/20 bg-primary/[0.02] shadow-sm"><CardHeader className="flex flex-row items-start justify-between gap-4 border-b p-5"><div className="flex gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><BrainCircuit className="h-5 w-5" /></div><div><CardTitle className="text-base">Inteligência ativa</CardTitle><p className="mt-1 text-xs text-muted-foreground">Análise automática do seu negócio com base nos dados mais recentes.</p></div></div><Button asChild variant="outline" size="sm"><Link to="/app/ai">Abrir Central IA<ArrowUpRight className="ml-2 h-4 w-4" /></Link></Button></CardHeader><CardContent className="p-5 space-y-5"><div className="grid gap-3 sm:grid-cols-3"><IntelMini label="Clientes em risco" value={intelSummary?.customers_at_risk_count ?? 0} icon={Users} /><IntelMini label="Oportunidades" value={intelSummary?.opportunity_count ?? 0} icon={Sparkles} /><IntelMini label="Previsão 30 dias" value={forecast ? brl(forecast.faturamento_previsto_brl ?? 0) : "Sem base"} icon={TrendingUp} /></div>{radarItems.length > 0 ? <div className="space-y-2"><div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[.12em] text-muted-foreground"><Radar className="h-3.5 w-3.5" />O que merece sua atenção</div>{radarItems.map((item: any) => <div key={item.id} className="flex flex-col gap-2 rounded-xl border bg-background/70 p-4 sm:flex-row sm:items-center"><div className="flex flex-1 gap-3"><div className="mt-0.5">{item.severity === "critical" ? <ShieldAlert className="h-4 w-4 text-destructive" /> : item.severity === "attention" ? <AlertTriangle className="h-4 w-4 text-amber-600" /> : <Sparkles className="h-4 w-4 text-primary" />}</div><div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-medium">{item.title}</p>{item.metric && <Badge variant="secondary">{item.metric}</Badge>}</div><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.description}</p></div></div><Button asChild variant="ghost" size="sm"><Link to="/app/ai">Ver análise</Link></Button></div>)}</div> : <p className="text-sm text-muted-foreground">Nenhum alerta relevante detectado neste momento.</p>}</CardContent></Card>}
+    {intel && <Card className="overflow-hidden border-primary/20 bg-primary/[0.02] shadow-sm"><CardHeader className="flex flex-col gap-4 border-b p-5 sm:flex-row sm:items-start sm:justify-between"><div className="flex gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><BrainCircuit className="h-5 w-5" /></div><div><CardTitle className="text-base">Inteligência ativa</CardTitle><p className="mt-1 text-xs text-muted-foreground">Análise automática do seu negócio com acompanhamento contínuo dos alertas.</p></div></div><div className="flex flex-wrap gap-2"><Button asChild variant="ghost" size="sm"><Link to="/app/ai-alerts"><History className="mr-2 h-4 w-4" />Histórico</Link></Button><Button asChild variant="outline" size="sm"><Link to="/app/ai">Abrir Central IA<ArrowUpRight className="ml-2 h-4 w-4" /></Link></Button></div></CardHeader><CardContent className="p-5 space-y-5"><div className="grid gap-3 sm:grid-cols-3"><IntelMini label="Clientes em risco" value={(intel?.customers_at_risk ?? []).length} icon={Users} /><IntelMini label="Oportunidades" value={intelSummary?.opportunity_count ?? 0} icon={Sparkles} /><IntelMini label="Previsão 30 dias" value={forecast ? brl(forecast.faturamento_previsto_brl ?? 0) : "Sem base"} icon={TrendingUp} /></div>{radarItems.length > 0 ? <div className="space-y-2"><div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[.12em] text-muted-foreground"><Radar className="h-3.5 w-3.5" />O que merece sua atenção</div>{radarItems.map((item: any) => <div key={item.id} className="flex flex-col gap-2 rounded-xl border bg-background/70 p-4 sm:flex-row sm:items-center"><div className="flex flex-1 gap-3"><div className="mt-0.5">{item.severity === "critical" ? <ShieldAlert className="h-4 w-4 text-destructive" /> : item.severity === "attention" ? <AlertTriangle className="h-4 w-4 text-amber-600" /> : <Sparkles className="h-4 w-4 text-primary" />}</div><div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-medium">{item.title}</p>{item.metric && <Badge variant="secondary">{item.metric}</Badge>}</div><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.description}</p></div></div><Button asChild variant="ghost" size="sm"><Link to="/app/ai">Ver análise</Link></Button></div>)}</div> : <p className="text-sm text-muted-foreground">Nenhum alerta relevante detectado neste momento.</p>}</CardContent></Card>}
 
     <Card className="overflow-hidden border-border/70 shadow-sm"><CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border bg-muted/40"><Link2 className="h-4 w-4" /></div><div className="min-w-0 flex-1"><p className="text-xs font-medium text-muted-foreground">Página pública de agendamento</p><p className="mt-1 truncate text-sm font-medium">{bookingUrl}</p></div><div className="flex gap-2"><Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(bookingUrl)}><Copy className="mr-2 h-4 w-4" />Copiar</Button><Button asChild size="sm" variant="secondary"><a href={bookingUrl} target="_blank" rel="noreferrer">Visualizar<ArrowUpRight className="ml-2 h-4 w-4" /></a></Button></div></CardContent></Card>
 
