@@ -1,0 +1,105 @@
+name: Unified operational suite
+on:
+  push:
+    paths: ['.github/workflows/operational-suite.yml']
+permissions:
+  contents: write
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Implement operational suite
+        shell: bash
+        run: |
+          cat > supabase/migrations/20260901190000_operational_suite.sql <<'SQL'
+          -- Unified operational foundation: cash sessions, expenses and immutable audit trail.
+          create table if not exists public.cash_sessions (
+            id uuid primary key default gen_random_uuid(), company_id uuid not null references public.companies(id) on delete cascade,
+            opened_by uuid not null, opened_at timestamptz not null default now(), opening_cents integer not null default 0 check (opening_cents >= 0),
+            closed_by uuid, closed_at timestamptz, expected_cents integer, counted_cents integer, difference_cents integer,
+            notes text, status text not null default 'open' check (status in ('open','closed'))
+          );
+          create unique index if not exists cash_sessions_one_open on public.cash_sessions(company_id) where status='open';
+          create index if not exists cash_sessions_company_date on public.cash_sessions(company_id, opened_at desc);
+
+          create table if not exists public.business_expenses (
+            id uuid primary key default gen_random_uuid(), company_id uuid not null references public.companies(id) on delete cascade,
+            category text not null default 'Outros', description text not null, amount_cents integer not null check (amount_cents > 0),
+            due_date date, paid_at timestamptz, payment_method text, status text not null default 'pending' check(status in ('pending','paid','cancelled')),
+            created_by uuid, created_at timestamptz not null default now()
+          );
+          create index if not exists business_expenses_company_date on public.business_expenses(company_id, due_date desc);
+
+          create table if not exists public.audit_events (
+            id bigint generated always as identity primary key, company_id uuid references public.companies(id) on delete cascade,
+            actor_id uuid, action text not null, entity_type text not null, entity_id text, metadata jsonb not null default '{}'::jsonb,
+            created_at timestamptz not null default now()
+          );
+          create index if not exists audit_events_company_created on public.audit_events(company_id, created_at desc);
+
+          alter table public.cash_sessions enable row level security;
+          alter table public.business_expenses enable row level security;
+          alter table public.audit_events enable row level security;
+          drop policy if exists cash_sessions_company on public.cash_sessions;
+          create policy cash_sessions_company on public.cash_sessions for all to authenticated using (public.is_company_member(company_id)) with check (public.is_company_member(company_id));
+          drop policy if exists business_expenses_company on public.business_expenses;
+          create policy business_expenses_company on public.business_expenses for all to authenticated using (public.is_company_member(company_id)) with check (public.is_company_member(company_id));
+          drop policy if exists audit_events_company on public.audit_events;
+          create policy audit_events_company on public.audit_events for select to authenticated using (public.is_company_member(company_id));
+
+          create or replace function public.audit_company_change() returns trigger language plpgsql security definer set search_path=public as $$
+          declare cid uuid; eid text; begin
+            cid := coalesce((to_jsonb(new)->>'company_id')::uuid,(to_jsonb(old)->>'company_id')::uuid);
+            eid := coalesce(to_jsonb(new)->>'id',to_jsonb(old)->>'id');
+            insert into public.audit_events(company_id,actor_id,action,entity_type,entity_id,metadata)
+            values(cid,auth.uid(),lower(tg_op),tg_table_name,eid,jsonb_build_object('old',case when tg_op='INSERT' then null else to_jsonb(old) end,'new',case when tg_op='DELETE' then null else to_jsonb(new) end));
+            return coalesce(new,old); end $$;
+          do $$ declare t text; begin foreach t in array array['appointments','appointment_payments','sales','inventory_movements','business_expenses','cash_sessions'] loop
+            execute format('drop trigger if exists trg_audit_%I on public.%I',t,t);
+            execute format('create trigger trg_audit_%I after insert or update or delete on public.%I for each row execute function public.audit_company_change()',t,t);
+          end loop; end $$;
+          SQL
+
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/components/app/AppLayout.tsx'); s=p.read_text()
+          s=s.replace('ShoppingCart, Palette, ChevronDown, Plus, MoreHorizontal, ShieldAlert, BookOpen, type LucideIcon,','ShoppingCart, Palette, ChevronDown, Plus, MoreHorizontal, ShieldAlert, BookOpen, CircleDollarSign, History, type LucideIcon,')
+          s=s.replace('{ to: "/app/agenda", label: "Agenda", icon: Calendar, perm: "agenda" },','{ to: "/app/agenda", label: "Agenda", icon: Calendar, perm: "agenda" },\n    { to: "/app/operations", label: "Central de Atendimento", icon: CalendarCheck, perm: "agendamentos" },',1)
+          s=s.replace('{ to: "/app/finances", label: "Dashboard financeiro", icon: Wallet, perm: "financeiro" },','{ to: "/app/finances", label: "Dashboard financeiro", icon: Wallet, perm: "financeiro" },\n    { to: "/app/cash", label: "Fechamento de caixa", icon: CircleDollarSign, perm: "financeiro" },\n    { to: "/app/audit", label: "Auditoria", icon: History, perm: "financeiro" },',1)
+          p.write_text(s)
+          PY
+
+          cat > src/routes/_authenticated/app/operations.tsx <<'TSX'
+          import { createFileRoute, Link } from '@tanstack/react-router';
+          import { useQuery } from '@tanstack/react-query';
+          import { supabase } from '@/integrations/supabase/client';
+          import { useCompany } from '@/lib/company';
+          import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+          import { Button } from '@/components/ui/button';
+          import { Badge } from '@/components/ui/badge';
+          import { CalendarCheck, Clock, UserRound, Wallet } from 'lucide-react';
+          import { brl } from '@/lib/format';
+          export const Route=createFileRoute('/_authenticated/app/operations')({component:Operations});
+          function Operations(){const {activeCompany}=useCompany(); const id=activeCompany?.id; const {data:rows=[]}=useQuery({queryKey:['operations-today',id],enabled:!!id,queryFn:async()=>{const a=new Date();a.setHours(0,0,0,0);const b=new Date(a);b.setDate(b.getDate()+1);const {data,error}=await supabase.from('appointments').select('id,starts_at,ends_at,status,total_cents,customer:customers(name),staff:staff(name)').eq('company_id',id!).gte('starts_at',a.toISOString()).lt('starts_at',b.toISOString()).order('starts_at');if(error)throw error;return data??[]}});return <div className="space-y-6"><div><p className="text-xs uppercase tracking-[.18em] text-muted-foreground">Operação do dia</p><h1 className="text-2xl font-semibold">Central de Atendimento</h1><p className="text-muted-foreground">Agenda, cliente e fechamento do atendimento em um único fluxo.</p></div><div className="grid gap-3 md:grid-cols-3"><Card><CardContent className="p-5"><CalendarCheck className="h-4 w-4 mb-3"/><p className="text-2xl font-semibold">{rows.length}</p><p className="text-sm text-muted-foreground">atendimentos hoje</p></CardContent></Card><Card><CardContent className="p-5"><Clock className="h-4 w-4 mb-3"/><p className="text-2xl font-semibold">{rows.filter((x:any)=>!['completed','cancelled','no_show'].includes(x.status)).length}</p><p className="text-sm text-muted-foreground">em andamento ou aguardando</p></CardContent></Card><Card><CardContent className="p-5"><Wallet className="h-4 w-4 mb-3"/><p className="text-2xl font-semibold">{brl(rows.reduce((n:number,x:any)=>n+(x.total_cents||0),0))}</p><p className="text-sm text-muted-foreground">valor previsto</p></CardContent></Card></div><Card><CardHeader><CardTitle>Fila operacional</CardTitle></CardHeader><CardContent className="space-y-3">{rows.map((x:any)=><div key={x.id} className="flex flex-wrap items-center gap-3 rounded-2xl border p-4"><div className="grid h-10 w-10 place-items-center rounded-xl bg-muted"><UserRound className="h-4 w-4"/></div><div className="min-w-40 flex-1"><p className="font-medium">{x.customer?.name||'Cliente'}</p><p className="text-xs text-muted-foreground">{new Date(x.starts_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · {x.staff?.name||'Sem profissional'}</p></div><Badge variant="secondary">{x.status}</Badge><strong>{brl(x.total_cents||0)}</strong><Button asChild size="sm"><Link to="/app/payments">Fechar atendimento</Link></Button></div>)}{!rows.length&&<p className="py-8 text-center text-muted-foreground">Nenhum atendimento para hoje.</p>}</CardContent></Card></div>}
+          TSX
+
+          cat > src/routes/_authenticated/app/cash.tsx <<'TSX'
+          import { createFileRoute } from '@tanstack/react-router'; import { useQuery } from '@tanstack/react-query'; import { supabase } from '@/integrations/supabase/client'; import { useCompany } from '@/lib/company'; import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'; import { brl } from '@/lib/format'; import { CircleDollarSign,ArrowDownCircle,ArrowUpCircle } from 'lucide-react';
+          export const Route=createFileRoute('/_authenticated/app/cash')({component:Cash});
+          function Cash(){const {activeCompany}=useCompany();const id=activeCompany?.id;const {data:p=[]}=useQuery({queryKey:['cash-payments',id],enabled:!!id,queryFn:async()=>{const d=new Date();d.setHours(0,0,0,0);const {data}=await supabase.from('appointment_payments').select('amount_cents,kind,status,created_at').eq('company_id',id!).gte('created_at',d.toISOString()).eq('status','approved');return data??[]}});const received=p.filter((x:any)=>x.kind!=='refund').reduce((n:number,x:any)=>n+x.amount_cents,0),refund=p.filter((x:any)=>x.kind==='refund').reduce((n:number,x:any)=>n+x.amount_cents,0);return <div className="space-y-6"><div><p className="text-xs uppercase tracking-[.18em] text-muted-foreground">Financeiro operacional</p><h1 className="text-2xl font-semibold">Fechamento de caixa</h1><p className="text-muted-foreground">Conferência diária de entradas, estornos e saldo esperado.</p></div><div className="grid gap-3 md:grid-cols-3"><Card><CardContent className="p-5"><ArrowUpCircle className="h-4 w-4 mb-3"/><p className="text-2xl font-semibold">{brl(received)}</p><p className="text-sm text-muted-foreground">recebido hoje</p></CardContent></Card><Card><CardContent className="p-5"><ArrowDownCircle className="h-4 w-4 mb-3"/><p className="text-2xl font-semibold">{brl(refund)}</p><p className="text-sm text-muted-foreground">estornos</p></CardContent></Card><Card><CardContent className="p-5"><CircleDollarSign className="h-4 w-4 mb-3"/><p className="text-2xl font-semibold">{brl(received-refund)}</p><p className="text-sm text-muted-foreground">saldo operacional</p></CardContent></Card></div><Card><CardHeader><CardTitle>Conferência</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">A migration desta atualização adiciona sessões formais de abertura e fechamento de caixa, despesas e trilha de auditoria. Após aplicá-la no Lovable Cloud, o histórico ficará persistente.</p></CardContent></Card></div>}
+          TSX
+
+          cat > src/routes/_authenticated/app/audit.tsx <<'TSX'
+          import { createFileRoute } from '@tanstack/react-router';import { useQuery } from '@tanstack/react-query';import { supabase } from '@/integrations/supabase/client';import { useCompany } from '@/lib/company';import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';import { Badge } from '@/components/ui/badge';
+          export const Route=createFileRoute('/_authenticated/app/audit')({component:Audit});
+          function Audit(){const {activeCompany}=useCompany();const id=activeCompany?.id;const {data:rows=[]}=useQuery({queryKey:['audit',id],enabled:!!id,queryFn:async()=>{const {data,error}=await supabase.from('audit_events').select('id,action,entity_type,entity_id,created_at').eq('company_id',id!).order('created_at',{ascending:false}).limit(200);if(error)throw error;return data??[]}});return <div className="space-y-6"><div><p className="text-xs uppercase tracking-[.18em] text-muted-foreground">Governança</p><h1 className="text-2xl font-semibold">Auditoria</h1><p className="text-muted-foreground">Rastreabilidade das alterações críticas da empresa.</p></div><Card><CardHeader><CardTitle>Atividades recentes</CardTitle></CardHeader><CardContent className="space-y-2">{rows.map((x:any)=><div key={x.id} className="flex items-center gap-3 rounded-xl border p-3"><Badge variant="outline">{x.action}</Badge><div className="flex-1"><p className="text-sm font-medium">{x.entity_type}</p><p className="text-xs text-muted-foreground">{new Date(x.created_at).toLocaleString('pt-BR')}</p></div><span className="hidden sm:block text-xs text-muted-foreground">{x.entity_id}</span></div>)}{!rows.length&&<p className="py-8 text-center text-muted-foreground">A auditoria começará a registrar eventos após a migration ser aplicada.</p>}</CardContent></Card></div>}
+          TSX
+
+          rm -f .github/scripts/patch_appointment_product_checkout.py
+          bun install --frozen-lockfile
+          bun run build
+          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: unify daily operations cash and audit' && git push
