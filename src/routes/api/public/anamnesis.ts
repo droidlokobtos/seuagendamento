@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import {
-  BASE_SECTION, SECTIONS, buildQuestionnaire, extractAlerts, isExpired, sectionsForServices,
+  BASE_SECTION,
+  SECTIONS,
+  buildQuestionnaire,
+  extractAlerts,
+  isExpired,
+  sectionsForServices,
 } from "@/lib/anamnesis-core";
 
 const postSchema = z.object({
@@ -17,32 +22,56 @@ const postSchema = z.object({
 });
 
 async function loadCompany(admin: any, slug: string) {
-  const { data } = await admin.from("companies").select("id,name,status").eq("slug", slug).maybeSingle();
+  const { data } = await admin
+    .from("companies")
+    .select("id,name,status")
+    .eq("slug", slug)
+    .maybeSingle();
   return data;
 }
 
 function phoneCandidates(phone: string) {
   const digits = phone.replace(/\D/g, "");
   const local = digits.startsWith("55") ? digits.slice(2) : digits;
-  const formatted = local.length === 11
-    ? `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`
-    : local.length === 10
-      ? `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`
-      : "";
-  return Array.from(new Set([
-    phone.trim(),
-    digits,
-    local,
-    formatted,
-    local.length === 11 ? `55${local}` : "",
-  ].filter(Boolean)));
+  const formatted =
+    local.length === 11
+      ? `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`
+      : local.length === 10
+        ? `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`
+        : "";
+  return Array.from(
+    new Set(
+      [phone.trim(), digits, local, formatted, local.length === 11 ? `55${local}` : ""].filter(
+        Boolean,
+      ),
+    ),
+  );
+}
+
+export function normalizeIdentityName(name: string) {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLocaleLowerCase("pt-BR");
 }
 
 async function findCustomerByPhone(admin: any, companyId: string, phone: string) {
   const candidates = phoneCandidates(phone);
   const [{ data: byPhone }, { data: byWhatsapp }] = await Promise.all([
-    admin.from("customers").select("id").eq("company_id", companyId).in("phone", candidates).limit(1),
-    admin.from("customers").select("id").eq("company_id", companyId).in("whatsapp", candidates).limit(1),
+    admin
+      .from("customers")
+      .select("id,name")
+      .eq("company_id", companyId)
+      .in("phone", candidates)
+      .limit(1),
+    admin
+      .from("customers")
+      .select("id,name")
+      .eq("company_id", companyId)
+      .in("whatsapp", candidates)
+      .limit(1),
   ]);
   return byPhone?.[0] ?? byWhatsapp?.[0] ?? null;
 }
@@ -61,13 +90,18 @@ export const Route = createFileRoute("/api/public/anamnesis")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const company = await loadCompany(supabaseAdmin, slug);
         if (!company) return Response.json({ error: "Empresa não encontrada" }, { status: 404 });
-        if (company.status === "suspended") return Response.json({ error: "Indisponível" }, { status: 403 });
+        if (company.status === "suspended")
+          return Response.json({ error: "Indisponível" }, { status: 403 });
 
         let sections: string[] = [];
         if (serviceIds.length) {
           const { data: svcs } = await supabaseAdmin
-            .from("services").select("id,name,category,anamnesis_section,company_id").in("id", serviceIds);
-          sections = sectionsForServices((svcs ?? []).filter((s: any) => s.company_id === company.id));
+            .from("services")
+            .select("id,name,category,anamnesis_section,company_id")
+            .in("id", serviceIds);
+          sections = sectionsForServices(
+            (svcs ?? []).filter((s: any) => s.company_id === company.id),
+          );
         }
 
         let lastFilledAt: string | null = null;
@@ -75,8 +109,13 @@ export const Route = createFileRoute("/api/public/anamnesis")({
           const cust = await findCustomerByPhone(supabaseAdmin, company.id, phone);
           if (cust) {
             const { data: rec } = await supabaseAdmin
-              .from("anamnesis_records").select("filled_at,sections")
-              .eq("company_id", company.id).eq("customer_id", cust.id).order("filled_at", { ascending: false }).limit(1).maybeSingle();
+              .from("anamnesis_records")
+              .select("filled_at,sections")
+              .eq("company_id", company.id)
+              .eq("customer_id", cust.id)
+              .order("filled_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
             if (rec) {
               lastFilledAt = rec.filled_at as string;
               // Se alguma seção nova (novo tipo de serviço) não estava na ficha anterior, exigir novamente.
@@ -99,8 +138,11 @@ export const Route = createFileRoute("/api/public/anamnesis")({
       /** Registra a ficha preenchida pelo cliente no portal público. */
       POST: async ({ request }) => {
         let body: unknown;
-        try { body = await request.json(); }
-        catch { return Response.json({ error: "Invalid JSON" }, { status: 400 }); }
+        try {
+          body = await request.json();
+        } catch {
+          return Response.json({ error: "Invalid JSON" }, { status: 400 });
+        }
         const parsed = postSchema.safeParse(body);
         if (!parsed.success) return Response.json({ error: "Dados inválidos" }, { status: 400 });
         const d = parsed.data;
@@ -111,13 +153,18 @@ export const Route = createFileRoute("/api/public/anamnesis")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const company = await loadCompany(supabaseAdmin, d.slug);
         if (!company) return Response.json({ error: "Empresa não encontrada" }, { status: 404 });
-        if (company.status === "suspended") return Response.json({ error: "Indisponível" }, { status: 403 });
+        if (company.status === "suspended")
+          return Response.json({ error: "Indisponível" }, { status: 403 });
 
         let sections: string[] = [];
         if (d.service_ids.length) {
           const { data: svcs } = await supabaseAdmin
-            .from("services").select("id,name,category,anamnesis_section,company_id").in("id", d.service_ids);
-          sections = sectionsForServices((svcs ?? []).filter((s: any) => s.company_id === company.id));
+            .from("services")
+            .select("id,name,category,anamnesis_section,company_id")
+            .in("id", d.service_ids);
+          sections = sectionsForServices(
+            (svcs ?? []).filter((s: any) => s.company_id === company.id),
+          );
         }
         const questionnaire = [BASE_SECTION, ...sections.map((s) => SECTIONS[s]).filter(Boolean)];
         const alerts = extractAlerts(questionnaire, d.answers);
@@ -125,12 +172,27 @@ export const Route = createFileRoute("/api/public/anamnesis")({
         // Cliente já existente por telefone, ou criado agora
         let customerId: string | null = null;
         const cust = await findCustomerByPhone(supabaseAdmin, company.id, d.phone);
+        if (
+          cust &&
+          (!d.name || normalizeIdentityName(cust.name ?? "") !== normalizeIdentityName(d.name))
+        ) {
+          return Response.json(
+            { error: "Os dados informados não correspondem ao cadastro deste telefone" },
+            { status: 409 },
+          );
+        }
         customerId = cust?.id ?? null;
         if (!customerId) {
           const { data: created, error } = await supabaseAdmin
             .from("customers")
-            .insert({ company_id: company.id, name: d.name || "Cliente", phone: d.phone, source: "portal_publico" } as any)
-            .select("id").single();
+            .insert({
+              company_id: company.id,
+              name: d.name || "Cliente",
+              phone: d.phone,
+              source: "portal_publico",
+            } as any)
+            .select("id")
+            .single();
           if (error) return Response.json({ error: error.message }, { status: 500 });
           customerId = created.id;
         }
@@ -149,7 +211,8 @@ export const Route = createFileRoute("/api/public/anamnesis")({
             signature_data: d.signature_data ?? null,
             filled_by: "customer",
           } as any)
-          .select("id").single();
+          .select("id")
+          .single();
         if (rErr) return Response.json({ error: rErr.message }, { status: 500 });
 
         await supabaseAdmin.from("anamnesis_access_log").insert({
@@ -171,7 +234,7 @@ export const Route = createFileRoute("/api/public/anamnesis")({
           } as any);
         }
 
-        return Response.json({ ok: true, record_id: rec.id, alerts });
+        return Response.json({ ok: true });
       },
     },
   },

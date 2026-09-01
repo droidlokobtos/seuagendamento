@@ -1,26 +1,358 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useCompany } from '@/lib/company';
-import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
-import { Dialog,DialogContent,DialogFooter,DialogHeader,DialogTitle,DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { brl, saoPauloDate } from '@/lib/format';
-import { Plus,ReceiptText,CheckCircle2,Clock3,AlertTriangle } from 'lucide-react';
-import { toast } from 'sonner';
-export const Route=createFileRoute('/_authenticated/app/expenses')({component:Expenses});
-const cats=['Aluguel','Água','Energia','Internet','Alimentação','Combustível','Contabilidade','Fornecedores','Marketing','Brindes','Manutenção','Outros'];
-const methodLabels:Record<string,string>={cash:'Dinheiro',pix:'Pix',credit_card:'Cartão de crédito',debit_card:'Cartão de débito',bank_transfer:'Transferência bancária',other:'Outro'};
-const money=(cents:number)=>brl(Number(cents||0)/100);
-function Expenses(){const {activeCompany}=useCompany();const id=activeCompany?.id;const qc=useQueryClient();const [open,setOpen]=useState(false);const [description,setDescription]=useState('');const [category,setCategory]=useState('Outros');const [amount,setAmount]=useState('');const [due,setDue]=useState('');const [payRow,setPayRow]=useState<any|null>(null);const [paymentMethodId,setPaymentMethodId]=useState('');
-const {data:rows=[]}=useQuery({queryKey:['expenses',id],enabled:!!id,queryFn:async()=>{const {data,error}=await supabase.from('business_expenses').select('*').eq('company_id',id!).neq('status','cancelled').order('created_at',{ascending:false});if(error)throw error;return data??[]}});
-const {data:paymentMethods=[]}=useQuery({queryKey:['expense-payment-methods',id],enabled:!!id,queryFn:async()=>{const {data,error}=await supabase.from('payment_methods').select('id,method,enabled').eq('company_id',id!).eq('enabled',true).order('method');if(error)throw error;return data??[]}});
-const save=useMutation({mutationFn:async()=>{const {data:{user}}=await supabase.auth.getUser();const value=Math.round((Number(amount.replace(',','.'))||0)*100);if(!description.trim()||value<=0)throw new Error('Informe descrição e valor.');const {error}=await supabase.from('business_expenses').insert({company_id:id!,description:description.trim(),category,amount_cents:value,due_date:due||null,created_by:user?.id});if(error)throw error},onSuccess:()=>{qc.invalidateQueries({queryKey:['expenses',id]});setOpen(false);setDescription('');setAmount('');setDue('');toast.success('Despesa registrada')},onError:(e:any)=>toast.error(e.message)});
-const pay=useMutation({mutationFn:async()=>{if(!payRow?.id)throw new Error('Selecione uma despesa.');if(!paymentMethodId)throw new Error('Selecione a forma de pagamento.');const {error}=await (supabase as any).rpc('mark_business_expense_paid',{p_expense_id:payRow.id,p_payment_method_id:paymentMethodId});if(error)throw error},onSuccess:()=>{qc.invalidateQueries({queryKey:['expenses',id]});qc.invalidateQueries({queryKey:['financial_transactions',id]});qc.invalidateQueries({queryKey:['financial_transactions']});qc.invalidateQueries({queryKey:['operational_expenses_finance',id]});setPayRow(null);setPaymentMethodId('');toast.success('Despesa paga e lançada no financeiro')},onError:(e:any)=>toast.error(e.message)});
-const today=saoPauloDate();const pendingRows=rows.filter((x:any)=>x.status==='pending');const pending=pendingRows.reduce((n:number,x:any)=>n+Number(x.amount_cents||0),0);const paid=rows.filter((x:any)=>x.status==='paid').reduce((n:number,x:any)=>n+Number(x.amount_cents||0),0);const overdueRows=pendingRows.filter((x:any)=>x.due_date&&x.due_date<today);const overdue=overdueRows.reduce((n:number,x:any)=>n+Number(x.amount_cents||0),0);
-return <div className="space-y-6"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs uppercase tracking-[.18em] text-muted-foreground">Controle financeiro</p><h1 className="text-2xl font-semibold">Despesas e contas a pagar</h1><p className="text-muted-foreground">Registre custos operacionais e acompanhe pagamentos.</p></div><Dialog open={open} onOpenChange={setOpen}><DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4"/>Nova despesa</Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>Registrar despesa</DialogTitle></DialogHeader><div className="grid gap-4"><div><Label>Descrição</Label><Input value={description} onChange={e=>setDescription(e.target.value)} placeholder="Ex.: Conta de energia"/></div><div><Label>Categoria</Label><Select value={category} onValueChange={setCategory}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{cats.map(c=><SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div><div className="grid grid-cols-2 gap-3"><div><Label>Valor</Label><Input inputMode="decimal" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="0,00"/></div><div><Label>Vencimento</Label><Input type="date" value={due} onChange={e=>setDue(e.target.value)}/></div></div></div><DialogFooter><Button onClick={()=>save.mutate()} disabled={save.isPending}>Salvar despesa</Button></DialogFooter></DialogContent></Dialog></div><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Card><CardContent className="p-5"><Clock3 className="mb-3 h-4 w-4"/><p className="text-2xl font-semibold">{money(pending)}</p><p className="text-sm text-muted-foreground">a pagar</p></CardContent></Card><Card><CardContent className="p-5"><AlertTriangle className="mb-3 h-4 w-4"/><p className="text-2xl font-semibold">{money(overdue)}</p><p className="text-sm text-muted-foreground">vencido · {overdueRows.length} conta(s)</p></CardContent></Card><Card><CardContent className="p-5"><CheckCircle2 className="mb-3 h-4 w-4"/><p className="text-2xl font-semibold">{money(paid)}</p><p className="text-sm text-muted-foreground">despesas pagas</p></CardContent></Card><Card><CardContent className="p-5"><ReceiptText className="mb-3 h-4 w-4"/><p className="text-2xl font-semibold">{rows.length}</p><p className="text-sm text-muted-foreground">lançamentos</p></CardContent></Card></div><Card><CardHeader><CardTitle>Lançamentos</CardTitle></CardHeader><CardContent className="space-y-2">{rows.map((x:any)=>{const isOverdue=x.status==='pending'&&x.due_date&&x.due_date<today;return <div key={x.id} className="flex flex-wrap items-center gap-3 rounded-xl border p-3"><div className="flex-1 min-w-48"><p className="font-medium">{x.description}</p><p className="text-xs text-muted-foreground">{x.category}{x.due_date?` · venc. ${new Date(x.due_date+'T12:00:00').toLocaleDateString('pt-BR')}`:''}</p></div><Badge variant={x.status==='paid'?'secondary':isOverdue?'destructive':'outline'}>{x.status==='paid'?'Pago':isOverdue?'Vencido':'Pendente'}</Badge><strong>{money(x.amount_cents)}</strong>{x.status==='pending'&&<Button size="sm" variant="outline" onClick={()=>{setPayRow(x);setPaymentMethodId('')}} disabled={pay.isPending}>Marcar paga</Button>}</div>})}{!rows.length&&<p className="py-8 text-center text-muted-foreground">Nenhuma despesa registrada.</p>}</CardContent></Card><Dialog open={!!payRow} onOpenChange={o=>{if(!o){setPayRow(null);setPaymentMethodId('')}}}><DialogContent><DialogHeader><DialogTitle>Confirmar pagamento</DialogTitle></DialogHeader><div className="space-y-4"><div className="rounded-lg border p-3"><p className="font-medium">{payRow?.description}</p><p className="text-sm text-muted-foreground">{payRow?money(payRow.amount_cents):''}</p></div><div><Label>Forma de pagamento</Label><Select value={paymentMethodId} onValueChange={setPaymentMethodId}><SelectTrigger><SelectValue placeholder="Selecionar forma de pagamento"/></SelectTrigger><SelectContent>{(paymentMethods as any[]).map(m=><SelectItem key={m.id} value={m.id}>{methodLabels[m.method]??m.method}</SelectItem>)}</SelectContent></Select>{!paymentMethods.length&&<p className="mt-2 text-xs text-muted-foreground">Cadastre ou ative uma forma de pagamento nas configurações financeiras.</p>}</div><p className="text-xs text-muted-foreground">Ao confirmar, a conta será marcada como paga e uma única saída será registrada automaticamente no financeiro.</p></div><DialogFooter><Button variant="outline" onClick={()=>setPayRow(null)}>Cancelar</Button><Button onClick={()=>pay.mutate()} disabled={!paymentMethodId||pay.isPending||!paymentMethods.length}>{pay.isPending?'Registrando...':'Confirmar pagamento'}</Button></DialogFooter></DialogContent></Dialog></div>}
+import { createFileRoute } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useCompany } from "@/lib/company";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { brl, saoPauloDate } from "@/lib/format";
+import { Plus, ReceiptText, CheckCircle2, Clock3, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
+export const Route = createFileRoute("/_authenticated/app/expenses")({ component: Expenses });
+const cats = [
+  "Aluguel",
+  "Água",
+  "Energia",
+  "Internet",
+  "Alimentação",
+  "Combustível",
+  "Contabilidade",
+  "Fornecedores",
+  "Marketing",
+  "Brindes",
+  "Manutenção",
+  "Outros",
+];
+const methodLabels: Record<string, string> = {
+  cash: "Dinheiro",
+  pix: "Pix",
+  credit_card: "Cartão de crédito",
+  debit_card: "Cartão de débito",
+  bank_transfer: "Transferência bancária",
+  other: "Outro",
+};
+const money = (cents: number) => brl(Number(cents || 0) / 100);
+function Expenses() {
+  const { activeCompany } = useCompany();
+  const id = activeCompany?.id;
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("Outros");
+  const [amount, setAmount] = useState("");
+  const [due, setDue] = useState("");
+  const [payRow, setPayRow] = useState<any | null>(null);
+  const [paymentMethodId, setPaymentMethodId] = useState("");
+  const { data: rows = [] } = useQuery({
+    queryKey: ["expenses", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("business_expenses")
+        .select("*")
+        .eq("company_id", id!)
+        .neq("status", "cancelled")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const { data: paymentMethods = [] } = useQuery({
+    queryKey: ["expense-payment-methods", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("payment_methods")
+        .select("id,method,enabled")
+        .eq("company_id", id!)
+        .eq("enabled", true)
+        .order("method");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const save = useMutation({
+    mutationFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const value = Math.round((Number(amount.replace(",", ".")) || 0) * 100);
+      if (!description.trim() || value <= 0) throw new Error("Informe descrição e valor.");
+      const { error } = await supabase
+        .from("business_expenses")
+        .insert({
+          company_id: id!,
+          description: description.trim(),
+          category,
+          amount_cents: value,
+          due_date: due || null,
+          created_by: user?.id,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["expenses", id] });
+      setOpen(false);
+      setDescription("");
+      setAmount("");
+      setDue("");
+      toast.success("Despesa registrada");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const pay = useMutation({
+    mutationFn: async () => {
+      if (!payRow?.id) throw new Error("Selecione uma despesa.");
+      if (!paymentMethodId) throw new Error("Selecione a forma de pagamento.");
+      const { error } = await (supabase as any).rpc("mark_business_expense_paid_authorized", {
+        p_expense_id: payRow.id,
+        p_payment_method_id: paymentMethodId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["expenses", id] });
+      qc.invalidateQueries({ queryKey: ["financial_transactions", id] });
+      qc.invalidateQueries({ queryKey: ["financial_transactions"] });
+      qc.invalidateQueries({ queryKey: ["operational_expenses_finance", id] });
+      setPayRow(null);
+      setPaymentMethodId("");
+      toast.success("Despesa paga e lançada no financeiro");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const today = saoPauloDate();
+  const pendingRows = rows.filter((x: any) => x.status === "pending");
+  const pending = pendingRows.reduce((n: number, x: any) => n + Number(x.amount_cents || 0), 0);
+  const paid = rows
+    .filter((x: any) => x.status === "paid")
+    .reduce((n: number, x: any) => n + Number(x.amount_cents || 0), 0);
+  const overdueRows = pendingRows.filter((x: any) => x.due_date && x.due_date < today);
+  const overdue = overdueRows.reduce((n: number, x: any) => n + Number(x.amount_cents || 0), 0);
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-[.18em] text-muted-foreground">
+            Controle financeiro
+          </p>
+          <h1 className="text-2xl font-semibold">Despesas e contas a pagar</h1>
+          <p className="text-muted-foreground">
+            Registre custos operacionais e acompanhe pagamentos.
+          </p>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Nova despesa
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Registrar despesa</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4">
+              <div>
+                <Label>Descrição</Label>
+                <Input
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Ex.: Conta de energia"
+                />
+              </div>
+              <div>
+                <Label>Categoria</Label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cats.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Valor</Label>
+                  <Input
+                    inputMode="decimal"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0,00"
+                  />
+                </div>
+                <div>
+                  <Label>Vencimento</Label>
+                  <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => save.mutate()} disabled={save.isPending}>
+                Salvar despesa
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Card>
+          <CardContent className="p-5">
+            <Clock3 className="mb-3 h-4 w-4" />
+            <p className="text-2xl font-semibold">{money(pending)}</p>
+            <p className="text-sm text-muted-foreground">a pagar</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <AlertTriangle className="mb-3 h-4 w-4" />
+            <p className="text-2xl font-semibold">{money(overdue)}</p>
+            <p className="text-sm text-muted-foreground">vencido · {overdueRows.length} conta(s)</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <CheckCircle2 className="mb-3 h-4 w-4" />
+            <p className="text-2xl font-semibold">{money(paid)}</p>
+            <p className="text-sm text-muted-foreground">despesas pagas</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <ReceiptText className="mb-3 h-4 w-4" />
+            <p className="text-2xl font-semibold">{rows.length}</p>
+            <p className="text-sm text-muted-foreground">lançamentos</p>
+          </CardContent>
+        </Card>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Lançamentos</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {rows.map((x: any) => {
+            const isOverdue = x.status === "pending" && x.due_date && x.due_date < today;
+            return (
+              <div key={x.id} className="flex flex-wrap items-center gap-3 rounded-xl border p-3">
+                <div className="flex-1 min-w-48">
+                  <p className="font-medium">{x.description}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {x.category}
+                    {x.due_date
+                      ? ` · venc. ${new Date(x.due_date + "T12:00:00").toLocaleDateString("pt-BR")}`
+                      : ""}
+                  </p>
+                </div>
+                <Badge
+                  variant={
+                    x.status === "paid" ? "secondary" : isOverdue ? "destructive" : "outline"
+                  }
+                >
+                  {x.status === "paid" ? "Pago" : isOverdue ? "Vencido" : "Pendente"}
+                </Badge>
+                <strong>{money(x.amount_cents)}</strong>
+                {x.status === "pending" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setPayRow(x);
+                      setPaymentMethodId("");
+                    }}
+                    disabled={pay.isPending}
+                  >
+                    Marcar paga
+                  </Button>
+                )}
+              </div>
+            );
+          })}
+          {!rows.length && (
+            <p className="py-8 text-center text-muted-foreground">Nenhuma despesa registrada.</p>
+          )}
+        </CardContent>
+      </Card>
+      <Dialog
+        open={!!payRow}
+        onOpenChange={(o) => {
+          if (!o) {
+            setPayRow(null);
+            setPaymentMethodId("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar pagamento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-lg border p-3">
+              <p className="font-medium">{payRow?.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {payRow ? money(payRow.amount_cents) : ""}
+              </p>
+            </div>
+            <div>
+              <Label>Forma de pagamento</Label>
+              <Select value={paymentMethodId} onValueChange={setPaymentMethodId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar forma de pagamento" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(paymentMethods as any[]).map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {methodLabels[m.method] ?? m.method}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!paymentMethods.length && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Cadastre ou ative uma forma de pagamento nas configurações financeiras.
+                </p>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Ao confirmar, a conta será marcada como paga e uma única saída será registrada
+              automaticamente no financeiro.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayRow(null)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => pay.mutate()}
+              disabled={!paymentMethodId || pay.isPending || !paymentMethods.length}
+            >
+              {pay.isPending ? "Registrando..." : "Confirmar pagamento"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
