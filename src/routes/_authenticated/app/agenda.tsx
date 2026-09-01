@@ -183,7 +183,7 @@ function Agenda() {
   }, [view, anchor, hours, appts, blocks, staffFilter, bufferMin, slotMin]);
 
   const openGapBooking = (start: Date) => {
-    setEdit({ starts_at: start.toISOString() });
+    setEdit({ starts_at: start.toISOString(), __new: true });
     setOpen(true);
   };
 
@@ -219,11 +219,11 @@ function Agenda() {
   const save = useMutation({
     mutationFn: async (v: any) => {
       const svc = (services as any[]).find((s) => s.id === v.service_id);
-      const dur = svc?.duration_min ?? (edit ? Math.round((new Date(edit.ends_at).getTime() - new Date(edit.starts_at).getTime()) / 60000) : 30);
-      const price = svc?.price_cents ?? edit?.total_cents ?? 0;
+      const dur = svc?.duration_min ?? (edit?.id ? Math.round((new Date(edit.ends_at).getTime() - new Date(edit.starts_at).getTime()) / 60000) : 30);
+      const price = svc?.price_cents ?? (edit?.id ? edit.total_cents : 0) ?? 0;
       const starts = new Date(v.starts_at);
       const ends = new Date(starts.getTime() + dur * 60_000);
-      const err = validate(starts, ends, v.staff_id || null, edit?.id);
+      const err = validate(starts, ends, v.staff_id || null, edit?.id || undefined);
       if (err) throw new Error(err);
       const payload = {
         company_id: companyId,
@@ -235,7 +235,7 @@ function Agenda() {
         total_cents: price,
         notes: v.notes || null,
       };
-      if (edit) {
+      if (edit?.id) {
         const { error } = await supabase.from("appointments").update(payload).eq("id", edit.id);
         if (error) throw error;
         if (v.service_id) {
@@ -256,7 +256,7 @@ function Agenda() {
       return { id: appt!.id, isNew: true, ...payload, service_name: svc?.name };
     },
     onSuccess: (result: any) => {
-      toast.success(edit ? "Agendamento atualizado" : "Agendamento criado");
+      toast.success(edit?.id ? "Agendamento atualizado" : "Agendamento criado");
       qc.invalidateQueries({ queryKey: ["appts", companyId] });
       setOpen(false); setEdit(null);
       if (result?.isNew) {
@@ -334,7 +334,7 @@ function Agenda() {
   };
 
   const openNew = (at?: Date) => {
-    setEdit(at ? { starts_at: at.toISOString() } : null);
+    setEdit(at ? { starts_at: at.toISOString(), __new: true } : null);
     setOpen(true);
   };
 
@@ -382,9 +382,9 @@ function Agenda() {
             </DialogTrigger>
             {open && (
               <ApptDialog
-                key={edit?.id ?? "new"}
-                edit={edit && edit.id ? edit : null}
-                seedDate={edit && !edit.id ? new Date(edit.starts_at) : anchor}
+                key={edit?.id ?? edit?.starts_at ?? "new"}
+                edit={edit?.id ? edit : null}
+                seedDate={edit?.__new && edit.starts_at ? new Date(edit.starts_at) : anchor}
                 customers={customers as any}
                 staff={staff as any}
                 services={services as any}
@@ -400,7 +400,7 @@ function Agenda() {
             {view === "day" && smartGaps.length > 0 && (
         <Card className="border-dashed">
           <CardContent className="p-4">
-            <div className="mb-3 flex items-center gap-2"><Sparkles className="h-4 w-4"/><div><p className="font-medium">Agenda inteligente</p><p className="text-xs text-muted-foreground">Horários livres de pelo menos 30 minutos encontrados neste dia.</p></div></div>
+            <div className="mb-3 flex items-center gap-2"><Sparkles className="h-4 w-4"/><div><p className="font-medium">Agenda inteligente</p><p className="text-xs text-muted-foreground">Horários livres compatíveis com o intervalo configurado da empresa.</p></div></div>
             <div className="flex flex-wrap gap-2">{smartGaps.map((g,i)=><Button key={i} type="button" variant="outline" size="sm" onClick={()=>openGapBooking(g.start)}><Clock3 className="mr-1 h-3.5 w-3.5"/>{fmtTime(g.start)}–{fmtTime(g.end)} · {g.minutes} min</Button>)}</div>
           </CardContent>
         </Card>
@@ -658,7 +658,7 @@ function ApptDialog({ edit, seedDate, customers, staff, services, defaultStaff, 
             placeholder="Pesquisar cliente pelo nome…"
             autoComplete="off"
           />
-          <Select value={f.customer_id} onValueChange={(v) => { setF({ ...f, customer_id: v }); setCustomerSearch(""); }}>
+          <Select value={f.customer_id} onValueChange={(v) => { setF((prev: any) => ({ ...prev, customer_id: v })); setCustomerSearch(""); }}>
             <SelectTrigger><SelectValue placeholder="Selecionar cliente…" /></SelectTrigger>
             <SelectContent>
               {filteredCustomers.length ? filteredCustomers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>) : <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado.</div>}
@@ -670,7 +670,7 @@ function ApptDialog({ edit, seedDate, customers, staff, services, defaultStaff, 
         <div>
           <Label>Funcionário</Label>
           {staff.length === 0 ? <p className="rounded-md border border-dashed p-2 text-sm text-muted-foreground">Nenhum profissional cadastrado.</p> : (
-            <Select value={f.staff_id} onValueChange={(v) => setF({ ...f, staff_id: v })}>
+            <Select value={f.staff_id} onValueChange={(v) => setF((prev: any) => ({ ...prev, staff_id: v }))}>
               <SelectTrigger><SelectValue placeholder="Selecionar…" /></SelectTrigger>
               <SelectContent>{staff.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
             </Select>
@@ -680,21 +680,21 @@ function ApptDialog({ edit, seedDate, customers, staff, services, defaultStaff, 
         {!edit && (
           <div>
             <Label>Serviço</Label>
-            <Select value={f.service_id} onValueChange={(v) => setF({ ...f, service_id: v })}>
+            <Select value={f.service_id} onValueChange={(v) => setF((prev: any) => ({ ...prev, service_id: v }))}>
               <SelectTrigger><SelectValue placeholder="Selecionar…" /></SelectTrigger>
               <SelectContent>{services.map((s) => <SelectItem key={s.id} value={s.id}>{s.name} — {s.duration_min} min · {brl(s.price_cents / 100)}</SelectItem>)}</SelectContent>
             </Select>
           </div>
         )}
-        <div><Label>Início</Label><Input type="datetime-local" value={f.starts_at} onChange={(e) => setF({ ...f, starts_at: e.target.value })} /></div>
+        <div><Label>Início</Label><Input type="datetime-local" value={f.starts_at} onChange={(e) => setF((prev: any) => ({ ...prev, starts_at: e.target.value }))} /></div>
         <div>
           <Label>Status</Label>
-          <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v })}>
+          <Select value={f.status} onValueChange={(v) => setF((prev: any) => ({ ...prev, status: v }))}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>{Object.entries(STATUS).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <div><Label>Observações</Label><Textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></div>
+        <div><Label>Observações</Label><Textarea value={f.notes} onChange={(e) => setF((prev: any) => ({ ...prev, notes: e.target.value }))} /></div>
       </div>
       <DialogFooter>
         <Button onClick={() => { try { onSave(f); } catch (err) { console.error("[agenda] erro ao salvar agendamento:", err); toast.error("Não foi possível salvar. Tente novamente."); } }} disabled={loading}>Salvar</Button>
