@@ -5,6 +5,7 @@ import {
   randomToken,
   renderTemplate,
 } from "@/lib/messaging";
+import { waLink, waNumber } from "@/lib/format";
 
 /**
  * Confirmação automática de agendamentos.
@@ -30,9 +31,7 @@ export const Route = createFileRoute("/api/public/hooks/confirmations")({
           .in("status", ["pending", "sent"])
           .lt("expires_at", nowIso);
 
-        const { data: settingsRows } = await supabaseAdmin
-          .from("messaging_settings")
-          .select("*");
+        const { data: settingsRows } = await supabaseAdmin.from("messaging_settings").select("*");
         const settings = new Map((settingsRows ?? []).map((s: any) => [s.company_id, s]));
 
         const maxWindow = new Date(Date.now() + 72 * 3600 * 1000).toISOString();
@@ -49,7 +48,10 @@ export const Route = createFileRoute("/api/public/hooks/confirmations")({
         const { data: existing } = await supabaseAdmin
           .from("appointment_confirmations")
           .select("appointment_id")
-          .in("appointment_id", appts.map((a) => a.id));
+          .in(
+            "appointment_id",
+            appts.map((a) => a.id),
+          );
         const already = new Set((existing ?? []).map((r: any) => r.appointment_id));
 
         const companyIds = Array.from(new Set(appts.map((a) => a.company_id)));
@@ -72,13 +74,18 @@ export const Route = createFileRoute("/api/public/hooks/confirmations")({
           const dueFrom = new Date(startsAt.getTime() - hours * 3600 * 1000);
           if (Date.now() < dueFrom.getTime()) continue;
 
-          const channels: string[] = Array.isArray(cfg.active_channels) && cfg.active_channels.length
-            ? cfg.active_channels
-            : ["whatsapp"];
+          const channels: string[] =
+            Array.isArray(cfg.active_channels) && cfg.active_channels.length
+              ? cfg.active_channels
+              : ["whatsapp"];
 
           const [{ data: cust }, { data: stf }, { data: svcs }] = await Promise.all([
             appt.customer_id
-              ? supabaseAdmin.from("customers").select("name, phone, email").eq("id", appt.customer_id).maybeSingle()
+              ? supabaseAdmin
+                  .from("customers")
+                  .select("name, phone, email")
+                  .eq("id", appt.customer_id)
+                  .maybeSingle()
               : Promise.resolve({ data: null } as any),
             appt.staff_id
               ? supabaseAdmin.from("staff").select("name").eq("id", appt.staff_id).maybeSingle()
@@ -111,11 +118,8 @@ export const Route = createFileRoute("/api/public/hooks/confirmations")({
             Empresa: (cmap.get(appt.company_id) as any)?.name ?? "",
           });
 
-          const digits = (cust?.phone ?? "").replace(/\D/g, "");
-          const phone = digits ? (digits.startsWith("55") ? digits : `55${digits}`) : "";
-          const sendUrl = phone
-            ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`
-            : null;
+          const phone = waNumber(cust?.phone);
+          const sendUrl = phone ? waLink(phone, message) : null;
 
           const { data: conf, error } = await supabaseAdmin
             .from("appointment_confirmations")
@@ -124,12 +128,12 @@ export const Route = createFileRoute("/api/public/hooks/confirmations")({
               appointment_id: appt.id,
               token,
               channel: channels[0],
-              status: sendUrl || cust?.email ? "sent" : "failed",
+              status: sendUrl || cust?.email ? "pending" : "failed",
               message,
               send_url: sendUrl,
-              sent_at: nowIso,
-              last_sent_at: nowIso,
-              send_attempts: 1,
+              sent_at: null,
+              last_sent_at: null,
+              send_attempts: 0,
               error: sendUrl || cust?.email ? null : "Cliente sem telefone/e-mail cadastrado",
               expires_at: startsAt.toISOString(),
             } as any)
@@ -145,7 +149,10 @@ export const Route = createFileRoute("/api/public/hooks/confirmations")({
             channel: channels[0],
             event: conf?.status === "failed" ? "failed" : "sent",
             status: conf?.status,
-            detail: conf?.status === "failed" ? "Cliente sem contato válido" : `Lembrete gerado (${hours}h antes)`,
+            detail:
+              conf?.status === "failed"
+                ? "Cliente sem contato válido"
+                : `Lembrete gerado (${hours}h antes)`,
           } as any);
 
           if (conf?.status === "sent") {
@@ -159,7 +166,10 @@ export const Route = createFileRoute("/api/public/hooks/confirmations")({
           await supabaseAdmin.from("notifications").insert({
             company_id: appt.company_id,
             kind: conf?.status === "failed" ? "confirmation_failed" : "confirmation_sent",
-            title: conf?.status === "failed" ? "Falha no lembrete de confirmação" : "Confirmação para enviar",
+            title:
+              conf?.status === "failed"
+                ? "Falha no lembrete de confirmação"
+                : "Confirmação para enviar",
             body: `${cust?.name ?? "Cliente"} · ${startsAt.toLocaleString("pt-BR", {
               day: "2-digit",
               month: "2-digit",
