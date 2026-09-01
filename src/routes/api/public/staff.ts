@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { guardPublicRequest, rateLimitResponse } from "@/lib/public-api-protection.server";
 
 /**
  * Profissionais habilitados e disponíveis para os serviços/horário escolhidos.
@@ -18,8 +19,14 @@ import { z } from "zod";
 const qSchema = z.object({
   slug: z.string().trim().min(1).max(80),
   service_ids: z.array(z.string().uuid()).min(1).max(20),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  time: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  time: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .optional(),
   starts_at: z.string().datetime().optional(),
 });
 
@@ -37,10 +44,17 @@ export const Route = createFileRoute("/api/public/staff")({
           time: url.searchParams.get("time") ?? undefined,
           starts_at: url.searchParams.get("starts_at") ?? undefined,
         });
-        if (!parsed.success) return Response.json({ error: "Parâmetros inválidos" }, { status: 400 });
+        if (!parsed.success)
+          return Response.json({ error: "Parâmetros inválidos" }, { status: 400 });
         const { slug, service_ids, date, time, starts_at } = parsed.data;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const guard = await guardPublicRequest(supabaseAdmin, request, {
+          scope: "staff:availability",
+          limit: 60,
+          windowSeconds: 300,
+        });
+        if (!guard.allowed) return rateLimitResponse(guard.retryAfter);
 
         const { data: company } = await supabaseAdmin
           .from("companies")
@@ -90,8 +104,8 @@ export const Route = createFileRoute("/api/public/staff")({
         // Serviços sem nenhum profissional vinculado não restringem a lista (compatibilidade)
         const required = validServiceIds.filter((id) => linkedServices.has(id));
 
-        let eligible = staffList.filter(
-          (s) => required.every((id) => linksByStaff.get(s.id)?.has(id)),
+        let eligible = staffList.filter((s) =>
+          required.every((id) => linksByStaff.get(s.id)?.has(id)),
         );
         if (!eligible.length) {
           return Response.json({ staff: [], reason: required.length ? "no_link" : "no_staff" });
@@ -143,7 +157,9 @@ export const Route = createFileRoute("/api/public/staff")({
         eligible = eligible.filter((s) => {
           // 3. jornada de trabalho (quando cadastrada). Sem jornada = segue o horário da empresa.
           if (hasSchedule.has(s.id)) {
-            const windows = (schedules ?? []).filter((x) => x.staff_id === s.id && x.weekday === weekday);
+            const windows = (schedules ?? []).filter(
+              (x) => x.staff_id === s.id && x.weekday === weekday,
+            );
             if (!windows.length) return false; // folga nesse dia da semana
             const fits = windows.some(
               (w) => toMin(w.start_time) <= slotStartMin && toMin(w.end_time) >= slotEndMin,

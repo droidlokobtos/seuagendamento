@@ -9,7 +9,7 @@ import { IMAGE_PRESETS, dimensionsMatch, presetError, readImageSize, type ImageP
  */
 export const validateUploadedImage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { path: string; preset: string }) => {
+  .validator((input: { path: string; preset: string }) => {
     if (!input?.path || typeof input.path !== "string") throw new Error("Caminho inválido");
     if (!(input.preset in IMAGE_PRESETS)) throw new Error("Preset de imagem inválido");
     return { path: input.path, preset: input.preset as ImagePresetKey };

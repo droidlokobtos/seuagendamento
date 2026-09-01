@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import {
-  GOOGLE_REDIRECT_MIN_RATING,
-  NEGATIVE_ALERT_MAX_RATING,
-} from "@/lib/reviews";
+import { GOOGLE_REDIRECT_MIN_RATING, NEGATIVE_ALERT_MAX_RATING } from "@/lib/reviews";
+import { guardPublicRequest, rateLimitResponse } from "@/lib/public-api-protection.server";
 
 /**
  * Endpoint público do módulo de avaliação.
@@ -28,6 +26,12 @@ export const Route = createFileRoute("/api/public/review")({
         if (!token) return Response.json({ error: "Token ausente" }, { status: 400 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const guard = await guardPublicRequest(supabaseAdmin, request, {
+          scope: "review:get",
+          limit: 40,
+          windowSeconds: 300,
+        });
+        if (!guard.allowed) return rateLimitResponse(guard.retryAfter);
         const { data: invite } = await supabaseAdmin
           .from("review_invites")
           .select("*")
@@ -38,25 +42,50 @@ export const Route = createFileRoute("/api/public/review")({
 
         const expired = new Date(invite.expires_at).getTime() < Date.now();
         if (expired && !["answered"].includes(invite.status)) {
-          await supabaseAdmin.from("review_invites").update({ status: "expired" }).eq("id", invite.id);
+          await supabaseAdmin
+            .from("review_invites")
+            .update({ status: "expired" })
+            .eq("id", invite.id);
         }
 
-        const [{ data: company }, { data: settings }, { data: cust }, { data: stf }, { data: svcs }, { data: appt }] =
-          await Promise.all([
-            supabaseAdmin.from("companies").select("name, logo_url, slug, primary_color").eq("id", invite.company_id).maybeSingle(),
-            supabaseAdmin.from("review_settings").select("google_review_url").eq("company_id", invite.company_id).maybeSingle(),
-            invite.customer_id
-              ? supabaseAdmin.from("customers").select("name").eq("id", invite.customer_id).maybeSingle()
-              : Promise.resolve({ data: null } as any),
-            invite.staff_id
-              ? supabaseAdmin.from("staff").select("name").eq("id", invite.staff_id).maybeSingle()
-              : Promise.resolve({ data: null } as any),
-            supabaseAdmin
-              .from("appointment_services")
-              .select("services(name)")
-              .eq("appointment_id", invite.appointment_id),
-            supabaseAdmin.from("appointments").select("starts_at").eq("id", invite.appointment_id).maybeSingle(),
-          ]);
+        const [
+          { data: company },
+          { data: settings },
+          { data: cust },
+          { data: stf },
+          { data: svcs },
+          { data: appt },
+        ] = await Promise.all([
+          supabaseAdmin
+            .from("companies")
+            .select("name, logo_url, slug, primary_color")
+            .eq("id", invite.company_id)
+            .maybeSingle(),
+          supabaseAdmin
+            .from("review_settings")
+            .select("google_review_url")
+            .eq("company_id", invite.company_id)
+            .maybeSingle(),
+          invite.customer_id
+            ? supabaseAdmin
+                .from("customers")
+                .select("name")
+                .eq("id", invite.customer_id)
+                .maybeSingle()
+            : Promise.resolve({ data: null } as any),
+          invite.staff_id
+            ? supabaseAdmin.from("staff").select("name").eq("id", invite.staff_id).maybeSingle()
+            : Promise.resolve({ data: null } as any),
+          supabaseAdmin
+            .from("appointment_services")
+            .select("services(name)")
+            .eq("appointment_id", invite.appointment_id),
+          supabaseAdmin
+            .from("appointments")
+            .select("starts_at")
+            .eq("id", invite.appointment_id)
+            .maybeSingle(),
+        ]);
 
         return Response.json({
           status: expired && invite.status !== "answered" ? "expired" : invite.status,
@@ -84,6 +113,12 @@ export const Route = createFileRoute("/api/public/review")({
         const { token, rating, comment, staffRating, wouldReturn, wouldRecommend } = parsed.data;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const guard = await guardPublicRequest(supabaseAdmin, request, {
+          scope: "review:submit",
+          limit: 5,
+          windowSeconds: 900,
+        });
+        if (!guard.allowed) return rateLimitResponse(guard.retryAfter);
         const ip =
           request.headers.get("cf-connecting-ip") ??
           request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
@@ -100,7 +135,10 @@ export const Route = createFileRoute("/api/public/review")({
         if (invite.status === "answered")
           return Response.json({ error: "Esta avaliação já foi enviada" }, { status: 409 });
         if (new Date(invite.expires_at).getTime() < Date.now()) {
-          await supabaseAdmin.from("review_invites").update({ status: "expired" }).eq("id", invite.id);
+          await supabaseAdmin
+            .from("review_invites")
+            .update({ status: "expired" })
+            .eq("id", invite.id);
           return Response.json({ error: "Este link de avaliação expirou" }, { status: 410 });
         }
 
@@ -108,7 +146,10 @@ export const Route = createFileRoute("/api/public/review")({
           .from("appointment_services")
           .select("services(name)")
           .eq("appointment_id", invite.appointment_id);
-        const serviceNames = (svcs ?? []).map((r: any) => r.services?.name).filter(Boolean).join(", ");
+        const serviceNames = (svcs ?? [])
+          .map((r: any) => r.services?.name)
+          .filter(Boolean)
+          .join(", ");
 
         const { data: review, error: reviewError } = await supabaseAdmin
           .from("reviews")
@@ -160,7 +201,11 @@ export const Route = createFileRoute("/api/public/review")({
         } as any);
 
         const { data: cust } = invite.customer_id
-          ? await supabaseAdmin.from("customers").select("name").eq("id", invite.customer_id).maybeSingle()
+          ? await supabaseAdmin
+              .from("customers")
+              .select("name")
+              .eq("id", invite.customer_id)
+              .maybeSingle()
           : { data: null as any };
 
         const negative = rating <= NEGATIVE_ALERT_MAX_RATING;
@@ -183,7 +228,7 @@ export const Route = createFileRoute("/api/public/review")({
           ok: true,
           rating,
           googleReviewUrl:
-            rating >= GOOGLE_REDIRECT_MIN_RATING ? settings?.google_review_url ?? null : null,
+            rating >= GOOGLE_REDIRECT_MIN_RATING ? (settings?.google_review_url ?? null) : null,
         });
       },
     },

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { guardPublicRequest, rateLimitResponse } from "@/lib/public-api-protection.server";
 
 /**
  * Endpoint público da página de confirmação (`/confirmar/<token>`).
@@ -23,6 +24,12 @@ export const Route = createFileRoute("/api/public/confirm")({
         if (!token) return Response.json({ error: "Token ausente" }, { status: 400 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const guard = await guardPublicRequest(supabaseAdmin, request, {
+          scope: "confirmation:get",
+          limit: 40,
+          windowSeconds: 300,
+        });
+        if (!guard.allowed) return rateLimitResponse(guard.retryAfter);
         const { data: conf } = await supabaseAdmin
           .from("appointment_confirmations")
           .select("id, status, expires_at, responded_at, appointment_id, company_id, cancel_reason")
@@ -97,6 +104,12 @@ export const Route = createFileRoute("/api/public/confirm")({
         const { token, action, reason } = parsed.data;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const guard = await guardPublicRequest(supabaseAdmin, request, {
+          scope: "confirmation:respond",
+          limit: 6,
+          windowSeconds: 900,
+        });
+        if (!guard.allowed) return rateLimitResponse(guard.retryAfter);
         const { data: conf } = await supabaseAdmin
           .from("appointment_confirmations")
           .select("id, company_id, appointment_id, status, expires_at")

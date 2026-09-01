@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const resetUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({
+  .validator((data) => z.object({
     email: z.string().email(),
     phone: z.string().min(10).optional(),
     new_password: z.string().min(8),
@@ -32,7 +32,7 @@ export const resetUserPassword = createServerFn({ method: "POST" })
 
 export const deleteCompany = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ company_id: z.string().uuid() }).parse(data))
+  .validator((data) => z.object({ company_id: z.string().uuid() }).parse(data))
   .handler(async ({ context, data }) => {
     const { data: isAdmin } = await context.supabase.rpc("is_super_admin");
     if (!isAdmin) throw new Error("Apenas Admin Master pode excluir empresas.");
@@ -47,7 +47,7 @@ export const deleteCompany = createServerFn({ method: "POST" })
 
 export const createCompanyWithAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({
+  .validator((data) => z.object({
     name: z.string().trim().min(2).max(160),
     owner_name: z.string().trim().min(2).max(160),
     slug: z.string().trim().min(2).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
@@ -114,7 +114,7 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
 
 export const setCompanyPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) =>
+  .validator((data) =>
     z.object({
       company_id: z.string().uuid(),
       plan_code: z.string().min(1).max(50).nullable().optional(),

@@ -22,7 +22,7 @@ export type SaveProcedureInput = {
  */
 export const saveProcedure = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: SaveProcedureInput) => input)
+  .validator((input: SaveProcedureInput) => input)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { companyId, base, items, costs } = data;

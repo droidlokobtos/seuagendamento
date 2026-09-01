@@ -159,16 +159,19 @@ function BookingPage() {
   const [session, setSession] = useState<{ userId: string; email?: string | null } | null>(null);
   const selectedServiceIdsKey = selected.map((s) => s.id).join(",");
   const customerPhone = form.phone.trim();
+  const customerName = form.name.trim();
 
   const [anamDone, setAnamDone] = useState(false);
+  const [verificationToken, setVerificationToken] = useState("");
   const [anamSubmitting, setAnamSubmitting] = useState(false);
   const anamQuery = useQuery({
     enabled: step === 6 && !!customerPhone && selected.length > 0 && !anamDone,
-    queryKey: ["anamnesis-check", company.slug, customerPhone, selectedServiceIdsKey],
+    queryKey: ["anamnesis-check", company.slug, customerPhone, customerName, selectedServiceIdsKey],
     queryFn: async () => {
       const p = new URLSearchParams({
         slug: String(company.slug ?? ""),
         phone: customerPhone,
+        name: customerName,
         service_ids: selectedServiceIdsKey,
       });
       const r = await fetch(`/api/public/anamnesis?${p.toString()}`);
@@ -187,7 +190,8 @@ function BookingPage() {
 
   useEffect(() => {
     setAnamDone(false);
-  }, [selectedServiceIdsKey, customerPhone]);
+    setVerificationToken("");
+  }, [selectedServiceIdsKey, customerPhone, customerName]);
 
   const submitAnamnesis = async (d: any) => {
     setAnamSubmitting(true);
@@ -205,6 +209,7 @@ function BookingPage() {
       });
       const json = await r.json();
       if (!r.ok) throw new Error(json.error || "Falha ao enviar a ficha");
+      setVerificationToken(String(json.verification_token ?? ""));
       setAnamDone(true);
       toast.success("Ficha de anamnese registrada. Obrigado!");
     } catch (e: any) {
@@ -429,6 +434,7 @@ function BookingPage() {
           staff_id: staff?.id ?? null,
           starts_at: new Date(iso).toISOString(),
           coupon_code: coupon?.code ?? "",
+          verification_token: verificationToken || anamQuery.data?.verification_token || "",
           customer: form,
         }),
       });

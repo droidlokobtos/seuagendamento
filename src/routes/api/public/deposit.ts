@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { fileSignatureMatchesMime, sameBrazilianPhone } from "@/lib/public-security";
+import { guardPublicRequest, rateLimitResponse } from "@/lib/public-api-protection.server";
 
 /**
  * Envio do comprovante do pagamento antecipado (sinal) pelo cliente.
@@ -31,6 +32,12 @@ export const Route = createFileRoute("/api/public/deposit")({
         const { appointment_id, phone, transaction_ref, file_base64, file_name } = parsed.data;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const guard = await guardPublicRequest(supabaseAdmin, request, {
+          scope: "deposit:submit",
+          limit: 6,
+          windowSeconds: 900,
+        });
+        if (!guard.allowed) return rateLimitResponse(guard.retryAfter);
 
         const { data: appt } = await supabaseAdmin
           .from("appointments")

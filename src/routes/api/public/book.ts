@@ -3,6 +3,11 @@ import { z } from "zod";
 import { canLinkCustomerIdentity } from "@/lib/public-security";
 import { computeDepositCents, depositConfigFromCompany } from "@/lib/finance";
 import { isExpired, sectionsForServices } from "@/lib/anamnesis-core";
+import {
+  guardPublicRequest,
+  hashPublicValue,
+  rateLimitResponse,
+} from "@/lib/public-api-protection.server";
 
 const schema = z.object({
   slug: z.string().min(1),
@@ -10,6 +15,7 @@ const schema = z.object({
   staff_id: z.string().uuid().nullable().optional(),
   starts_at: z.string().min(10),
   coupon_code: z.string().trim().max(40).optional().or(z.literal("")),
+  verification_token: z.string().min(20).max(160).optional().or(z.literal("")),
   customer: z.object({
     name: z.string().trim().min(2).max(120),
     phone: z.string().trim().min(6).max(40),
@@ -72,9 +78,23 @@ export const Route = createFileRoute("/api/public/book")({
             { status: 400 },
           );
         }
-        const { slug, service_ids, staff_id, starts_at, customer, coupon_code } = parsed.data;
+        const {
+          slug,
+          service_ids,
+          staff_id,
+          starts_at,
+          customer,
+          coupon_code,
+          verification_token,
+        } = parsed.data;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const guard = await guardPublicRequest(supabaseAdmin, request, {
+          scope: "booking:create",
+          limit: 8,
+          windowSeconds: 900,
+        });
+        if (!guard.allowed) return rateLimitResponse(guard.retryAfter);
 
         const { data: company } = await supabaseAdmin
           .from("companies")
@@ -175,6 +195,7 @@ export const Route = createFileRoute("/api/public/book")({
         }
 
         let customerId: string | null = null;
+        let verificationId: string | null = null;
         if (authUserId) {
           const { data: byUser } = await supabaseAdmin
             .from("customers")
@@ -200,6 +221,27 @@ export const Route = createFileRoute("/api/public/book")({
                 .is("user_id", null);
             }
           }
+        }
+        if (!authUserId) {
+          const tokenHash = verification_token ? hashPublicValue(verification_token) : "";
+          const phoneHash = hashPublicValue(customer.phone.replace(/\D/g, ""));
+          const { data: verification } = await supabaseAdmin
+            .from("public_client_verifications")
+            .select("id")
+            .eq("token_hash", tokenHash)
+            .eq("company_id", company.id)
+            .eq("customer_id", customerId ?? "")
+            .eq("phone_hash", phoneHash)
+            .is("consumed_at", null)
+            .gt("expires_at", new Date().toISOString())
+            .maybeSingle();
+          if (!verification) {
+            return Response.json(
+              { error: "Sua verificação expirou. Confirme novamente seus dados." },
+              { status: 403 },
+            );
+          }
+          verificationId = verification.id;
         }
         // Segurança do fluxo público: não permite criar a reserva quando a
         // anamnese obrigatória ainda não foi preenchida ou está vencida.
@@ -336,6 +378,14 @@ export const Route = createFileRoute("/api/public/book")({
             );
           }
           return Response.json({ error: msg }, { status: 500 });
+        }
+
+        if (verificationId) {
+          await supabaseAdmin
+            .from("public_client_verifications")
+            .update({ consumed_at: new Date().toISOString() })
+            .eq("id", verificationId)
+            .is("consumed_at", null);
         }
 
         const rows = services.map((s) => ({

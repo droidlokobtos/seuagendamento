@@ -23,7 +23,7 @@ async function assertAccess(
 /** Finaliza o atendimento de forma segura, sem que etapas acessórias impeçam a conclusão. */
 export const completeAppointment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { appointmentId: string }) =>
+  .validator((input: { appointmentId: string }) =>
     z.object({ appointmentId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -75,7 +75,7 @@ export const completeAppointment = createServerFn({ method: "POST" })
 /** Adiciona um serviço a um atendimento em andamento, recalculando valor, duração e conflitos. */
 export const addAppointmentService = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: {
+  .validator((input: {
     appointmentId: string;
     serviceId: string;
     staffId?: string | null;

@@ -27,7 +27,7 @@ function changed(existing: any, alert: z.infer<typeof AlertSchema>) {
 
 export const syncAiAlerts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => SyncInput.parse(input))
+  .validator((input: unknown) => SyncInput.parse(input))
   .handler(async ({ data, context }) => {
     const db = context.supabase as any;
     const now = new Date();
@@ -109,7 +109,7 @@ export const syncAiAlerts = createServerFn({ method: "POST" })
 
 export const getAiAlertHistory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => CompanyInput.parse(input))
+  .validator((input: unknown) => CompanyInput.parse(input))
   .handler(async ({ data, context }) => {
     const db = context.supabase as any;
     const [alertsRes, eventsRes] = await Promise.all([
