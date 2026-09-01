@@ -1,0 +1,97 @@
+name: Prevent booking overlap
+on:
+  push:
+    paths: ['.github/workflows/prevent-booking-overlap.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          # Public booking API: conflict is company-wide, not per staff.
+          p=Path('src/routes/api/public/book.ts'); t=p.read_text()
+          start=t.index('        if (staff_id) {')
+          end=t.index('\n\n        // Bloqueios de agenda', start)
+          repl='''        // Capacidade global: qualquer atendimento ativo ocupa o intervalo da empresa,
+        // independentemente de cliente, serviço ou profissional.
+        const { data: conflicts } = await supabaseAdmin
+          .from("appointments").select("id")
+          .eq("company_id", company.id)
+          .not("status", "in", '(cancelled,cancelled_by_customer,cancelled_by_company,no_show)')
+          .lt("starts_at", end.toISOString()).gt("ends_at", start.toISOString())
+          .limit(1);
+        if (conflicts && conflicts.length > 0)
+          return Response.json({ error: "Este horário já está ocupado. Escolha outro horário." }, { status: 409 });'''
+          t=t[:start]+repl+t[end:]; p.write_text(t)
+
+          # Internal agenda: remove exception that allowed different staff simultaneously.
+          p=Path('src/routes/_authenticated/app/agenda.tsx'); t=p.read_text()
+          old='      if (staff_id && a.staff_id && a.staff_id !== staff_id) continue;\n'
+          if old not in t: raise SystemExit('agenda staff exception not found')
+          t=t.replace(old,'',1); p.write_text(t)
+
+          # Server helper exposes only occupied intervals, never customer data.
+          p=Path('src/lib/public-portal.functions.ts'); t=p.read_text()
+          marker='/** Bloqueios de agenda (apenas janelas de horário, sem o motivo). */'
+          helper='''/** Intervalos já ocupados da empresa, sem expor cliente, serviço ou profissional. */
+export const getPublicOccupiedAppointments = createServerFn({ method: "GET" })
+  .inputValidator((input: { companyId: string; from: string; to: string }) =>
+    z.object({ companyId: z.string().uuid(), from: z.string().min(1), to: z.string().min(1) }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("appointments")
+      .select("starts_at,ends_at")
+      .eq("company_id", data.companyId)
+      .not("status", "in", '(cancelled,cancelled_by_customer,cancelled_by_company,no_show)')
+      .lt("starts_at", data.to)
+      .gt("ends_at", data.from);
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as { starts_at: string; ends_at: string }[];
+  });
+
+'''
+          if marker not in t: raise SystemExit('public helper marker not found')
+          t=t.replace(marker,helper+marker,1); p.write_text(t)
+
+          # Public UI: hide occupied intervals before customer reaches confirmation.
+          p=Path('src/routes/b.$slug.index.tsx'); t=p.read_text()
+          t=t.replace('getPublicCompany, getPublicTimeBlocks', 'getPublicCompany, getPublicTimeBlocks, getPublicOccupiedAppointments',1)
+          marker='''  const { data: staffData, isLoading: staffLoading } = useQuery({'''
+          query='''  const { data: occupied = [] } = useQuery({
+    queryKey: ["pub_occupied", companyId, dateStr],
+    queryFn: async () => getPublicOccupiedAppointments({ data: { companyId, from: `${dateStr}T00:00:00`, to: `${dateStr}T23:59:59` } }),
+    enabled: !!dateStr,
+    refetchOnWindowFocus: true,
+  });
+
+'''
+          if marker not in t: raise SystemExit('booking query marker not found')
+          t=t.replace(marker,query+marker,1)
+          block='''      if (conflictBlock) continue;
+      out.push(`${hh}:${mm}`);'''
+          replacement='''      if (conflictBlock) continue;
+      const conflictAppointment = occupied.some((a) => {
+        const as = new Date(a.starts_at).getTime();
+        const ae = new Date(a.ends_at).getTime();
+        return slotStart < ae && slotEnd > as;
+      });
+      if (conflictAppointment) continue;
+      out.push(`${hh}:${mm}`);'''
+          if block not in t: raise SystemExit('slot block not found')
+          t=t.replace(block,replacement,1)
+          t=t.replace('[dateStr, hours, blocks, totalMin, minAdvanceMin, slotIntervalMin]', '[dateStr, hours, blocks, occupied, totalMin, minAdvanceMin, slotIntervalMin]',1)
+          p.write_text(t)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/api/public/book.ts src/routes/_authenticated/app/agenda.tsx src/lib/public-portal.functions.ts 'src/routes/b.$slug.index.tsx'
+          git commit -m 'fix: block company-wide overlapping appointments'
+          git push
