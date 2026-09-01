@@ -1,0 +1,56 @@
+name: Apply booking slot interval patch
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-booking-slot-interval.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch public booking slot interval
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/routes/b.$slug.index.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''  const minAdvanceMin = (company as any).min_advance_min ?? 0;\n  const maxAdvanceDays = (company as any).max_advance_days ?? 60;'''
+          new = '''  const minAdvanceMin = (company as any).min_advance_min ?? 0;\n  const maxAdvanceDays = (company as any).max_advance_days ?? 60;\n  const slotIntervalMin = Math.min(240, Math.max(5, Number((company as any).booking_slot_interval_min) || 30));'''
+          if old not in text:
+              raise SystemExit('Could not find advance settings block')
+          text = text.replace(old, new, 1)
+
+          if '    const gran = 15;' not in text:
+              raise SystemExit('Could not find hardcoded 15-minute slot interval')
+          text = text.replace('    const gran = 15;', '    const gran = slotIntervalMin;', 1)
+
+          old_deps = '  }, [dateStr, hours, blocks, totalMin, minAdvanceMin]);'
+          new_deps = '  }, [dateStr, hours, blocks, totalMin, minAdvanceMin, slotIntervalMin]);'
+          if old_deps not in text:
+              raise SystemExit('Could not find slot memo dependencies')
+          text = text.replace(old_deps, new_deps, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Commit patch
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 'src/routes/b.$slug.index.tsx'
+          git commit -m 'feat: use configurable 30 minute booking slots'
+          git push
