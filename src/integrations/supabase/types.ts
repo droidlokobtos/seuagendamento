@@ -47,6 +47,148 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_alert_events: {
+        Row: {
+          action: string
+          alert_id: string
+          alert_key: string
+          company_id: string
+          created_at: string
+          description: string
+          event_type: string
+          id: string
+          metric: string | null
+          severity: string
+          snapshot: Json
+          title: string
+        }
+        Insert: {
+          action: string
+          alert_id: string
+          alert_key: string
+          company_id: string
+          created_at?: string
+          description: string
+          event_type: string
+          id?: string
+          metric?: string | null
+          severity: string
+          snapshot?: Json
+          title: string
+        }
+        Update: {
+          action?: string
+          alert_id?: string
+          alert_key?: string
+          company_id?: string
+          created_at?: string
+          description?: string
+          event_type?: string
+          id?: string
+          metric?: string | null
+          severity?: string
+          snapshot?: Json
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_alert_events_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "ai_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_alert_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_alert_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_alerts: {
+        Row: {
+          action: string
+          alert_key: string
+          company_id: string
+          created_at: string
+          description: string
+          first_seen_at: string
+          id: string
+          last_event_at: string
+          last_seen_at: string
+          metric: string | null
+          occurrence_count: number
+          reopened_count: number
+          resolved_at: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          alert_key: string
+          company_id: string
+          created_at?: string
+          description: string
+          first_seen_at?: string
+          id?: string
+          last_event_at?: string
+          last_seen_at?: string
+          metric?: string | null
+          occurrence_count?: number
+          reopened_count?: number
+          resolved_at?: string | null
+          severity: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          alert_key?: string
+          company_id?: string
+          created_at?: string
+          description?: string
+          first_seen_at?: string
+          id?: string
+          last_event_at?: string
+          last_seen_at?: string
+          metric?: string | null
+          occurrence_count?: number
+          reopened_count?: number
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_alerts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_alerts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       anamnesis_access_log: {
         Row: {
           action: string
@@ -3175,6 +3317,7 @@ export type Database = {
       }
       platform_settings: {
         Row: {
+          default_trial_days: number
           id: boolean
           pix_bank: string | null
           pix_holder: string | null
@@ -3184,6 +3327,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          default_trial_days?: number
           id?: boolean
           pix_bank?: string | null
           pix_holder?: string | null
@@ -3193,6 +3337,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          default_trial_days?: number
           id?: boolean
           pix_bank?: string | null
           pix_holder?: string | null
@@ -4386,6 +4531,7 @@ export type Database = {
           photo_position: string
           photo_url: string | null
           price_cents: number
+          show_on_booking: boolean
           sort_order: number
           updated_at: string
         }
@@ -4406,6 +4552,7 @@ export type Database = {
           photo_position?: string
           photo_url?: string | null
           price_cents?: number
+          show_on_booking?: boolean
           sort_order?: number
           updated_at?: string
         }
@@ -4426,6 +4573,7 @@ export type Database = {
           photo_position?: string
           photo_url?: string | null
           price_cents?: number
+          show_on_booking?: boolean
           sort_order?: number
           updated_at?: string
         }

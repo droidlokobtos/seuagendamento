@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConfirmarTokenRouteImport } from './routes/confirmar.$token'
 import { Route as AvaliarTokenRouteImport } from './routes/avaliar.$token'
 import { Route as AvaliacaoTokenRouteImport } from './routes/avaliacao.$token'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNoAccessRouteImport } from './routes/_authenticated/no-access'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
@@ -62,9 +63,11 @@ import { Route as AuthenticatedAppCampaignsRouteImport } from './routes/_authent
 import { Route as AuthenticatedAppBlocksRouteImport } from './routes/_authenticated/app/blocks'
 import { Route as AuthenticatedAppBirthdaysRouteImport } from './routes/_authenticated/app/birthdays'
 import { Route as AuthenticatedAppAttendanceRouteImport } from './routes/_authenticated/app/attendance'
+import { Route as AuthenticatedAppAiAlertsRouteImport } from './routes/_authenticated/app/ai-alerts'
 import { Route as AuthenticatedAppAiRouteImport } from './routes/_authenticated/app/ai'
 import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app/agenda'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
+import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
 import { Route as AuthenticatedAdminNichesRouteImport } from './routes/_authenticated/admin/niches'
 import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated/admin/logs'
@@ -117,6 +120,11 @@ const AvaliacaoTokenRoute = AvaliacaoTokenRouteImport.update({
   id: '/avaliacao/$token',
   path: '/avaliacao/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedNoAccessRoute = AuthenticatedNoAccessRouteImport.update({
   id: '/no-access',
@@ -352,6 +360,12 @@ const AuthenticatedAppAttendanceRoute =
     path: '/attendance',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
+const AuthenticatedAppAiAlertsRoute =
+  AuthenticatedAppAiAlertsRouteImport.update({
+    id: '/ai-alerts',
+    path: '/ai-alerts',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
 const AuthenticatedAppAiRoute = AuthenticatedAppAiRouteImport.update({
   id: '/ai',
   path: '/ai',
@@ -368,6 +382,11 @@ const AuthenticatedAdminSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminPlansRoute = AuthenticatedAdminPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
 const AuthenticatedAdminPaymentsRoute =
   AuthenticatedAdminPaymentsRouteImport.update({
     id: '/payments',
@@ -426,6 +445,7 @@ export interface FileRoutesByFullPath {
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/avaliacao/$token': typeof AvaliacaoTokenRoute
   '/avaliar/$token': typeof AvaliarTokenRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
@@ -433,9 +453,11 @@ export interface FileRoutesByFullPath {
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
+  '/app/ai-alerts': typeof AuthenticatedAppAiAlertsRoute
   '/app/attendance': typeof AuthenticatedAppAttendanceRoute
   '/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
   '/app/blocks': typeof AuthenticatedAppBlocksRoute
@@ -489,6 +511,7 @@ export interface FileRoutesByTo {
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/avaliacao/$token': typeof AvaliacaoTokenRoute
   '/avaliar/$token': typeof AvaliarTokenRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
@@ -496,9 +519,11 @@ export interface FileRoutesByTo {
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
+  '/app/ai-alerts': typeof AuthenticatedAppAiAlertsRoute
   '/app/attendance': typeof AuthenticatedAppAttendanceRoute
   '/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
   '/app/blocks': typeof AuthenticatedAppBlocksRoute
@@ -556,6 +581,7 @@ export interface FileRoutesById {
   '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/no-access': typeof AuthenticatedNoAccessRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/avaliacao/$token': typeof AvaliacaoTokenRoute
   '/avaliar/$token': typeof AvaliarTokenRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
@@ -563,9 +589,11 @@ export interface FileRoutesById {
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
   '/_authenticated/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
+  '/_authenticated/app/ai-alerts': typeof AuthenticatedAppAiAlertsRoute
   '/_authenticated/app/attendance': typeof AuthenticatedAppAttendanceRoute
   '/_authenticated/app/birthdays': typeof AuthenticatedAppBirthdaysRoute
   '/_authenticated/app/blocks': typeof AuthenticatedAppBlocksRoute
@@ -623,6 +651,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/home'
     | '/no-access'
+    | '/onboarding'
     | '/avaliacao/$token'
     | '/avaliar/$token'
     | '/confirmar/$token'
@@ -630,9 +659,11 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/admin/niches'
     | '/admin/payments'
+    | '/admin/plans'
     | '/admin/settings'
     | '/app/agenda'
     | '/app/ai'
+    | '/app/ai-alerts'
     | '/app/attendance'
     | '/app/birthdays'
     | '/app/blocks'
@@ -686,6 +717,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/home'
     | '/no-access'
+    | '/onboarding'
     | '/avaliacao/$token'
     | '/avaliar/$token'
     | '/confirmar/$token'
@@ -693,9 +725,11 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/admin/niches'
     | '/admin/payments'
+    | '/admin/plans'
     | '/admin/settings'
     | '/app/agenda'
     | '/app/ai'
+    | '/app/ai-alerts'
     | '/app/attendance'
     | '/app/birthdays'
     | '/app/blocks'
@@ -752,6 +786,7 @@ export interface FileRouteTypes {
     | '/_authenticated/change-password'
     | '/_authenticated/home'
     | '/_authenticated/no-access'
+    | '/_authenticated/onboarding'
     | '/avaliacao/$token'
     | '/avaliar/$token'
     | '/confirmar/$token'
@@ -759,9 +794,11 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/logs'
     | '/_authenticated/admin/niches'
     | '/_authenticated/admin/payments'
+    | '/_authenticated/admin/plans'
     | '/_authenticated/admin/settings'
     | '/_authenticated/app/agenda'
     | '/_authenticated/app/ai'
+    | '/_authenticated/app/ai-alerts'
     | '/_authenticated/app/attendance'
     | '/_authenticated/app/birthdays'
     | '/_authenticated/app/blocks'
@@ -898,6 +935,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/avaliacao/$token'
       preLoaderRoute: typeof AvaliacaoTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/no-access': {
       id: '/_authenticated/no-access'
@@ -1207,6 +1251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAttendanceRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/ai-alerts': {
+      id: '/_authenticated/app/ai-alerts'
+      path: '/ai-alerts'
+      fullPath: '/app/ai-alerts'
+      preLoaderRoute: typeof AuthenticatedAppAiAlertsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/ai': {
       id: '/_authenticated/app/ai'
       path: '/ai'
@@ -1226,6 +1277,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/admin/settings'
       preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/plans': {
+      id: '/_authenticated/admin/plans'
+      path: '/plans'
+      fullPath: '/admin/plans'
+      preLoaderRoute: typeof AuthenticatedAdminPlansRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/payments': {
@@ -1292,6 +1350,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminLogsRoute: typeof AuthenticatedAdminLogsRoute
   AuthenticatedAdminNichesRoute: typeof AuthenticatedAdminNichesRoute
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
+  AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
@@ -1302,6 +1361,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminLogsRoute: AuthenticatedAdminLogsRoute,
     AuthenticatedAdminNichesRoute: AuthenticatedAdminNichesRoute,
     AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
+    AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRoute,
     AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   }
@@ -1314,6 +1374,7 @@ const AuthenticatedAdminRouteRouteWithChildren =
 interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppAgendaRoute: typeof AuthenticatedAppAgendaRoute
   AuthenticatedAppAiRoute: typeof AuthenticatedAppAiRoute
+  AuthenticatedAppAiAlertsRoute: typeof AuthenticatedAppAiAlertsRoute
   AuthenticatedAppAttendanceRoute: typeof AuthenticatedAppAttendanceRoute
   AuthenticatedAppBirthdaysRoute: typeof AuthenticatedAppBirthdaysRoute
   AuthenticatedAppBlocksRoute: typeof AuthenticatedAppBlocksRoute
@@ -1346,6 +1407,7 @@ interface AuthenticatedAppRouteRouteChildren {
 const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppAgendaRoute: AuthenticatedAppAgendaRoute,
   AuthenticatedAppAiRoute: AuthenticatedAppAiRoute,
+  AuthenticatedAppAiAlertsRoute: AuthenticatedAppAiAlertsRoute,
   AuthenticatedAppAttendanceRoute: AuthenticatedAppAttendanceRoute,
   AuthenticatedAppBirthdaysRoute: AuthenticatedAppBirthdaysRoute,
   AuthenticatedAppBlocksRoute: AuthenticatedAppBlocksRoute,
@@ -1386,6 +1448,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChangePasswordRoute: typeof AuthenticatedChangePasswordRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedNoAccessRoute: typeof AuthenticatedNoAccessRoute
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1394,6 +1457,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChangePasswordRoute: AuthenticatedChangePasswordRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedNoAccessRoute: AuthenticatedNoAccessRoute,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -1428,3 +1492,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
