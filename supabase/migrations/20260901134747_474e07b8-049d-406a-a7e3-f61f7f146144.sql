@@ -1,0 +1,1 @@
+ALTER VIEW public.public_companies SET (security_invoker = false);

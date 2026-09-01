@@ -1167,6 +1167,7 @@ export type Database = {
           amenities: string[]
           app_icon_url: string | null
           banner_url: string | null
+          booking_slot_interval_min: number
           buffer_min: number
           city: string | null
           contracted_plan: string | null
@@ -1240,6 +1241,7 @@ export type Database = {
           amenities?: string[]
           app_icon_url?: string | null
           banner_url?: string | null
+          booking_slot_interval_min?: number
           buffer_min?: number
           city?: string | null
           contracted_plan?: string | null
@@ -1313,6 +1315,7 @@ export type Database = {
           amenities?: string[]
           app_icon_url?: string | null
           banner_url?: string | null
+          booking_slot_interval_min?: number
           buffer_min?: number
           city?: string | null
           contracted_plan?: string | null
@@ -5354,6 +5357,7 @@ export type Database = {
           amenities: string[] | null
           app_icon_url: string | null
           banner_url: string | null
+          booking_slot_interval_min: number | null
           buffer_min: number | null
           city: string | null
           deposit_enabled: boolean | null
@@ -5400,6 +5404,7 @@ export type Database = {
           amenities?: string[] | null
           app_icon_url?: string | null
           banner_url?: string | null
+          booking_slot_interval_min?: number | null
           buffer_min?: number | null
           city?: string | null
           deposit_enabled?: boolean | null
@@ -5446,6 +5451,7 @@ export type Database = {
           amenities?: string[] | null
           app_icon_url?: string | null
           banner_url?: string | null
+          booking_slot_interval_min?: number | null
           buffer_min?: number | null
           city?: string | null
           deposit_enabled?: boolean | null
@@ -5557,6 +5563,24 @@ export type Database = {
         Returns: boolean
       }
       company_features: { Args: { _company: string }; Returns: Json }
+      create_company_for_user_as_super_admin: {
+        Args: {
+          _admin_notes: string
+          _contracted_plan: string
+          _email: string
+          _monthly_fee: number
+          _name: string
+          _next_due_at: string
+          _niche_id: string
+          _owner_name: string
+          _phone: string
+          _slug: string
+          _status: Database["public"]["Enums"]["company_status"]
+          _sub_niche_id: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       customer_booking_rule: {
         Args: { _company: string; _customer: string }
         Returns: {
@@ -5580,6 +5604,10 @@ export type Database = {
           score: number
           total: number
         }[]
+      }
+      delete_company_as_super_admin: {
+        Args: { _company: string }
+        Returns: Json
       }
       has_any_permission: {
         Args: { _company: string; _keys: string[] }
