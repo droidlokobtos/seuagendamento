@@ -18,6 +18,42 @@ export type PublicSubscriptionPlan = {
   sort_order: number;
 };
 
+const FALLBACK_PUBLIC_PLANS: PublicSubscriptionPlan[] = [
+  {
+    code: "basic",
+    name: "Básico",
+    description: "Recursos essenciais para começar",
+    monthly_cents: 4990,
+    cycle_months: 1,
+    cycle_total_cents: 4990,
+    discount_percent: 0,
+    max_users: 3,
+    sort_order: 1,
+  },
+  {
+    code: "business",
+    name: "Business",
+    description: "Gestão completa do salão",
+    monthly_cents: 6990,
+    cycle_months: 6,
+    cycle_total_cents: 39843,
+    discount_percent: 5,
+    max_users: null,
+    sort_order: 2,
+  },
+  {
+    code: "pro",
+    name: "Pro",
+    description: "Todos os recursos atuais e futuros",
+    monthly_cents: 10990,
+    cycle_months: 12,
+    cycle_total_cents: 125286,
+    discount_percent: 5,
+    max_users: null,
+    sort_order: 3,
+  },
+];
+
 /** Dados de vitrine de uma empresa pelo slug (sem PIX, documento, e-mail ou dados de cobrança). */
 export const getPublicCompany = createServerFn({ method: "GET" })
   .inputValidator((input: { slug: string }) => z.object({ slug: z.string().min(1).max(120) }).parse(input))
@@ -43,17 +79,32 @@ export const listPublicCompanies = createServerFn({ method: "GET" }).handler(asy
   return (data ?? []) as PublicCompany[];
 });
 
-/** Planos comerciais ativos exibidos na página inicial. A leitura acontece no servidor. */
+/**
+ * Planos comerciais ativos exibidos na página inicial.
+ * Tenta carregar do catálogo real. Se o ambiente público não tiver a credencial
+ * de servidor disponível, a home continua funcionando com o catálogo padrão.
+ */
 export const listPublicSubscriptionPlans = createServerFn({ method: "GET" }).handler(async () => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin
-    .from("subscription_plans")
-    .select("code,name,description,monthly_cents,cycle_months,cycle_total_cents,discount_percent,max_users,sort_order")
-    .eq("active", true)
-    .eq("selectable", true)
-    .order("sort_order", { ascending: true });
-  if (error) throw new Error(error.message);
-  return (data ?? []) as PublicSubscriptionPlan[];
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("subscription_plans")
+      .select("code,name,description,monthly_cents,cycle_months,cycle_total_cents,discount_percent,max_users,sort_order")
+      .eq("active", true)
+      .eq("selectable", true)
+      .order("sort_order", { ascending: true });
+
+    if (error) {
+      console.warn("[landing] Falha ao carregar subscription_plans; usando fallback:", error.message);
+      return FALLBACK_PUBLIC_PLANS;
+    }
+
+    const plans = (data ?? []) as PublicSubscriptionPlan[];
+    return plans.length ? plans : FALLBACK_PUBLIC_PLANS;
+  } catch (error) {
+    console.warn("[landing] Catálogo de planos indisponível; usando fallback:", error);
+    return FALLBACK_PUBLIC_PLANS;
+  }
 });
 
 /** Bloqueios de agenda (apenas janelas de horário, sem o motivo). */
