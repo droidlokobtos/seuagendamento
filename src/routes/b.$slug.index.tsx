@@ -230,6 +230,7 @@ function BookingPage() {
   const totalPrice = selected.reduce((s, x) => s + x.price_cents, 0) / 100;
   const minAdvanceMin = (company as any).min_advance_min ?? 0;
   const maxAdvanceDays = (company as any).max_advance_days ?? 60;
+  const slotIntervalMin = Math.min(240, Math.max(5, Number((company as any).booking_slot_interval_min) || 30));
 
   const slots = useMemo(() => {
     if (!dateStr || !totalMin) return [] as string[];
@@ -241,7 +242,7 @@ function BookingPage() {
     const [eh, em] = h.end_time.split(":").map(Number);
     const start = sh * 60 + sm;
     const end = eh * 60 + em;
-    const gran = 15;
+    const gran = slotIntervalMin;
     const now = Date.now();
     const minStart = now + minAdvanceMin * 60_000;
     const out: string[] = [];
@@ -261,7 +262,7 @@ function BookingPage() {
       out.push(`${hh}:${mm}`);
     }
     return out;
-  }, [dateStr, hours, blocks, totalMin, minAdvanceMin]);
+  }, [dateStr, hours, blocks, totalMin, minAdvanceMin, slotIntervalMin]);
 
   const dateOptions = useMemo(() => {
     const list: { iso: string; label: string; wd: number; disabled: boolean }[] = [];
