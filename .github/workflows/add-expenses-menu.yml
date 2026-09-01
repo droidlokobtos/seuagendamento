@@ -1,0 +1,26 @@
+name: Wire expenses navigation
+on:
+  push:
+    paths: ['.github/workflows/add-expenses-menu.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/components/app/AppLayout.tsx');s=p.read_text()
+          s=s.replace('CircleDollarSign, History, type LucideIcon','CircleDollarSign, History, ReceiptText, type LucideIcon')
+          needle='{ to: "/app/cash", label: "Fechamento de caixa", icon: CircleDollarSign, perm: "financeiro" },'
+          if '/app/expenses' not in s:s=s.replace(needle,needle+'\n    { to: "/app/expenses", label: "Despesas e contas a pagar", icon: ReceiptText, perm: "financeiro" },')
+          p.write_text(s)
+          PY
+          bun install --frozen-lockfile
+          bun run build
+          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/components/app/AppLayout.tsx
+          git commit -m 'feat: add expenses to finance navigation' && git push
