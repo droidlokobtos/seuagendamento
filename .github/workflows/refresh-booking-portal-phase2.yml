@@ -1,0 +1,62 @@
+name: Refresh booking portal phase 2
+
+on:
+  push:
+    paths:
+      - '.github/workflows/refresh-booking-portal-phase2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply phase 2 visual polish
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('src/routes/b.$slug.index.tsx')
+          text = p.read_text(encoding='utf-8')
+
+          # Confirmation screen
+          text = text.replace('<div className="min-h-screen bg-background">\n        <Hero company={company} primary={primary} accent={accent} slug={company.slug} loggedIn={!!session} />\n        <div className="max-w-lg mx-auto p-6 space-y-4">\n          <Card><CardContent className="p-8 text-center space-y-4">', '<div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background">\n        <Hero company={company} primary={primary} accent={accent} slug={company.slug} loggedIn={!!session} />\n        <div className="max-w-2xl mx-auto px-4 py-8 md:px-6 md:py-12 space-y-5">\n          <Card className="overflow-hidden border-border/60 shadow-lg"><CardContent className="p-7 md:p-10 text-center space-y-5">', 1)
+          text = text.replace('<div className="mx-auto grid h-14 w-14 place-items-center rounded-full" style={{ background: accent }}><Check className="h-7 w-7 text-white" /></div>', '<div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl shadow-sm" style={{ background: accent }}><Check className="h-8 w-8 text-white" /></div>', 1)
+          text = text.replace('<h2 className="text-2xl font-semibold">{depositCents > 0 ? "Agendamento registrado!" : "Agendamento confirmado!"}</h2>\n            <p className="text-muted-foreground">{dateLabel} às {timeLabel}</p>', '<div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Tudo certo</p><h2 className="mt-1 text-2xl md:text-3xl font-semibold tracking-tight">{depositCents > 0 ? "Agendamento registrado" : "Agendamento confirmado"}</h2><p className="mt-2 text-muted-foreground">{dateLabel} às {timeLabel}</p></div><div className="rounded-2xl border bg-muted/30 p-4 text-left"><p className="text-xs font-medium text-muted-foreground">Resumo</p><p className="mt-1 font-semibold">{selected.map((s) => s.name).join(" + ")}</p><p className="mt-1 text-sm text-muted-foreground">{staff?.name ?? "Profissional a definir"} · {brl(totalCents / 100)}</p></div>', 1)
+          text = text.replace('<div className="flex flex-col gap-2 items-center pt-2">', '<div className="grid gap-2 pt-2 sm:grid-cols-2">', 1)
+          text = text.replace('<Link to="/b/$slug/minha-conta" params={{ slug: company.slug }}><Button style={{ background: primary }}>Ver meus agendamentos</Button></Link>', '<Link className="w-full" to="/b/$slug/minha-conta" params={{ slug: company.slug }}><Button className="w-full" size="lg" style={{ background: primary }}>Ver meus agendamentos</Button></Link>', 1)
+          text = text.replace('<Link to="/b/$slug/entrar" params={{ slug: company.slug }}><Button style={{ background: primary }}>Criar conta e acompanhar</Button></Link>', '<Link className="w-full" to="/b/$slug/entrar" params={{ slug: company.slug }}><Button className="w-full" size="lg" style={{ background: primary }}>Criar conta e acompanhar</Button></Link>', 1)
+          text = text.replace('<a href={`https://api.whatsapp.com/send?phone=${p}&text=${waMsg}`} target="_blank" rel="noreferrer"><Button style={{ background: "#25D366", color: "white" }}><Phone className="h-4 w-4 mr-2" /> Enviar confirmação no WhatsApp</Button></a>', '<a className="w-full" href={`https://api.whatsapp.com/send?phone=${p}&text=${waMsg}`} target="_blank" rel="noreferrer"><Button className="w-full" size="lg" style={{ background: "#25D366", color: "white" }}><Phone className="h-4 w-4 mr-2" /> Enviar no WhatsApp</Button></a>', 1)
+
+          # Staff section
+          text = text.replace('{step === 4 && showStaffStep && <Card><CardContent className="p-4 space-y-3"><h2 className="font-semibold text-lg">Profissionais disponíveis</h2>', '{step === 4 && showStaffStep && <Card className="border-border/70 shadow-sm"><CardContent className="p-5 md:p-6 space-y-4"><div><h2 className="font-semibold text-xl tracking-tight">Profissionais disponíveis</h2><p className="mt-1 text-sm text-muted-foreground">Escolha quem vai realizar seu atendimento.</p></div>', 1)
+          text = text.replace('className={`w-full text-left rounded-xl border p-3 ${!staff ? "border-primary bg-primary/5" : "border-border"}`}', 'className={`w-full text-left rounded-2xl border p-4 transition-all ${!staff ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20" : "border-border/70 bg-card hover:border-primary/40 hover:shadow-sm"}`}', 1)
+          text = text.replace('className={`w-full text-left rounded-xl border p-3 flex items-center gap-3 ${staff?.id === s.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}', 'className={`w-full text-left rounded-2xl border p-4 flex items-center gap-4 transition-all ${staff?.id === s.id ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20" : "border-border/70 bg-card hover:border-primary/40 hover:shadow-sm"}`}', 1)
+          text = text.replace('className="h-10 w-10 rounded-full object-cover"', 'className="h-12 w-12 rounded-2xl object-cover"', 1)
+          text = text.replace('className="h-10 w-10 rounded-full grid place-items-center text-white text-sm font-semibold"', 'className="h-12 w-12 rounded-2xl grid place-items-center text-white text-sm font-semibold shadow-sm"', 1)
+
+          # Personal data card
+          text = text.replace('{step === 5 && <Card><CardContent className="p-4 space-y-3"><h2 className="font-semibold text-lg">Seus dados</h2>', '{step === 5 && <Card className="border-border/70 shadow-sm"><CardContent className="p-5 md:p-6 space-y-4"><div><h2 className="font-semibold text-xl tracking-tight">Seus dados</h2><p className="mt-1 text-sm text-muted-foreground">Preencha somente as informações necessárias para sua reserva.</p></div>', 1)
+
+          # Hero width and spacing
+          text = text.replace('<div className={`relative max-w-lg mx-auto px-6 py-10 ${heroTextClass(theme)}`}>', '<div className={`relative max-w-5xl mx-auto px-4 py-8 md:px-6 md:py-12 ${heroTextClass(theme)}`}>', 1)
+          text = text.replace('className="h-14 w-14 rounded-2xl object-cover ring-2 ring-white/40"', 'className="h-16 w-16 md:h-20 md:w-20 rounded-2xl object-cover ring-2 ring-white/40 shadow-lg"', 1)
+          text = text.replace('className="h-14 w-14 rounded-2xl grid place-items-center bg-white/15 ring-2 ring-white/40"', 'className="h-16 w-16 md:h-20 md:w-20 rounded-2xl grid place-items-center bg-white/15 ring-2 ring-white/40 shadow-lg"', 1)
+
+          p.write_text(text, encoding='utf-8')
+          PY
+      - name: Commit changes
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 'src/routes/b.$slug.index.tsx'
+          git commit -m 'feat: polish booking header staff and confirmation'
+          git push
