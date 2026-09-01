@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConfirmarTokenRouteImport } from './routes/confirmar.$token'
 import { Route as AvaliarTokenRouteImport } from './routes/avaliar.$token'
 import { Route as AvaliacaoTokenRouteImport } from './routes/avaliacao.$token'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNoAccessRouteImport } from './routes/_authenticated/no-access'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
@@ -124,6 +125,11 @@ const AvaliarTokenRoute = AvaliarTokenRouteImport.update({
 const AvaliacaoTokenRoute = AvaliacaoTokenRouteImport.update({
   id: '/avaliacao/$token',
   path: '/avaliacao/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
@@ -478,6 +484,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/api/health': typeof ApiHealthRoute
   '/avaliacao/$token': typeof AvaliacaoTokenRoute
   '/avaliar/$token': typeof AvaliarTokenRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
@@ -549,6 +556,7 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/api/health': typeof ApiHealthRoute
   '/avaliacao/$token': typeof AvaliacaoTokenRoute
   '/avaliar/$token': typeof AvaliarTokenRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
@@ -624,6 +632,7 @@ export interface FileRoutesById {
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/no-access': typeof AuthenticatedNoAccessRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/api/health': typeof ApiHealthRoute
   '/avaliacao/$token': typeof AvaliacaoTokenRoute
   '/avaliar/$token': typeof AvaliarTokenRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
@@ -699,6 +708,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/no-access'
     | '/onboarding'
+    | '/api/health'
     | '/avaliacao/$token'
     | '/avaliar/$token'
     | '/confirmar/$token'
@@ -770,6 +780,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/no-access'
     | '/onboarding'
+    | '/api/health'
     | '/avaliacao/$token'
     | '/avaliar/$token'
     | '/confirmar/$token'
@@ -844,6 +855,7 @@ export interface FileRouteTypes {
     | '/_authenticated/home'
     | '/_authenticated/no-access'
     | '/_authenticated/onboarding'
+    | '/api/health'
     | '/avaliacao/$token'
     | '/avaliar/$token'
     | '/confirmar/$token'
@@ -913,6 +925,7 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   AvaliacaoTokenRoute: typeof AvaliacaoTokenRoute
   AvaliarTokenRoute: typeof AvaliarTokenRoute
   ConfirmarTokenRoute: typeof ConfirmarTokenRoute
@@ -996,6 +1009,13 @@ declare module '@tanstack/react-router' {
       path: '/avaliacao/$token'
       fullPath: '/avaliacao/$token'
       preLoaderRoute: typeof AvaliacaoTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/onboarding': {
@@ -1577,6 +1597,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
+  ApiHealthRoute: ApiHealthRoute,
   AvaliacaoTokenRoute: AvaliacaoTokenRoute,
   AvaliarTokenRoute: AvaliarTokenRoute,
   ConfirmarTokenRoute: ConfirmarTokenRoute,
