@@ -1,3 +1,5 @@
+import { saoPauloDate, saoPauloDateAddDays } from "@/lib/format";
+
 /**
  * Regras compartilhadas dos módulos de Estoque, Vendas e Financeiro.
  * Todos os valores monetários de venda trafegam em CENTAVOS.
@@ -92,8 +94,8 @@ export const effectivePriceCents = (p: Pick<Product, "sale_price" | "promo_price
 export type StockAlert = { product: Product; kind: "out" | "low" | "expired" | "expiring" };
 
 export function stockAlerts(products: Product[]): StockAlert[] {
-  const today = new Date().toISOString().slice(0, 10);
-  const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+  const today = saoPauloDate();
+  const in30 = saoPauloDateAddDays(30, today);
   const out: StockAlert[] = [];
   for (const p of products) {
     if (!p.active) continue;

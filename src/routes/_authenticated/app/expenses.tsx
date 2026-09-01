@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { Dialog,DialogContent,DialogFooter,DialogHeader,DialogTitle,DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { brl } from '@/lib/format';
+import { brl, saoPauloDate } from '@/lib/format';
 import { Plus,ReceiptText,CheckCircle2,Clock3,AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 export const Route=createFileRoute('/_authenticated/app/expenses')({component:Expenses});

@@ -13,6 +13,25 @@ export const saoPauloDate = (d: Date = new Date()) => {
   return `${get("year")}-${get("month")}-${get("day")}`;
 };
 
+/** Soma dias preservando a data civil de São Paulo. */
+export const saoPauloDateAddDays = (days: number, from: string = saoPauloDate()) => {
+  const d = new Date(`${from}T12:00:00-03:00`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return saoPauloDate(d);
+};
+
+/** Início de uma data civil de São Paulo como timestamptz ISO. */
+export const saoPauloDayStartIso = (date: string = saoPauloDate()) =>
+  new Date(`${date}T00:00:00-03:00`).toISOString();
+
+/** Primeiro dia do mês seguinte sem conversão implícita para UTC/local. */
+export const nextMonthStart = (month: string) => {
+  const [year, mon] = month.split("-").map(Number);
+  const nextYear = mon === 12 ? year + 1 : year;
+  const nextMon = mon === 12 ? 1 : mon + 1;
+  return `${nextYear}-${String(nextMon).padStart(2, "0")}-01`;
+};
+
 export const brl = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 

@@ -56,8 +56,8 @@ function Reports() {
       const { data, error } = await supabase.from("appointments")
         .select("id,status,starts_at,total_cents,staff_id,customer_id")
         .eq("company_id", companyId)
-        .gte("starts_at", `${from}T00:00:00`)
-        .lte("starts_at", `${to}T23:59:59`);
+        .gte("starts_at", `${from}T00:00:00-03:00`)
+        .lte("starts_at", `${to}T23:59:59-03:00`);
       if (error) throw error;
       return data ?? [];
     },

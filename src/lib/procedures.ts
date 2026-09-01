@@ -1,3 +1,5 @@
+import { saoPauloDate, saoPauloDateAddDays } from "@/lib/format";
+
 /**
  * Motor de custos da plataforma — Calculadora de Procedimentos.
  *
@@ -341,8 +343,8 @@ export function procedureAlerts(
   minMarginPct = 10,
 ): ProcedureAlert[] {
   const out: ProcedureAlert[] = [];
-  const today = new Date().toISOString().slice(0, 10);
-  const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+  const today = saoPauloDate();
+  const in30 = saoPauloDateAddDays(30, today);
 
   for (const it of items) {
     const p = products.find((x) => x.id === it.product_id);

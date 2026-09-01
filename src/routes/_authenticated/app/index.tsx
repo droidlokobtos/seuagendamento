@@ -7,7 +7,7 @@ import { getBusinessIntelligence } from "@/lib/ai.functions";
 import { syncAiAlerts } from "@/lib/ai-alerts.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Users, TrendingUp, Clock, Link2, Copy, DollarSign, XCircle, UserPlus, Repeat, Scissors, Trophy, ArrowUpRight, BrainCircuit, Radar, AlertTriangle, ShieldAlert, Sparkles, History } from "lucide-react";
-import { brl } from "@/lib/format";
+import { brl, saoPauloDate, saoPauloDateAddDays, saoPauloDayStartIso } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useMemo } from "react";
@@ -30,12 +30,15 @@ function Dashboard() {
   const syncAlerts = useServerFn(syncAiAlerts);
   const companyId = activeCompany!.id;
   const today = new Date();
-  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString();
-  const in7 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7).toISOString();
-  const startMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-  const endMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1).toISOString();
-  const monthStartDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+  const todayDate = saoPauloDate(today);
+  const startOfDay = saoPauloDayStartIso(todayDate);
+  const endOfDay = saoPauloDayStartIso(saoPauloDateAddDays(1, todayDate));
+  const in7 = saoPauloDayStartIso(saoPauloDateAddDays(7, todayDate));
+  const monthStartDate = `${todayDate.slice(0, 7)}-01`;
+  const startMonth = saoPauloDayStartIso(monthStartDate);
+  const [monthYear, monthNumber] = todayDate.slice(0, 7).split("-").map(Number);
+  const nextMonthDate = `${monthNumber === 12 ? monthYear + 1 : monthYear}-${String(monthNumber === 12 ? 1 : monthNumber + 1).padStart(2, "0")}-01`;
+  const endMonth = saoPauloDayStartIso(nextMonthDate);
 
   const { data: intelligence } = useQuery({
     queryKey: ["dashboard-intelligence", companyId],

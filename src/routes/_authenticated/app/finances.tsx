@@ -16,7 +16,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, Download } from "lucide-react";
-import { brl, dateBR } from "@/lib/format";
+import { brl, dateBR, nextMonthStart, saoPauloDate } from "@/lib/format";
 import { DEFAULT_EXPENSE_CATEGORIES, downloadCSV } from "@/lib/commerce";
 import { toast } from "sonner";
 
@@ -54,11 +54,10 @@ function Finances() {
   const { activeCompany } = useCompany();
   const companyId = activeCompany!.id;
   const [open, setOpen] = useState(false);
-  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [month, setMonth] = useState(() => saoPauloDate().slice(0, 7));
 
   const from = `${month}-01`;
-  const to = new Date(new Date(from).getFullYear(), new Date(from).getMonth() + 1, 1)
-    .toISOString().slice(0, 10);
+  const to = nextMonthStart(month);
 
   const { data: txs = [], isLoading } = useQuery({
     queryKey: ["finances", companyId, month],

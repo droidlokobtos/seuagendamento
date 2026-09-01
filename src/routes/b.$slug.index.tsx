@@ -220,7 +220,7 @@ function BookingPage() {
       const params = new URLSearchParams({ slug: company.slug, service_ids: selectedServiceIdsKey });
       params.set("date", dateStr);
       params.set("time", timeStr);
-      params.set("starts_at", new Date(`${dateStr}T${timeStr}:00`).toISOString());
+      params.set("starts_at", new Date(`${dateStr}T${timeStr}:00-03:00`).toISOString());
       const res = await fetch(`/api/public/staff?${params.toString()}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Falha ao buscar profissionais");
@@ -256,7 +256,7 @@ function BookingPage() {
     for (let m = start; m + totalMin <= end; m += gran) {
       const hh = Math.floor(m / 60).toString().padStart(2, "0");
       const mm = (m % 60).toString().padStart(2, "0");
-      const iso = `${dateStr}T${hh}:${mm}:00`;
+      const iso = `${dateStr}T${hh}:${mm}:00-03:00`;
       const slotStart = new Date(iso).getTime();
       const slotEnd = slotStart + totalMin * 60_000;
       if (slotStart < minStart) continue;
@@ -279,15 +279,16 @@ function BookingPage() {
 
   const dateOptions = useMemo(() => {
     const list: { iso: string; label: string; wd: number; disabled: boolean }[] = [];
-    const today = new Date();
+    const todayIso = saoPauloDate();
     const maxDays = Math.min(Math.max(maxAdvanceDays, 1), 60);
     const daysToShow = Math.min(14, maxDays);
     for (let i = 0; i < daysToShow; i++) {
-      const d = new Date(); d.setDate(today.getDate() + i);
-      const iso = d.toISOString().slice(0, 10);
-      const wd = d.getDay();
+      const base = new Date(`${todayIso}T12:00:00-03:00`); base.setUTCDate(base.getUTCDate() + i);
+      const iso = saoPauloDate(base);
+      const wd = new Date(`${iso}T12:00:00-03:00`).getUTCDay();
       const h = resolveHours(wd, hours);
-      list.push({ iso, wd, label: `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1).toString().padStart(2, "0")}`, disabled: !h });
+      const [, mm, dd] = iso.split("-");
+      list.push({ iso, wd, label: `${dd}/${mm}`, disabled: !h });
     }
     return list;
   }, [hours, maxAdvanceDays]);
@@ -327,7 +328,7 @@ function BookingPage() {
     }
     setSubmitting(true);
     try {
-      const iso = `${dateStr}T${timeStr}:00`;
+      const iso = `${dateStr}T${timeStr}:00-03:00`;
       const { data: s } = await supabase.auth.getSession();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (s.session?.access_token) headers.Authorization = `Bearer ${s.session.access_token}`;

@@ -7,6 +7,7 @@ import { AppLayout } from "@/components/app/AppLayout";
 import { usePermissions } from "@/lib/use-permissions";
 import { routeFeature, routePermission } from "@/lib/permissions";
 import { Card, CardContent } from "@/components/ui/card";
+import { saoPauloDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/app")({ component: AppGate });
 
@@ -34,7 +35,7 @@ function AppShell() {
     return <div className="min-h-screen grid place-items-center bg-background p-6"><Card className="max-w-md"><CardContent className="p-8 text-center"><div className="grid h-14 w-14 mx-auto place-items-center rounded-2xl bg-primary/10 text-primary"><Building2 className="h-7 w-7" /></div><h1 className="mt-4 text-lg font-semibold">Nenhuma empresa vinculada</h1><p className="mt-2 text-sm text-muted-foreground">Conclua o cadastro da sua empresa para acessar o painel.</p></CardContent></Card></div>;
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = saoPauloDate();
   const trialExpired = activeCompany.is_trial && !!activeCompany.trial_ends_at && activeCompany.trial_ends_at < today;
   const blockedStatus = ["suspended", "overdue", "trial_expired"].includes(activeCompany.status ?? "");
   const blocked = !isSuperAdmin && (trialExpired || blockedStatus);
