@@ -217,6 +217,7 @@ function WhatsAppQueue() {
 function QuickSend({ companyId, companyName }: { companyId?: string; companyName: string }) {
   const [templateId, setTemplateId] = useState<string>(TEMPLATES[0].id);
   const [customerId, setCustomerId] = useState<string>("");
+  const [customerSearch, setCustomerSearch] = useState("");
   const [manualPhone, setManualPhone] = useState("");
   const [manualName, setManualName] = useState("");
   const [message, setMessage] = useState<string>(TEMPLATES[0].body);
@@ -235,6 +236,12 @@ function QuickSend({ companyId, companyName }: { companyId?: string; companyName
       return (data ?? []) as Array<{ id: string; name: string; phone: string }>;
     },
   });
+
+  const filteredCustomers = useMemo(() => {
+    const term = customerSearch.trim().toLocaleLowerCase("pt-BR");
+    if (!term) return customers.slice(0, 50);
+    return customers.filter((c) => c.name.toLocaleLowerCase("pt-BR").includes(term)).slice(0, 50);
+  }, [customers, customerSearch]);
 
   const selectedCustomer = useMemo(
     () => customers.find((c) => c.id === customerId) ?? null,
@@ -297,16 +304,23 @@ function QuickSend({ companyId, companyName }: { companyId?: string; companyName
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <Label>Cliente cadastrado</Label>
-            <Select value={customerId} onValueChange={setCustomerId}>
+            <Input
+              value={customerSearch}
+              onChange={(e) => setCustomerSearch(e.target.value)}
+              placeholder="Digite o nome do cliente…"
+              autoComplete="off"
+              className="mb-2"
+            />
+            <Select value={customerId} onValueChange={(v) => { setCustomerId(v); setCustomerSearch(""); }}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um cliente" />
               </SelectTrigger>
               <SelectContent>
-                {customers.map((c) => (
+                {filteredCustomers.length ? filteredCustomers.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.name} — {c.phone}
                   </SelectItem>
-                ))}
+                )) : <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado.</div>}
               </SelectContent>
             </Select>
           </div>

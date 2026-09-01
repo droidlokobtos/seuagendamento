@@ -288,6 +288,7 @@ function SaleDialog({ products, services, customers, options, onSave, loading }:
   const [items, setItems] = useState<SaleItem[]>([]);
   const [payments, setPayments] = useState<SalePayment[]>([]);
   const [customer, setCustomer] = useState<string>("");
+  const [customerSearch, setCustomerSearch] = useState("");
   const [discount, setDiscount] = useState(0);
   const [surcharge, setSurcharge] = useState(0);
   const [notes, setNotes] = useState("");
@@ -348,10 +349,17 @@ function SaleDialog({ products, services, customers, options, onSave, loading }:
       <div className="space-y-4">
         <div>
           <Label>Cliente (opcional)</Label>
-          <Select value={customer} onValueChange={setCustomer}>
+          <Input
+            value={customerSearch}
+            onChange={(e) => setCustomerSearch(e.target.value)}
+            placeholder="Digite o nome do cliente…"
+            autoComplete="off"
+            className="mb-2"
+          />
+          <Select value={customer} onValueChange={(v) => { setCustomer(v); setCustomerSearch(""); }}>
             <SelectTrigger><SelectValue placeholder="Consumidor final" /></SelectTrigger>
             <SelectContent>
-              {customers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              {(customers as any[]).filter((c) => c.name.toLocaleLowerCase("pt-BR").includes(customerSearch.trim().toLocaleLowerCase("pt-BR"))).slice(0, 50).map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>

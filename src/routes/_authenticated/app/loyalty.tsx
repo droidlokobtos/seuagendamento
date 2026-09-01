@@ -35,6 +35,7 @@ function Loyalty() {
   const qc = useQueryClient();
   const { activeCompany } = useCompany();
   const [open, setOpen] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState("");
 
   const { data: program } = useQuery({
     queryKey: ["loyalty_program", activeCompany?.id],
@@ -109,6 +110,12 @@ function Loyalty() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const filteredCustomers = useMemo(() => {
+    const term = customerSearch.trim().toLocaleLowerCase("pt-BR");
+    if (!term) return customers.slice(0, 50);
+    return customers.filter((c) => c.name.toLocaleLowerCase("pt-BR").includes(term)).slice(0, 50);
+  }, [customers, customerSearch]);
 
   const customerName = (id: string) => customers.find((c) => c.id === id)?.name ?? "—";
   const kindLabel: Record<string, string> = {
@@ -195,10 +202,17 @@ function Loyalty() {
               >
                 <div>
                   <Label>Cliente</Label>
+                  <Input
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    placeholder="Digite o nome do cliente…"
+                    autoComplete="off"
+                    className="mb-2"
+                  />
                   <Select name="customer_id" required>
                     <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
                     <SelectContent>
-                      {customers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      {filteredCustomers.length ? filteredCustomers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>) : <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado.</div>}
                     </SelectContent>
                   </Select>
                 </div>
