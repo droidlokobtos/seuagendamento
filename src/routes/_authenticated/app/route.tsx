@@ -6,7 +6,7 @@ import { CompanyProvider, useCompany } from "@/lib/company";
 import { AppLayout } from "@/components/app/AppLayout";
 import { useRouterState } from "@tanstack/react-router";
 import { usePermissions } from "@/lib/use-permissions";
-import { routePermission } from "@/lib/permissions";
+import { routeFeature, routePermission } from "@/lib/permissions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Building2 } from "lucide-react";
 
@@ -77,17 +77,25 @@ function AppShell() {
 
 function PermissionGate() {
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const { can, loading } = usePermissions();
+  const { can, hasFeature, loading } = usePermissions();
   const key = routePermission(path);
+  const feature = routeFeature(path);
   if (loading) return null;
   const isDashboard = path === "/app" || path === "/app/";
-  if ((!isDashboard && !key) || (key && !can(key))) {
+  const permissionDenied = (!isDashboard && !key) || (key && !can(key));
+  const planDenied = !!feature && !hasFeature(feature);
+
+  if (permissionDenied || planDenied) {
     return (
       <Card className="max-w-lg mx-auto">
         <CardContent className="p-8 text-center">
-          <h1 className="text-lg font-semibold">Acesso não autorizado</h1>
+          <h1 className="text-lg font-semibold">
+            {planDenied ? "Recurso não disponível no seu plano" : "Acesso não autorizado"}
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Seu perfil não tem permissão para acessar esta área. Fale com o administrador da empresa.
+            {planDenied
+              ? "Este recurso faz parte de um plano superior. Fale com o administrador para alterar o plano da empresa."
+              : "Seu perfil não tem permissão para acessar esta área. Fale com o administrador da empresa."}
           </p>
         </CardContent>
       </Card>
