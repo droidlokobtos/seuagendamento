@@ -56,7 +56,7 @@ const CreateZ = z.object({
 
 export const createCompanyUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => CreateZ.parse(input))
+  .validator((input: unknown) => CreateZ.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId, data.companyId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -136,7 +136,7 @@ const UpdateZ = z.object({
 
 export const updateCompanyUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => UpdateZ.parse(input))
+  .validator((input: unknown) => UpdateZ.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId, data.companyId);
     const patch: Record<string, unknown> = {};
@@ -188,7 +188,7 @@ const PasswordZ = z.object({
 
 export const setCompanyUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => PasswordZ.parse(input))
+  .validator((input: unknown) => PasswordZ.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId, data.companyId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -213,7 +213,7 @@ const RemoveZ = z.object({
 });
 export const removeCompanyUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => RemoveZ.parse(input))
+  .validator((input: unknown) => RemoveZ.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId, data.companyId);
     const { error } = await context.supabase
@@ -228,7 +228,7 @@ export const removeCompanyUser = createServerFn({ method: "POST" })
 
 export const listCompanyUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ companyId: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ companyId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId, data.companyId);
     const { data: rows, error } = await context.supabase
@@ -263,7 +263,7 @@ export const listCompanyUsers = createServerFn({ method: "GET" })
 // Compatibilidade com telas antigas
 export const updateCompanyUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({
       companyId: z.string().uuid(),
       membershipId: z.string().uuid(),
