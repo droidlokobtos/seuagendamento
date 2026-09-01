@@ -1,0 +1,35 @@
+name: Commission profitability insights
+on:
+  push:
+    paths: ['.github/workflows/commission-profitability.yml']
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/routes/_authenticated/app/commissions.tsx'); s=p.read_text()
+          s=s.replace('BadgePercent, CheckCheck, Trash2, Pencil, Eye, FileDown, FileSpreadsheet, Printer, Wallet, Users,','BadgePercent, CheckCheck, Trash2, Pencil, Eye, FileDown, FileSpreadsheet, Printer, Wallet, Users, TrendingUp, Award,')
+          needle='''  const save = useMutation({'''
+          block='''  const performance = useMemo(() => {\n    const map = new Map<string, { id: string; name: string; sold: number; commission: number; count: number }>();\n    rows.filter((c) => c.status !== "cancelled").forEach((c) => {\n      const key = c.staff_id ?? c.staff_name ?? "unknown";\n      const current = map.get(key) ?? { id: key, name: c.staff_name ?? "Sem profissional", sold: 0, commission: 0, count: 0 };\n      current.sold += c.service_amount_cents; current.commission += c.commission_cents; current.count += 1; map.set(key, current);\n    });\n    return Array.from(map.values()).map((x) => ({ ...x, net: x.sold - x.commission, avg: x.count ? x.sold / x.count : 0, commissionRate: x.sold ? (x.commission / x.sold) * 100 : 0 })).sort((a,b) => b.net-a.net);\n  }, [rows]);\n  const best = performance[0];\n  const netAfterCommissions = totals.sold - totals.comm;\n\n'''
+          if needle not in s: raise SystemExit('save anchor missing')
+          s=s.replace(needle,block+needle,1)
+          target='''      <Card className="print:hidden">'''
+          panel='''      {isAdmin && rows.length > 0 && (\n        <div className="grid gap-3 lg:grid-cols-3">\n          <Kpi label="Receita após comissões" value={brl(netAfterCommissions / 100)} icon={<TrendingUp className="h-4 w-4" />} />\n          <Kpi label="Peso das comissões" value={`${totals.sold ? ((totals.comm / totals.sold) * 100).toFixed(1) : "0.0"}%`} icon={<BadgePercent className="h-4 w-4" />} />\n          <Kpi label="Maior contribuição líquida" value={best ? `${best.name} · ${brl(best.net / 100)}` : "—"} icon={<Award className="h-4 w-4" />} />\n        </div>\n      )}\n      {isAdmin && performance.length > 0 && (\n        <Card><CardContent className="p-4"><div className="mb-3"><p className="font-medium">Rentabilidade por profissional</p><p className="text-xs text-muted-foreground">Receita de serviços menos comissões, conforme os filtros selecionados.</p></div><div className="space-y-2">{performance.slice(0,8).map((x)=><div key={x.id} className="grid gap-2 rounded-xl border p-3 text-sm sm:grid-cols-5 sm:items-center"><div className="font-medium">{x.name}</div><div><span className="text-xs text-muted-foreground">Vendido</span><p>{brl(x.sold/100)}</p></div><div><span className="text-xs text-muted-foreground">Comissão</span><p>{brl(x.commission/100)} · {x.commissionRate.toFixed(1)}%</p></div><div><span className="text-xs text-muted-foreground">Líquido</span><p className="font-medium">{brl(x.net/100)}</p></div><div><span className="text-xs text-muted-foreground">Ticket médio</span><p>{brl(x.avg/100)}</p></div></div>)}</div></CardContent></Card>\n      )}\n\n'''
+          if target not in s: raise SystemExit('filter card anchor missing')
+          s=s.replace(target,panel+target,1)
+          p.write_text(s)
+          PY
+          bun install --frozen-lockfile
+          bun run build
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/_authenticated/app/commissions.tsx
+          git commit -m 'feat: add commission profitability insights'
+          git push
