@@ -57,7 +57,8 @@ function PermissionGate() {
   const feature = routeFeature(path);
   if (loading) return null;
   const isDashboard = path === "/app" || path === "/app/";
-  const permissionDenied = (!isDashboard && !key) || (key && !can(key));
+  const isHelp = path === "/app/help" || path.startsWith("/app/help/");
+  const permissionDenied = isDashboard ? !can("dashboard") : (!isHelp && ((!key) || !can(key)));
   const planDenied = !!feature && !hasFeature(feature);
 
   if (permissionDenied || planDenied) {
