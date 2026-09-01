@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Calendar, Users, UserCog, Scissors, Settings, LogOut, Menu, Sparkles,
   Wallet, Package, BarChart3, Ticket, Award, Star, Megaphone, Cake, Gift, Link2,
   MessageCircle, Image as ImageIcon, BadgePercent, CalendarCheck, Layers, Calculator,
-  ShoppingCart, Palette, ChevronDown, Plus, MoreHorizontal, ShieldAlert, BookOpen, CircleDollarSign, History, type LucideIcon,
+  ShoppingCart, Palette, ChevronDown, Plus, MoreHorizontal, ShieldAlert, BookOpen, CircleDollarSign, History, ReceiptText, type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,7 @@ const GROUPS: NavGroup[] = [
   { id: "financeiro", label: "Financeiro", icon: Wallet, items: [
     { to: "/app/finances", label: "Dashboard financeiro", icon: Wallet, perm: "financeiro" },
     { to: "/app/cash", label: "Fechamento de caixa", icon: CircleDollarSign, perm: "financeiro" },
+    { to: "/app/expenses", label: "Despesas e contas a pagar", icon: ReceiptText, perm: "financeiro" },
     { to: "/app/audit", label: "Auditoria", icon: History, perm: "financeiro" },
     { to: "/app/payments", label: "Pagamentos", icon: Wallet, perm: "financeiro" },
     { to: "/app/commissions", label: "Comissões", icon: BadgePercent, perm: "comissoes" },
