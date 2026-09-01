@@ -6,6 +6,17 @@ const PUBLIC_COMPANY_COLUMNS =
   "id,niche_id,sub_niche_id,name,slug,logo_url,banner_url,app_icon_url,primary_color,secondary_color,theme,address,city,state,latitude,longitude,phone,whatsapp,status,listed_in_marketplace,short_description,description,welcome_message,instagram_url,facebook_url,tiktok_url,website_url,show_staff_on_portal,show_reviews_on_portal,amenities,online_booking_enabled,min_advance_min,max_advance_days,buffer_min,deposit_enabled,deposit_type,deposit_value,portal_bg_url,portal_bg_style,portal_button_color,portal_text_color,portal_card_style,portal_highlight,portal_slogan";
 
 export type PublicCompany = Record<string, any>;
+export type PublicSubscriptionPlan = {
+  code: string;
+  name: string;
+  description: string | null;
+  monthly_cents: number;
+  cycle_months: number | null;
+  cycle_total_cents: number | null;
+  discount_percent: number | null;
+  max_users: number | null;
+  sort_order: number;
+};
 
 /** Dados de vitrine de uma empresa pelo slug (sem PIX, documento, e-mail ou dados de cobrança). */
 export const getPublicCompany = createServerFn({ method: "GET" })
@@ -30,6 +41,19 @@ export const listPublicCompanies = createServerFn({ method: "GET" }).handler(asy
     .eq("listed_in_marketplace", true)
     .order("name");
   return (data ?? []) as PublicCompany[];
+});
+
+/** Planos comerciais ativos exibidos na página inicial. A leitura acontece no servidor. */
+export const listPublicSubscriptionPlans = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("subscription_plans")
+    .select("code,name,description,monthly_cents,cycle_months,cycle_total_cents,discount_percent,max_users,sort_order")
+    .eq("active", true)
+    .eq("selectable", true)
+    .order("sort_order", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as PublicSubscriptionPlan[];
 });
 
 /** Bloqueios de agenda (apenas janelas de horário, sem o motivo). */
