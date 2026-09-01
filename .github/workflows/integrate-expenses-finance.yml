@@ -1,0 +1,25 @@
+name: Integrate expenses into finance
+on:
+  push:
+    paths: ['.github/workflows/integrate-expenses-finance.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/components/app/AppLayout.tsx');s=p.read_text();s=s.replace('CircleDollarSign, History, type LucideIcon','CircleDollarSign, History, ReceiptText, type LucideIcon');s=s.replace('{ to: "/app/cash", label: "Fechamento de caixa", icon: CircleDollarSign, perm: "financeiro" },','{ to: "/app/cash", label: "Fechamento de caixa", icon: CircleDollarSign, perm: "financeiro" },\n    { to: "/app/expenses", label: "Despesas e contas", icon: ReceiptText, perm: "financeiro" },');p.write_text(s)
+          p=Path('src/routes/_authenticated/app/finances.tsx');s=p.read_text();needle='  const totals = useMemo(() => {';insert='''  const { data: operationalExpenses = [] } = useQuery({\n    queryKey: ["operational_expenses_finance", companyId, month],\n    queryFn: async () => {\n      const { data, error } = await supabase.from("business_expenses")\n        .select("amount_cents,status,due_date,paid_at,created_at").eq("company_id", companyId)\n        .neq("status", "cancelled").gte("created_at", `${from}T00:00:00`).lt("created_at", `${to}T00:00:00`);\n      if (error) throw error; return data ?? [];\n    },\n  });\n  const operationalExpensePaid = operationalExpenses.filter((x:any)=>x.status === "paid").reduce((n:number,x:any)=>n + Number(x.amount_cents||0)/100,0);\n  const operationalExpensePending = operationalExpenses.filter((x:any)=>x.status === "pending").reduce((n:number,x:any)=>n + Number(x.amount_cents||0)/100,0);\n\n''';s=s.replace(needle,insert+needle);s=s.replace('return { income, expense, balance: income - expense };','const expenseWithOperational = expense + operationalExpensePaid;\n    return { income, expense: expenseWithOperational, balance: income - expenseWithOperational };');s=s.replace('  }, [txs]);','  }, [txs, operationalExpensePaid]);',1);s=s.replace('<StatCard label="Saídas" value={totals.expense}', '<StatCard label="Saídas pagas" value={totals.expense}');s=s.replace('<StatCard label="Saldo do mês" value={totals.balance}', '<StatCard label={`Saldo do mês · ${brl(operationalExpensePending)} a pagar`} value={totals.balance}');p.write_text(s)
+          PY
+          bun install --frozen-lockfile
+          bun run build
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: integrate expenses with financial result' && git push
