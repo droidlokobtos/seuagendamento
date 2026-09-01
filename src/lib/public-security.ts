@@ -5,6 +5,17 @@ export const bearerToken = (authorization: string | null | undefined) => {
   return match?.[1] ?? "";
 };
 
+export const canLinkCustomerIdentity = (
+  storedEmail: string | null | undefined,
+  authenticatedEmail: string | null | undefined,
+) => {
+  const normalize = (value: string | null | undefined) =>
+    value?.trim().toLocaleLowerCase("en-US") ?? "";
+  const stored = normalize(storedEmail);
+  const authenticated = normalize(authenticatedEmail);
+  return Boolean(stored && authenticated && stored === authenticated);
+};
+
 export const sameBrazilianPhone = (
   stored: string | null | undefined,
   supplied: string | null | undefined,
