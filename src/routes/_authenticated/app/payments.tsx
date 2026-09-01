@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/lib/company";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +20,7 @@ import {
   computeFinance, PAYMENT_STATUS_META, PAYMENT_KIND_LABEL, AUDIT_ACTION_LABEL,
   type AppointmentPaymentStatus,
 } from "@/lib/finance";
-import { Check, X, FileText, History, Plus, Wallet, Clock, RotateCcw } from "lucide-react";
+import { Check, X, FileText, History, Plus, Wallet, Clock, RotateCcw, ShoppingCart, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/payments")({
   component: PaymentsPage,
@@ -51,6 +51,11 @@ type Pay = {
   reject_reason: string | null; created_at: string;
 };
 
+type CheckoutProduct = {
+  id: string; name: string; stock_qty: number; sale_price: number; promo_price: number | null;
+};
+type CheckoutProductLine = { product_id: string; name: string; quantity: number; unit_price_cents: number };
+
 function PaymentsPage() {
   const qc = useQueryClient();
   const { activeCompany } = useCompany();
@@ -75,6 +80,18 @@ function PaymentsPage() {
         .order("starts_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as Appt[];
+    },
+  });
+
+  const { data: checkoutProducts = [] } = useQuery({
+    queryKey: ["checkout-products", companyId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("products")
+        .select("id,name,stock_qty,sale_price,promo_price")
+        .eq("company_id", companyId).eq("scope", "sale").eq("active", true)
+        .gt("stock_qty", 0).order("name");
+      if (error) throw error;
+      return (data ?? []) as unknown as CheckoutProduct[];
     },
   });
 
@@ -116,7 +133,19 @@ function PaymentsPage() {
   });
 
   const addPayment = useMutation({
-    mutationFn: async (v: { appointment_id: string; kind: Pay["kind"]; amount_cents: number; method: string }) => {
+    mutationFn: async (v: { appointment_id: string; kind: Pay["kind"]; amount_cents: number; method: string; products?: CheckoutProductLine[] }) => {
+      if (v.products?.length) {
+        const { error } = await (supabase as any).rpc("checkout_appointment_with_products", {
+          _appointment_id: v.appointment_id,
+          _products: v.products.map((p) => ({ product_id: p.product_id, quantity: p.quantity })),
+          _payment_kind: v.kind,
+          _payment_amount_cents: v.amount_cents,
+          _payment_method: v.method,
+        });
+        if (error) throw error;
+        return;
+      }
+
       const { data: u } = await supabase.auth.getUser();
       const { error } = await supabase.from("appointment_payments").insert({
         company_id: companyId,
@@ -138,6 +167,9 @@ function PaymentsPage() {
       qc.invalidateQueries({ queryKey: ["fin_appts", companyId] });
       qc.invalidateQueries({ queryKey: ["finances", companyId] });
       qc.invalidateQueries({ queryKey: ["appts", companyId] });
+      qc.invalidateQueries({ queryKey: ["sales", companyId] });
+      qc.invalidateQueries({ queryKey: ["products", companyId] });
+      qc.invalidateQueries({ queryKey: ["checkout-products", companyId] });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -322,6 +354,7 @@ function PaymentsPage() {
       {payFor && (
         <PaymentDialog
           appt={payFor}
+          products={checkoutProducts}
           onClose={() => setPayFor(null)}
           loading={addPayment.isPending}
           onSave={(v) => addPayment.mutate({ appointment_id: payFor.id, ...v })}
@@ -355,10 +388,11 @@ function Cell({ label, value, tone }: { label: string; value: string; tone?: str
   );
 }
 
-function PaymentDialog({ appt, onClose, onSave, loading }: {
+function PaymentDialog({ appt, products, onClose, onSave, loading }: {
   appt: Appt;
+  products: CheckoutProduct[];
   onClose: () => void;
-  onSave: (v: { kind: "deposit" | "final" | "extra" | "refund"; amount_cents: number; method: string }) => void;
+  onSave: (v: { kind: "deposit" | "final" | "extra" | "refund"; amount_cents: number; method: string; products: CheckoutProductLine[] }) => void;
   loading: boolean;
 }) {
   const f = computeFinance({
@@ -371,81 +405,92 @@ function PaymentDialog({ appt, onClose, onSave, loading }: {
   const [kind, setKind] = useState<"deposit" | "final" | "extra" | "refund">(defaultKind);
   const [amount, setAmount] = useState((initialCents / 100).toFixed(2));
   const [method, setMethod] = useState("pix");
+  const [productSearch, setProductSearch] = useState("");
+  const [productId, setProductId] = useState("");
+  const [lines, setLines] = useState<CheckoutProductLine[]>([]);
+
+  const filteredProducts = useMemo(() => {
+    const term = productSearch.trim().toLocaleLowerCase("pt-BR");
+    return products.filter((p) => !term || p.name.toLocaleLowerCase("pt-BR").includes(term)).slice(0, 50);
+  }, [products, productSearch]);
+
+  const productsTotal = useMemo(() => lines.reduce((sum, l) => sum + Math.round(l.quantity * l.unit_price_cents), 0), [lines]);
+  const combinedBalance = f.balanceCents + productsTotal;
+  const combinedTotal = f.totalCents + productsTotal;
+
+  useEffect(() => {
+    if (kind === "final") setAmount((combinedBalance / 100).toFixed(2));
+  }, [productsTotal, kind, combinedBalance]);
+
+  const addProduct = () => {
+    const p = products.find((x) => x.id === productId);
+    if (!p) return;
+    const price = Math.round(Number(p.promo_price && Number(p.promo_price) > 0 ? p.promo_price : p.sale_price) * 100);
+    setLines((prev) => {
+      const existing = prev.find((x) => x.product_id === p.id);
+      if (existing) {
+        if (existing.quantity + 1 > Number(p.stock_qty)) { toast.error("Quantidade maior que o estoque disponível"); return prev; }
+        return prev.map((x) => x.product_id === p.id ? { ...x, quantity: x.quantity + 1 } : x);
+      }
+      return [...prev, { product_id: p.id, name: p.name, quantity: 1, unit_price_cents: price }];
+    });
+    setProductId("");
+    setProductSearch("");
+  };
+
+  const setQty = (id: string, quantity: number) => {
+    const p = products.find((x) => x.id === id);
+    const max = Math.max(1, Math.floor(Number(p?.stock_qty ?? 1)));
+    const qty = Math.min(max, Math.max(1, Math.floor(quantity || 1)));
+    setLines((prev) => prev.map((x) => x.product_id === id ? { ...x, quantity: qty } : x));
+  };
 
   const changeKind = (v: "deposit" | "final" | "extra" | "refund") => {
     setKind(v);
     if (v === "deposit") {
-      const suggested = f.depositDueCents > 0 ? f.depositDueCents : Math.min(f.depositRequiredCents || f.balanceCents, f.balanceCents);
+      const suggested = f.depositDueCents > 0 ? f.depositDueCents : Math.min(f.depositRequiredCents || combinedBalance, combinedBalance);
       if (suggested > 0) setAmount((suggested / 100).toFixed(2));
-    } else if (v === "final") {
-      setAmount((f.balanceCents / 100).toFixed(2));
-    }
+    } else if (v === "final") setAmount((combinedBalance / 100).toFixed(2));
   };
 
   const parsedCents = Math.round((parseFloat(amount) || 0) * 100);
-  const exceedsBalance = kind !== "refund" && kind !== "extra" && parsedCents > f.balanceCents;
+  const exceedsBalance = kind !== "refund" && kind !== "extra" && parsedCents > combinedBalance;
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{kind === "deposit" ? "Registrar sinal antecipado" : "Registrar pagamento"}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader><DialogTitle>{kind === "deposit" ? "Registrar sinal antecipado" : "Fechar atendimento e pagamento"}</DialogTitle></DialogHeader>
+        <div className="space-y-4">
           <div className="rounded-lg border p-3 text-sm space-y-1">
-            <div className="flex justify-between"><span>Total</span><span>{brl(f.totalCents / 100)}</span></div>
-            <div className="flex justify-between"><span>Sinal exigido</span><span>{brl(f.depositRequiredCents / 100)}</span></div>
+            <div className="flex justify-between"><span>Serviços / atendimento</span><span>{brl(f.totalCents / 100)}</span></div>
+            {productsTotal > 0 && <div className="flex justify-between"><span>Produtos adicionados</span><span>{brl(productsTotal / 100)}</span></div>}
+            <div className="flex justify-between font-semibold border-t pt-1"><span>Total da compra</span><span>{brl(combinedTotal / 100)}</span></div>
             <div className="flex justify-between"><span>Já pago</span><span>{brl(f.paidCents / 100)}</span></div>
-            <div className="flex justify-between font-semibold"><span>Saldo restante</span><span>{brl(f.balanceCents / 100)}</span></div>
+            <div className="flex justify-between font-semibold"><span>Saldo a receber</span><span>{brl(combinedBalance / 100)}</span></div>
           </div>
-          {kind === "deposit" && f.depositDueCents > 0 && (
-            <p className="rounded-md bg-muted px-3 py-2 text-xs">
-              Valor sugerido do sinal ainda pendente: <strong>{brl(f.depositDueCents / 100)}</strong>. A administradora pode alterar o valor abaixo.
-            </p>
+
+          {kind !== "deposit" && kind !== "refund" && (
+            <div className="rounded-lg border p-3 space-y-3">
+              <div className="flex items-center gap-2"><ShoppingCart className="h-4 w-4 text-primary" /><div><p className="text-sm font-medium">Adicionar produtos ao atendimento</p><p className="text-xs text-muted-foreground">O produto será vinculado a este cliente, baixará do estoque e entrará no mesmo pagamento.</p></div></div>
+              <Input value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Digite o nome do produto…" autoComplete="off" />
+              <div className="flex gap-2">
+                <Select value={productId} onValueChange={setProductId}>
+                  <SelectTrigger className="flex-1"><SelectValue placeholder="Selecionar produto" /></SelectTrigger>
+                  <SelectContent>{filteredProducts.length ? filteredProducts.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} · {brl(Number(p.promo_price && Number(p.promo_price) > 0 ? p.promo_price : p.sale_price))} · estoque {Number(p.stock_qty)}</SelectItem>) : <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum produto encontrado.</div>}</SelectContent>
+                </Select>
+                <Button type="button" variant="outline" onClick={addProduct} disabled={!productId}>Adicionar</Button>
+              </div>
+              {lines.length > 0 && <div className="divide-y rounded-md border">{lines.map((l) => <div key={l.product_id} className="flex items-center gap-2 p-2 text-sm"><div className="min-w-0 flex-1"><p className="font-medium truncate">{l.name}</p><p className="text-xs text-muted-foreground">{brl(l.unit_price_cents / 100)} cada</p></div><Input className="w-20" type="number" min="1" value={l.quantity} onChange={(e) => setQty(l.product_id, Number(e.target.value))} /><span className="w-24 text-right font-medium">{brl((l.quantity * l.unit_price_cents) / 100)}</span><Button type="button" size="icon" variant="ghost" onClick={() => setLines((prev) => prev.filter((x) => x.product_id !== l.product_id))}><Trash2 className="h-4 w-4" /></Button></div>)}</div>}
+            </div>
           )}
-          <div>
-            <Label>Tipo</Label>
-            <Select value={kind} onValueChange={(v) => changeKind(v as any)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="deposit">Sinal (antecipado)</SelectItem>
-                <SelectItem value="final">Pagamento final</SelectItem>
-                <SelectItem value="extra">Acréscimo</SelectItem>
-                <SelectItem value="refund">Estorno</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Valor (R$)</Label>
-            <Input type="number" step="0.01" min="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
-            {exceedsBalance && <p className="mt-1 text-xs text-destructive">O valor não pode ser maior que o saldo restante.</p>}
-          </div>
-          <div>
-            <Label>Forma de pagamento</Label>
-            <Select value={method} onValueChange={setMethod}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pix">PIX</SelectItem>
-                <SelectItem value="cash">Dinheiro</SelectItem>
-                <SelectItem value="credit_card">Cartão de crédito</SelectItem>
-                <SelectItem value="debit_card">Cartão de débito</SelectItem>
-                <SelectItem value="bank_transfer">Transferência</SelectItem>
-                <SelectItem value="other">Outro</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            O valor registrado será somado ao total já pago e o saldo restante será recalculado automaticamente para o fechamento do atendimento.
-          </p>
+
+          {kind === "deposit" && f.depositDueCents > 0 && <p className="rounded-md bg-muted px-3 py-2 text-xs">Valor sugerido do sinal ainda pendente: <strong>{brl(f.depositDueCents / 100)}</strong>. A administradora pode alterar o valor abaixo.</p>}
+          <div><Label>Tipo</Label><Select value={kind} onValueChange={(v) => changeKind(v as any)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="deposit">Sinal (antecipado)</SelectItem><SelectItem value="final">Pagamento final</SelectItem><SelectItem value="extra">Acréscimo</SelectItem><SelectItem value="refund">Estorno</SelectItem></SelectContent></Select></div>
+          <div><Label>Valor recebido (R$)</Label><Input type="number" step="0.01" min="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />{exceedsBalance && <p className="mt-1 text-xs text-destructive">O valor não pode ser maior que o saldo total do atendimento com os produtos.</p>}</div>
+          <div><Label>Forma de pagamento</Label><Select value={method} onValueChange={setMethod}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pix">PIX</SelectItem><SelectItem value="cash">Dinheiro</SelectItem><SelectItem value="credit_card">Cartão de crédito</SelectItem><SelectItem value="debit_card">Cartão de débito</SelectItem><SelectItem value="bank_transfer">Transferência</SelectItem><SelectItem value="other">Outro</SelectItem></SelectContent></Select></div>
+          <p className="text-xs text-muted-foreground">Ao salvar, serviço e produtos permanecem vinculados ao mesmo cliente e ao mesmo atendimento. A baixa de estoque dos produtos é automática.</p>
         </div>
-        <DialogFooter>
-          <Button
-            disabled={loading || parsedCents <= 0 || exceedsBalance}
-            onClick={() => onSave({ kind, amount_cents: parsedCents, method })}
-          >
-            {loading ? "Registrando..." : kind === "deposit" ? "Registrar sinal" : "Salvar"}
-          </Button>
-        </DialogFooter>
+        <DialogFooter><Button disabled={loading || parsedCents <= 0 || exceedsBalance} onClick={() => onSave({ kind, amount_cents: parsedCents, method, products: lines })}>{loading ? "Registrando..." : kind === "deposit" ? "Registrar sinal" : "Concluir pagamento"}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
