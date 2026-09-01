@@ -3,7 +3,6 @@ import {
   Outlet,
   Link,
   createRootRouteWithContext,
-  useRouter,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -13,6 +12,22 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
+
+const RECOVERY_KEY = "beauty:root-error-recovery";
+
+async function recoverApplication() {
+  try {
+    if ("caches" in window) {
+      const names = await window.caches.keys();
+      await Promise.all(names.map((name) => window.caches.delete(name)));
+    }
+  } catch {
+    // Cache API may be unavailable in restricted browser modes.
+  }
+  const url = new URL(window.location.href);
+  url.searchParams.set("__recovery", Date.now().toString());
+  window.location.replace(url.toString());
+}
 
 function NotFoundComponent() {
   return (
@@ -36,11 +51,16 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error }: { error: Error }) {
   console.error(error);
-  const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    const lastRecovery = Number(sessionStorage.getItem(RECOVERY_KEY) ?? 0);
+    const alreadyRecovered = Date.now() - lastRecovery < 30_000;
+    if (!alreadyRecovered) {
+      sessionStorage.setItem(RECOVERY_KEY, Date.now().toString());
+      void recoverApplication();
+    }
   }, [error]);
 
   return (
@@ -53,12 +73,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
-              router.invalidate();
-              reset();
+              sessionStorage.removeItem(RECOVERY_KEY);
+              void recoverApplication();
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
-            Tentar de novo
+            Atualizar sistema
           </button>
           <a
             href="/"
@@ -92,9 +112,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "BeautySaaS — Sistema de agendamento white label" },
-      { name: "twitter:description", content: "Plataforma white label de agendamento para barbearias, salões, manicures e designers de sobrancelhas. Gestão completa com identidade visual própria." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7eccc709-dfdf-413f-934a-462f962c9339/id-preview-71f37bd3--2ca49ee1-054e-42b1-aa32-f886e5da6ed8.lovable.app-1784315384853.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7eccc709-dfdf-413f-934a-462f962c9339/id-preview-71f37bd3--2ca49ee1-054e-42b1-aa32-f886e5da6ed8.lovable.app-1784315384853.png" },
+      {
+        name: "twitter:description",
+        content:
+          "Plataforma white label de agendamento para barbearias, salões, manicures e designers de sobrancelhas. Gestão completa com identidade visual própria.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7eccc709-dfdf-413f-934a-462f962c9339/id-preview-71f37bd3--2ca49ee1-054e-42b1-aa32-f886e5da6ed8.lovable.app-1784315384853.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7eccc709-dfdf-413f-934a-462f962c9339/id-preview-71f37bd3--2ca49ee1-054e-42b1-aa32-f886e5da6ed8.lovable.app-1784315384853.png",
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -122,6 +154,17 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      sessionStorage.removeItem(RECOVERY_KEY);
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("__recovery")) {
+        url.searchParams.delete("__recovery");
+        window.history.replaceState(window.history.state, "", url.toString());
+      }
+    }, 15_000);
+    return () => window.clearTimeout(timer);
+  }, []);
   const { queryClient } = Route.useRouteContext();
 
   return (
