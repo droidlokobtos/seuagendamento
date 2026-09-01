@@ -107,6 +107,16 @@ export const listPublicSubscriptionPlans = createServerFn({ method: "GET" }).han
   }
 });
 
+/** Intervalos ocupados, sem expor dados do cliente. */
+export const getPublicOccupiedAppointments = createServerFn({ method: "GET" })
+  .inputValidator((input: { companyId: string; from: string; to: string }) => z.object({ companyId: z.string().uuid(), from: z.string().min(1), to: z.string().min(1) }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin.from("appointments").select("starts_at,ends_at").eq("company_id", data.companyId).not("status", "in", '(cancelled,cancelled_by_customer,cancelled_by_company,no_show)').lt("starts_at", data.to).gt("ends_at", data.from);
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as { starts_at: string; ends_at: string }[];
+  });
+
 /** Bloqueios de agenda (apenas janelas de horário, sem o motivo). */
 export const getPublicTimeBlocks = createServerFn({ method: "GET" })
   .inputValidator((input: { companyId: string; from: string; to: string }) =>

@@ -107,31 +107,15 @@ export const Route = createFileRoute("/api/public/book")({
           return Response.json({ error: `Agende com no máximo ${maxAdv} dias de antecedência` }, { status: 400 });
         const end = new Date(start.getTime() + totalMin * 60_000);
 
-        if (staff_id) {
-          const { data: st } = await supabaseAdmin
-            .from("staff").select("id,active,company_id").eq("id", staff_id).maybeSingle();
-          if (!st || st.company_id !== company.id || !st.active)
-            return Response.json({ error: "Profissional indisponível" }, { status: 400 });
-          const { data: conflicts } = await supabaseAdmin
-            .from("appointments").select("id")
-            .eq("company_id", company.id)
-            .eq("staff_id", staff_id)
-            .neq("status", "cancelled")
-            .lt("starts_at", end.toISOString()).gt("ends_at", start.toISOString());
-          if (conflicts && conflicts.length > 0)
-            return Response.json({ error: "Horário já ocupado" }, { status: 409 });
-        } else {
-          // Sem profissional escolhido: impede sobreposição com outros
-          // agendamentos "sem profissional" da mesma empresa.
-          const { data: conflicts } = await supabaseAdmin
-            .from("appointments").select("id")
-            .eq("company_id", company.id)
-            .is("staff_id", null)
-            .neq("status", "cancelled")
-            .lt("starts_at", end.toISOString()).gt("ends_at", start.toISOString());
-          if (conflicts && conflicts.length > 0)
-            return Response.json({ error: "Horário já ocupado" }, { status: 409 });
-        }
+        // Capacidade global: qualquer atendimento ativo ocupa o intervalo da empresa.
+        const { data: conflicts } = await supabaseAdmin
+          .from("appointments").select("id")
+          .eq("company_id", company.id)
+          .not("status", "in", '(cancelled,cancelled_by_customer,cancelled_by_company,no_show)')
+          .lt("starts_at", end.toISOString()).gt("ends_at", start.toISOString())
+          .limit(1);
+        if (conflicts && conflicts.length > 0)
+          return Response.json({ error: "Este horário já está ocupado. Escolha outro horário." }, { status: 409 });
 
         // Bloqueios de agenda (feriados, folgas, etc.)
         const { data: blocks } = await supabaseAdmin

@@ -13,7 +13,7 @@ import { brl } from "@/lib/format";
 import { computeDepositCents, depositConfigFromCompany } from "@/lib/finance";
 import { getAmenities } from "@/lib/amenities";
 import { toast } from "sonner";
-import { getPublicCompany, getPublicTimeBlocks } from "@/lib/public-portal.functions";
+import { getPublicCompany, getPublicTimeBlocks, getPublicOccupiedAppointments } from "@/lib/public-portal.functions";
 import { portalTheme, heroBackground, heroImageOpacity, heroTextClass } from "@/lib/portal-theme";
 import { AnamnesisForm } from "@/components/app/AnamnesisForm";
 
@@ -207,6 +207,13 @@ function BookingPage() {
     enabled: !!dateStr,
   });
 
+  const { data: occupied = [] } = useQuery({
+    queryKey: ["pub_occupied", companyId, dateStr],
+    queryFn: async () => getPublicOccupiedAppointments({ data: { companyId, from: `${dateStr}T00:00:00`, to: `${dateStr}T23:59:59` } }),
+    enabled: !!dateStr,
+    refetchOnWindowFocus: true,
+  });
+
   const { data: staffData, isLoading: staffLoading } = useQuery({
     queryKey: ["pub_staff", company.slug, selectedServiceIdsKey, dateStr, timeStr],
     queryFn: async () => {
@@ -259,10 +266,16 @@ function BookingPage() {
         return slotStart < be && slotEnd > bs;
       });
       if (conflictBlock) continue;
+      const conflictAppointment = occupied.some((a) => {
+        const as = new Date(a.starts_at).getTime();
+        const ae = new Date(a.ends_at).getTime();
+        return slotStart < ae && slotEnd > as;
+      });
+      if (conflictAppointment) continue;
       out.push(`${hh}:${mm}`);
     }
     return out;
-  }, [dateStr, hours, blocks, totalMin, minAdvanceMin, slotIntervalMin]);
+  }, [dateStr, hours, blocks, occupied, totalMin, minAdvanceMin, slotIntervalMin]);
 
   const dateOptions = useMemo(() => {
     const list: { iso: string; label: string; wd: number; disabled: boolean }[] = [];

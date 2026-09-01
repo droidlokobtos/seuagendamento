@@ -159,7 +159,6 @@ function Agenda() {
     for (const a of appts as any[]) {
       if (ignoreId && a.id === ignoreId) continue;
       if (FREED_STATUSES.includes(a.status)) continue;
-      if (staff_id && a.staff_id && a.staff_id !== staff_id) continue;
       const as = new Date(a.starts_at).getTime() - buf;
       const ae = new Date(a.ends_at).getTime() + buf;
       if (starts.getTime() < ae && ends.getTime() > as) {
