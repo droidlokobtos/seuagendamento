@@ -1,5 +1,10 @@
 import { waNumber } from "./format";
 
+export const bearerToken = (authorization: string | null | undefined) => {
+  const match = /^Bearer\s+([^\s]+)$/i.exec(authorization?.trim() ?? "");
+  return match?.[1] ?? "";
+};
+
 export const sameBrazilianPhone = (
   stored: string | null | undefined,
   supplied: string | null | undefined,
