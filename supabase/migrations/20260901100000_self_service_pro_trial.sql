@@ -28,16 +28,16 @@ STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT public.is_super_admin() OR false = true
-  UNION ALL
-  SELECT COALESCE(
-    c.status IN ('suspended'::public.company_status, 'overdue'::public.company_status, 'trial_expired'::public.company_status)
-    OR (c.is_trial = true AND c.trial_ends_at IS NOT NULL AND c.trial_ends_at < CURRENT_DATE),
-    false
-  )
-  FROM public.companies c
-  WHERE c.id = _company
-  LIMIT 1;
+  SELECT CASE
+    WHEN public.is_super_admin() THEN false
+    ELSE COALESCE((
+      SELECT
+        c.status IN ('suspended'::public.company_status, 'overdue'::public.company_status, 'trial_expired'::public.company_status)
+        OR (c.is_trial = true AND c.trial_ends_at IS NOT NULL AND c.trial_ends_at < CURRENT_DATE)
+      FROM public.companies c
+      WHERE c.id = _company
+    ), false)
+  END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.plan_mark_expired() TO authenticated;
