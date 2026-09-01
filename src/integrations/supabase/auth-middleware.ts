@@ -4,6 +4,12 @@ import { getRequest } from '@tanstack/react-start/server'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from './types'
 
+// Public fallback used by Lovable deployments that do not inject the public
+// Supabase variables into the server runtime. Authorization is still enforced
+// with the user's JWT and database RLS policies.
+const FALLBACK_SUPABASE_URL = 'https://ggewrcbiqfnpmlzgwqqe.supabase.co'
+const FALLBACK_SUPABASE_PUBLISHABLE_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnZXdyY2JpcWZucG1semd3cXFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyOTM3MDksImV4cCI6MjA5OTg2OTcwOX0.HGMbq4yc3exCxrM2F-H3pphAy3yJTQBaL1H6wWVnQlU'
 
 
 function isNewSupabaseApiKey(value: string): boolean {
@@ -33,8 +39,9 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
     
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+    const SUPABASE_URL = process.env.SUPABASE_URL || FALLBACK_SUPABASE_URL;
+    const SUPABASE_PUBLISHABLE_KEY =
+      process.env.SUPABASE_PUBLISHABLE_KEY || FALLBACK_SUPABASE_PUBLISHABLE_KEY;
 
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
       const missing = [
