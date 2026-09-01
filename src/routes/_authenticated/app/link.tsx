@@ -28,6 +28,7 @@ function LinkPage() {
   const [minAdv, setMinAdv] = useState<number>(c?.min_advance_min ?? 0);
   const [maxAdv, setMaxAdv] = useState<number>(c?.max_advance_days ?? 60);
   const [bufferMin, setBufferMin] = useState<number>(c?.buffer_min ?? 0);
+  const [slotIntervalMin, setSlotIntervalMin] = useState<number>(c?.booking_slot_interval_min ?? 30);
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -37,6 +38,7 @@ function LinkPage() {
     setMinAdv(c?.min_advance_min ?? 0);
     setMaxAdv(c?.max_advance_days ?? 60);
     setBufferMin(c?.buffer_min ?? 0);
+    setSlotIntervalMin(c?.booking_slot_interval_min ?? 30);
   }, [c?.id]);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -55,14 +57,17 @@ function LinkPage() {
     mutationFn: async () => {
       const cleanSlug = slugify(slug);
       if (!cleanSlug) throw new Error("Slug obrigatório");
+      const normalizedSlotInterval = Math.min(240, Math.max(5, Math.round(slotIntervalMin || 30)));
       const { error } = await supabase.from("companies").update({
         slug: cleanSlug,
         online_booking_enabled: enabled,
         min_advance_min: Math.max(0, minAdv | 0),
         max_advance_days: Math.max(1, maxAdv | 0),
         buffer_min: Math.max(0, bufferMin | 0),
+        booking_slot_interval_min: normalizedSlotInterval,
       } as any).eq("id", companyId);
       if (error) throw error;
+      setSlotIntervalMin(normalizedSlotInterval);
     },
     onSuccess: () => {
       toast.success("Configurações salvas");
@@ -182,8 +187,14 @@ function LinkPage() {
               <p className="text-xs text-muted-foreground mt-1">Somente letras, números e hífens. Precisa ser único.</p>
             </div>
             <div>
+              <Label>Intervalo dos horários disponíveis (min)</Label>
+              <Input type="number" min={5} max={240} step={5} value={slotIntervalMin} onChange={(e) => setSlotIntervalMin(Number(e.target.value))} />
+              <p className="text-xs text-muted-foreground mt-1">Define de quantos em quantos minutos os horários aparecem para o cliente. Padrão: 30 min.</p>
+            </div>
+            <div>
               <Label>Intervalo entre atendimentos (min)</Label>
               <Input type="number" min={0} value={bufferMin} onChange={(e) => setBufferMin(Number(e.target.value))} />
+              <p className="text-xs text-muted-foreground mt-1">Tempo de respiro entre o fim de um atendimento e o próximo.</p>
             </div>
             <div>
               <Label>Antecedência mínima (min)</Label>
