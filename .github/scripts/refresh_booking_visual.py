@@ -1,0 +1,112 @@
+from pathlib import Path
+
+p = Path('src/routes/b.$slug.index.tsx')
+text = p.read_text(encoding='utf-8')
+
+text = text.replace(
+    'import { Sparkles, MapPin, Phone, Check, Calendar, Clock, ChevronLeft, ChevronRight, User, Instagram, Facebook, Globe, Star, MessageCircle, X as XIcon, Image as ImageIcon } from "lucide-react";',
+    'import { Sparkles, MapPin, Phone, Check, Calendar, Clock, ChevronLeft, ChevronRight, User, Instagram, Facebook, Globe, Star, MessageCircle, X as XIcon, Image as ImageIcon, CalendarDays, Scissors, UsersRound, ClipboardCheck } from "lucide-react";',
+    1,
+)
+
+text = text.replace(
+    '<div className="min-h-screen bg-background pb-20">',
+    '<div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background pb-24">',
+    1,
+)
+text = text.replace(
+    '<div className="max-w-lg mx-auto p-4 md:p-6 space-y-4">\n        <Steps step={step} accent={accent} showStaffStep={showStaffStep} />',
+    '<div className="max-w-5xl mx-auto px-4 py-5 md:px-6 md:py-8 space-y-5">\n        <Steps step={step} accent={accent} showStaffStep={showStaffStep} />\n        <BookingStepHeader step={step} />\n        {selected.length > 0 && <BookingSummary selected={selected} staff={staff} dateStr={dateStr} timeStr={timeStr} totalMin={totalMin} totalPrice={totalPrice} primary={primary} />}',
+    1,
+)
+
+text = text.replace(
+    '<Card><CardContent className="p-4 space-y-3"><h2 className="font-semibold text-lg">Escolha os serviços</h2>',
+    '<Card className="overflow-hidden border-border/70 shadow-sm"><CardContent className="p-5 md:p-6 space-y-4"><div><h2 className="font-semibold text-xl tracking-tight">Escolha os serviços</h2><p className="text-sm text-muted-foreground mt-1">Selecione um ou mais serviços para continuar.</p></div>',
+    1,
+)
+text = text.replace('<div className="space-y-2">{services.map((s) => {', '<div className="grid gap-3 md:grid-cols-2">{services.map((s) => {', 1)
+text = text.replace(
+    'className={`w-full text-left rounded-xl border overflow-hidden transition ${active ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}',
+    'className={`group w-full text-left rounded-2xl border overflow-hidden transition-all duration-200 ${active ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20" : "border-border/70 bg-card hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"}`}',
+    1,
+)
+text = text.replace('<div className="h-32 w-full bg-muted overflow-hidden">', '<div className="h-36 md:h-40 w-full bg-muted overflow-hidden">', 1)
+text = text.replace('<div className="p-3 flex items-center justify-between gap-2">', '<div className="p-4 flex items-center justify-between gap-3">', 1)
+
+text = text.replace(
+    '<Card><CardContent className="p-4 space-y-4"><h2 className="font-semibold text-lg">Escolha a data</h2>',
+    '<Card className="border-border/70 shadow-sm"><CardContent className="p-5 md:p-6 space-y-5"><div><h2 className="font-semibold text-xl tracking-tight">Escolha a data</h2><p className="text-sm text-muted-foreground mt-1">Mostramos apenas os dias em que a empresa atende.</p></div>',
+    1,
+)
+text = text.replace(
+    'className={`shrink-0 rounded-xl border px-3 py-2 min-w-16 text-center transition ${d.disabled ? "opacity-40 cursor-not-allowed" : dateStr === d.iso ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-muted/50"}`}',
+    'className={`shrink-0 rounded-2xl border px-4 py-3 min-w-20 text-center transition-all ${d.disabled ? "opacity-35 cursor-not-allowed" : dateStr === d.iso ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border/70 bg-card hover:border-primary/40 hover:bg-muted/40"}`}',
+    1,
+)
+
+text = text.replace(
+    '<Card><CardContent className="p-4 space-y-4"><h2 className="font-semibold text-lg">Escolha o horário</h2>',
+    '<Card className="border-border/70 shadow-sm"><CardContent className="p-5 md:p-6 space-y-5"><div><h2 className="font-semibold text-xl tracking-tight">Escolha o horário</h2><p className="text-sm text-muted-foreground mt-1">Selecione um dos horários disponíveis.</p></div>',
+    1,
+)
+text = text.replace('<div className="grid grid-cols-4 gap-2">{slots.map((t) =>', '<div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">{slots.map((t) =>', 1)
+text = text.replace(
+    'className={`rounded-lg border py-2 text-sm transition ${timeStr === t ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-muted/50"}`}',
+    'className={`rounded-xl border py-3 text-sm font-medium transition-all ${timeStr === t ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border/70 bg-card hover:border-primary/40 hover:bg-muted/40"}`}',
+    1,
+)
+
+marker = 'function Steps({ step, accent, showStaffStep }:'
+if marker not in text:
+    raise SystemExit('Steps component marker not found')
+
+helpers = '''function BookingStepHeader({ step }: { step: number }) {
+  const copy: Record<number, { eyebrow: string; title: string; description: string; icon: React.ReactNode }> = {
+    1: { eyebrow: "Comece por aqui", title: "O que você deseja fazer?", description: "Escolha os serviços que deseja reservar.", icon: <Scissors className="h-5 w-5" /> },
+    2: { eyebrow: "Sua disponibilidade", title: "Escolha o melhor dia", description: "Selecione uma data disponível para o atendimento.", icon: <CalendarDays className="h-5 w-5" /> },
+    3: { eyebrow: "Horários disponíveis", title: "Qual horário funciona para você?", description: "Os horários exibidos respeitam a agenda e a duração dos serviços.", icon: <Clock className="h-5 w-5" /> },
+    4: { eyebrow: "Profissional", title: "Quem vai atender você?", description: "Escolha um profissional disponível ou deixe a empresa definir.", icon: <UsersRound className="h-5 w-5" /> },
+    5: { eyebrow: "Quase pronto", title: "Informe seus dados", description: "Usaremos essas informações apenas para identificar e confirmar seu agendamento.", icon: <User className="h-5 w-5" /> },
+    6: { eyebrow: "Revisão final", title: "Confira antes de confirmar", description: "Revise os detalhes do seu agendamento antes de concluir.", icon: <ClipboardCheck className="h-5 w-5" /> },
+  };
+  const current = copy[step] ?? copy[1];
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/90 px-5 py-4 shadow-sm backdrop-blur md:px-6 md:py-5">
+      <div className="flex items-start gap-3">
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">{current.icon}</div>
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{current.eyebrow}</p>
+          <h1 className="mt-1 text-xl font-semibold tracking-tight md:text-2xl">{current.title}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{current.description}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BookingSummary({ selected, staff, dateStr, timeStr, totalMin, totalPrice, primary }: {
+  selected: Service[]; staff: Staff | null; dateStr: string; timeStr: string; totalMin: number; totalPrice: number; primary: string;
+}) {
+  const dateLabel = dateStr ? new Date(`${dateStr}T12:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "A definir";
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm md:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-muted-foreground">Resumo do agendamento</p>
+          <p className="mt-0.5 truncate text-sm font-semibold">{selected.map((s) => s.name).join(" + ")}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{totalMin} min · {staff?.name ?? "Profissional a definir"} · {timeStr ? `${dateLabel} às ${timeStr}` : dateStr ? dateLabel : "Data a definir"}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-muted-foreground">Total</p>
+          <p className="text-lg font-semibold" style={{ color: primary }}>{brl(totalPrice)}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+'''
+
+text = text.replace(marker, helpers + marker, 1)
+p.write_text(text, encoding='utf-8')
