@@ -1,17 +1,45 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Scissors, Sparkles, CalendarCheck, Users, BarChart3, ShieldCheck, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { listPublicSubscriptionPlans } from "@/lib/public-portal.functions";
 import { brl } from "@/lib/format";
 
-export const Route = createFileRoute("/")({
-  loader: async () => ({ plans: await listPublicSubscriptionPlans() }),
-  component: Landing,
-});
+export const Route = createFileRoute("/")({ component: Landing });
+
+const plans = [
+  {
+    code: "basic",
+    name: "Básico",
+    description: "Recursos essenciais para começar",
+    monthly_cents: 4990,
+    cycle_months: 1,
+    cycle_total_cents: 4990,
+    discount_percent: 0,
+    max_users: 3,
+  },
+  {
+    code: "business",
+    name: "Business",
+    description: "Gestão completa do salão",
+    monthly_cents: 6990,
+    cycle_months: 6,
+    cycle_total_cents: 39843,
+    discount_percent: 5,
+    max_users: null,
+  },
+  {
+    code: "pro",
+    name: "Pro",
+    description: "Todos os recursos atuais e futuros",
+    monthly_cents: 10990,
+    cycle_months: 12,
+    cycle_total_cents: 125286,
+    discount_percent: 5,
+    max_users: null,
+  },
+];
 
 function Landing() {
-  const { plans } = Route.useLoaderData();
-  const startingPlan = plans.find((p) => p.monthly_cents > 0) ?? plans[0];
+  const startingPlan = plans[0];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -48,51 +76,47 @@ function Landing() {
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link to="/auth"><Button size="lg">Acessar plataforma</Button></Link>
           </div>
-          {startingPlan && (
-            <p className="mt-4 text-sm text-muted-foreground">
-              Planos a partir de {brl(startingPlan.monthly_cents / 100)}/mês. Escolha o plano ideal para sua empresa.
-            </p>
-          )}
+          <p className="mt-4 text-sm text-muted-foreground">
+            Planos a partir de {brl(startingPlan.monthly_cents / 100)}/mês. Escolha o plano ideal para sua empresa.
+          </p>
         </div>
       </section>
 
-      {plans.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 pb-20">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold tracking-tight">Planos para cada fase do seu negócio</h2>
-            <p className="mt-2 text-muted-foreground">Os valores abaixo são carregados diretamente do catálogo de planos da plataforma.</p>
-          </div>
-          <div className="grid gap-5 md:grid-cols-3">
-            {plans.map((plan) => (
-              <div key={plan.code} className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm flex flex-col">
-                <div>
-                  <h3 className="text-xl font-semibold">{plan.name}</h3>
-                  {plan.description && <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>}
-                </div>
-                <div className="mt-5">
-                  <div className="flex items-end gap-1">
-                    <span className="text-3xl font-bold">{brl(plan.monthly_cents / 100)}</span>
-                    <span className="text-sm text-muted-foreground mb-1">/mês</span>
-                  </div>
-                  {plan.cycle_months && plan.cycle_months > 1 && plan.cycle_total_cents ? (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Ciclo de {plan.cycle_months} meses por {brl(plan.cycle_total_cents / 100)}
-                      {Number(plan.discount_percent ?? 0) > 0 ? ` · ${Number(plan.discount_percent)}% de desconto` : ""}
-                    </p>
-                  ) : null}
-                </div>
-                <div className="mt-5 space-y-2 text-sm flex-1">
-                  <p className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Recursos conforme o plano selecionado</p>
-                  <p className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Agendamento e gestão online</p>
-                  <p className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Identidade visual da empresa</p>
-                  {plan.max_users ? <p className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Até {plan.max_users} usuários</p> : null}
-                </div>
-                <Link to="/auth" className="mt-6"><Button className="w-full">Escolher {plan.name}</Button></Link>
+      <section className="mx-auto max-w-6xl px-4 pb-20">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold tracking-tight">Planos para cada fase do seu negócio</h2>
+          <p className="mt-2 text-muted-foreground">Escolha a opção que melhor combina com sua empresa.</p>
+        </div>
+        <div className="grid gap-5 md:grid-cols-3">
+          {plans.map((plan) => (
+            <div key={plan.code} className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm flex flex-col">
+              <div>
+                <h3 className="text-xl font-semibold">{plan.name}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
               </div>
-            ))}
-          </div>
-        </section>
-      )}
+              <div className="mt-5">
+                <div className="flex items-end gap-1">
+                  <span className="text-3xl font-bold">{brl(plan.monthly_cents / 100)}</span>
+                  <span className="text-sm text-muted-foreground mb-1">/mês</span>
+                </div>
+                {plan.cycle_months > 1 && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Ciclo de {plan.cycle_months} meses por {brl(plan.cycle_total_cents / 100)}
+                    {plan.discount_percent > 0 ? ` · ${plan.discount_percent}% de desconto` : ""}
+                  </p>
+                )}
+              </div>
+              <div className="mt-5 space-y-2 text-sm flex-1">
+                <p className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Recursos conforme o plano selecionado</p>
+                <p className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Agendamento e gestão online</p>
+                <p className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Identidade visual da empresa</p>
+                {plan.max_users ? <p className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Até {plan.max_users} usuários</p> : null}
+              </div>
+              <Link to="/auth" className="mt-6"><Button className="w-full">Escolher {plan.name}</Button></Link>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-24">
         <div className="grid gap-6 md:grid-cols-3">
