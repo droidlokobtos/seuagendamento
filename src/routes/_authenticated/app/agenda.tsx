@@ -116,8 +116,6 @@ function Agenda() {
   const { data: staff = [] } = useQuery({
     queryKey: ["staff-lite", companyId],
     queryFn: async () => {
-      // `staff` não possui coluna sort_order — ordenar por ela quebrava a
-      // consulta e a lista de profissionais vinha vazia.
       const { data, error } = await supabase
         .from("staff")
         .select("id,name,color")
@@ -142,7 +140,6 @@ function Agenda() {
   );
 
   const validate = (starts: Date, ends: Date, staff_id: string | null, ignoreId?: string) => {
-    // Company hours
     const h = (hours as any[]).find((x) => x.weekday === starts.getDay());
     if (h) {
       if (h.closed) return "A empresa está fechada nesse dia.";
@@ -152,14 +149,12 @@ function Agenda() {
       const minsEnd = ends.getHours() * 60 + ends.getMinutes();
       if (minsStart < sh * 60 + sm || minsEnd > eh * 60 + em) return "Fora do horário de funcionamento.";
     }
-    // Blocks
     for (const b of blocks as any[]) {
       if (b.staff_id && b.staff_id !== staff_id) continue;
       const bs = new Date(b.starts_at).getTime();
       const be = new Date(b.ends_at).getTime();
       if (starts.getTime() < be && ends.getTime() > bs) return `Horário bloqueado${b.reason ? ` (${b.reason})` : ""}.`;
     }
-    // Conflicts + buffer
     const buf = bufferMin * 60_000;
     for (const a of appts as any[]) {
       if (ignoreId && a.id === ignoreId) continue;
@@ -196,7 +191,6 @@ function Agenda() {
       if (edit) {
         const { error } = await supabase.from("appointments").update(payload).eq("id", edit.id);
         if (error) throw error;
-        // Mantém os serviços do agendamento em sincronia com o serviço escolhido
         if (v.service_id) {
           await supabase.from("appointment_services").delete().eq("appointment_id", edit.id);
           await supabase.from("appointment_services").insert({
@@ -219,7 +213,6 @@ function Agenda() {
       qc.invalidateQueries({ queryKey: ["appts", companyId] });
       setOpen(false); setEdit(null);
       if (result?.isNew) {
-        // Offer WhatsApp confirmation using the "new appointment" template
         const cust = (customers as any[]).find((c) => c.id === result.customer_id);
         const st = (staff as any[]).find((s) => s.id === result.staff_id);
         const dt = new Date(result.starts_at);
@@ -256,8 +249,7 @@ function Agenda() {
   });
 
   const addService = useMutation({
-    mutationFn: async (v: { appointmentId: string; serviceId: string; notes?: string }) =>
-      addServiceFn({ data: v }),
+    mutationFn: async (v: { appointmentId: string; serviceId: string; notes?: string }) => addServiceFn({ data: v }),
     onSuccess: (r: any) => {
       toast.success(`${r.serviceName} adicionado (+${brl(r.addedCents / 100)})`);
       qc.invalidateQueries({ queryKey: ["appts", companyId] });
@@ -277,7 +269,6 @@ function Agenda() {
     },
     onError: (e: any) => toast.error(e.message),
   });
-
 
   const del = useMutation({
     mutationFn: async (id: string) => {
@@ -355,7 +346,6 @@ function Agenda() {
                 loading={save.isPending}
               />
             )}
-
           </Dialog>
         </div>
       </div>
@@ -386,7 +376,6 @@ function Agenda() {
           onFinish={(id) => finish.mutate(id)}
           onAddService={(a) => setAddSvc(a)}
           onDelete={(id) => { if (confirm("Cancelar/remover?")) del.mutate(id); }}
-
         />
       )}
 
@@ -413,9 +402,7 @@ function Agenda() {
         services={services as any[]}
         onClose={() => setAddSvc(null)}
         loading={addService.isPending}
-        onSubmit={(serviceId, notes) =>
-          addService.mutate({ appointmentId: addSvc.id, serviceId, notes })
-        }
+        onSubmit={(serviceId, notes) => addService.mutate({ appointmentId: addSvc.id, serviceId, notes })}
       />
 
       <WhatsAppShareDialog
@@ -425,15 +412,11 @@ function Agenda() {
         message={waMsg.message}
         phone={waMsg.phone}
       />
-
     </div>
   );
 }
 
-/* ---------- Adicionar serviço durante o atendimento ---------- */
-function AddServiceDialog({
-  appt, services, onClose, onSubmit, loading,
-}: {
+function AddServiceDialog({ appt, services, onClose, onSubmit, loading }: {
   appt: any | null;
   services: any[];
   onClose: () => void;
@@ -442,18 +425,12 @@ function AddServiceDialog({
 }) {
   const [serviceId, setServiceId] = useState("");
   const [notes, setNotes] = useState("");
-
   const svc = services.find((s) => s.id === serviceId);
 
   return (
-    <Dialog
-      open={!!appt}
-      onOpenChange={(o) => { if (!o) { setServiceId(""); setNotes(""); onClose(); } }}
-    >
+    <Dialog open={!!appt} onOpenChange={(o) => { if (!o) { setServiceId(""); setNotes(""); onClose(); } }}>
       <DialogContent onInteractOutside={(e) => e.preventDefault()}>
-        <DialogHeader>
-          <DialogTitle>Adicionar serviço ao atendimento</DialogTitle>
-        </DialogHeader>
+        <DialogHeader><DialogTitle>Adicionar serviço ao atendimento</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label>Serviço</Label>
@@ -461,9 +438,7 @@ function AddServiceDialog({
               <SelectTrigger><SelectValue placeholder="Selecione o serviço" /></SelectTrigger>
               <SelectContent>
                 {services.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name} · {brl((s.price_cents ?? 0) / 100)} · {s.duration_min ?? 30} min
-                  </SelectItem>
+                  <SelectItem key={s.id} value={s.id}>{s.name} · {brl((s.price_cents ?? 0) / 100)} · {s.duration_min ?? 30} min</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -472,29 +447,18 @@ function AddServiceDialog({
             <Label>Observação (opcional)</Label>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
           </div>
-          {svc && (
-            <p className="text-xs text-muted-foreground">
-              O atendimento passará a somar +{brl((svc.price_cents ?? 0) / 100)} e +{svc.duration_min ?? 30} minutos.
-            </p>
-          )}
+          {svc && <p className="text-xs text-muted-foreground">O atendimento passará a somar +{brl((svc.price_cents ?? 0) / 100)} e +{svc.duration_min ?? 30} minutos.</p>}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button disabled={!serviceId || loading} onClick={() => onSubmit(serviceId, notes)}>
-            {loading ? "Adicionando..." : "Adicionar"}
-          </Button>
+          <Button disabled={!serviceId || loading} onClick={() => onSubmit(serviceId, notes)}>{loading ? "Adicionando..." : "Adicionar"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-
-
-/* ---------- Day view ---------- */
-function DayView({
-  appts, blocks, onOpen, onNewAt, onConfirmWa, onSetStatus, onFinish, onAddService, onDelete,
-}: {
+function DayView({ appts, blocks, onOpen, onNewAt, onConfirmWa, onSetStatus, onFinish, onAddService, onDelete }: {
   appts: any[]; blocks: any[];
   onOpen: (a: any) => void;
   onNewAt: (d: Date) => void;
@@ -504,101 +468,42 @@ function DayView({
   onAddService: (a: any) => void;
   onDelete: (id: string) => void;
 }) {
-
   if (!appts.length && !blocks.length) {
-    return (
-      <Card>
-        <CardContent className="p-12 text-center">
-          <CalIcon className="h-8 w-8 mx-auto text-muted-foreground" />
-          <p className="mt-2 text-sm text-muted-foreground">Nenhum agendamento neste dia.</p>
-        </CardContent>
-      </Card>
-    );
+    return <Card><CardContent className="p-12 text-center"><CalIcon className="h-8 w-8 mx-auto text-muted-foreground" /><p className="mt-2 text-sm text-muted-foreground">Nenhum agendamento neste dia.</p></CardContent></Card>;
   }
   return (
     <div className="space-y-2">
-      {blocks.map((b) => (
-        <Card key={`b-${b.id}`} className="border-dashed">
-          <CardContent className="p-3 text-sm text-muted-foreground flex items-center gap-3">
-            <span className="font-medium">{fmtTime(b.starts_at)} — {fmtTime(b.ends_at)}</span>
-            <span>🚫 Bloqueado{b.reason ? ` · ${b.reason}` : ""}</span>
-          </CardContent>
-        </Card>
-      ))}
+      {blocks.map((b) => <Card key={`b-${b.id}`} className="border-dashed"><CardContent className="p-3 text-sm text-muted-foreground flex items-center gap-3"><span className="font-medium">{fmtTime(b.starts_at)} — {fmtTime(b.ends_at)}</span><span>🚫 Bloqueado{b.reason ? ` · ${b.reason}` : ""}</span></CardContent></Card>)}
       {appts.map((a) => {
         const st = STATUS[a.status] ?? STATUS.scheduled;
         const svc = (a.appointment_services ?? []).map((x: any) => x.services?.name).filter(Boolean).join(", ");
         return (
           <Card key={a.id}>
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="text-center shrink-0 w-16">
-                <p className="text-lg font-semibold">{fmtTime(a.starts_at)}</p>
-                <p className="text-[10px] text-muted-foreground">até {fmtTime(a.ends_at)}</p>
-              </div>
+              <div className="text-center shrink-0 w-16"><p className="text-lg font-semibold">{fmtTime(a.starts_at)}</p><p className="text-[10px] text-muted-foreground">até {fmtTime(a.ends_at)}</p></div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{a.customers?.name ?? "Sem cliente"}</p>
                 <div className="mt-1 flex items-center gap-2 flex-wrap">
                   {svc && <span className="text-xs text-muted-foreground truncate">{svc}</span>}
-                  {a.staff && (
-                    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <span className="h-2 w-2 rounded-full" style={{ background: a.staff.color ?? "#8b7355" }} />
-                      {a.staff.name}
-                    </span>
-                  )}
+                  {a.staff && <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><span className="h-2 w-2 rounded-full" style={{ background: a.staff.color ?? "#8b7355" }} />{a.staff.name}</span>}
                   <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full border ${st.color}`}>{st.label}</span>
-                  {(() => {
-                    const meta = PAYMENT_STATUS_META[(a.payment_status ?? "pending") as AppointmentPaymentStatus];
-                    return meta ? (
-                      <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full ${meta.className}`}>{meta.label}</span>
-                    ) : null;
-                  })()}
+                  {(() => { const meta = PAYMENT_STATUS_META[(a.payment_status ?? "pending") as AppointmentPaymentStatus]; return meta ? <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full ${meta.className}`}>{meta.label}</span> : null; })()}
                 </div>
               </div>
               <div className="text-right shrink-0">
                 <p className="text-sm font-semibold">{brl((a.total_cents ?? 0) / 100)}</p>
                 {(() => {
-                  const f = computeFinance({
-                    subtotalCents: a.total_cents, discountCents: a.discount_cents,
-                    surchargeCents: a.surcharge_cents, paidCents: a.paid_cents,
-                    depositRequiredCents: a.deposit_required_cents,
-                  });
+                  const f = computeFinance({ subtotalCents: a.total_cents, discountCents: a.discount_cents, surchargeCents: a.surcharge_cents, paidCents: a.paid_cents, depositRequiredCents: a.deposit_required_cents });
                   if (!f.paidCents && !f.depositRequiredCents) return null;
-                  return (
-                    <p className="text-[10px] text-muted-foreground">
-                      Pago {brl(f.paidCents / 100)} · Saldo {brl(f.balanceCents / 100)}
-                    </p>
-                  );
+                  return <p className="text-[10px] text-muted-foreground">Pago {brl(f.paidCents / 100)} · Saldo {brl(f.balanceCents / 100)}</p>;
                 })()}
                 <div className="mt-1 flex gap-1 justify-end flex-wrap">
-                  <Button size="icon" variant="ghost" title="Confirmar por WhatsApp" onClick={() => onConfirmWa(a)}>
-                    <MessageCircle className="h-4 w-4" />
-                  </Button>
-                  {a.status === "scheduled" && (
-                    <Button size="icon" variant="ghost" title="Confirmar" onClick={() => onSetStatus(a.id, "confirmed")}>
-                      <Check className="h-4 w-4" />
-                    </Button>
-                  )}
-                  {(a.status === "scheduled" || a.status === "confirmed") && (
-                    <Button size="icon" variant="ghost" title="Iniciar" onClick={() => onSetStatus(a.id, "in_progress")}>
-                      <Play className="h-4 w-4" />
-                    </Button>
-                  )}
-                  {!["completed", "cancelled", "cancelled_by_customer", "cancelled_by_company", "no_show"].includes(a.status) && (
-                    <Button size="sm" variant="ghost" title="Adicionar serviço" onClick={() => onAddService(a)}>
-                      <Plus className="h-4 w-4 mr-1" /> Serviço
-                    </Button>
-                  )}
-                  {a.status !== "completed" && a.status !== "cancelled" && (
-                    <Button size="icon" variant="ghost" title="Finalizar" onClick={() => onFinish(a.id)}>
-                      <CheckCheck className="h-4 w-4" />
-                    </Button>
-                  )}
-
-                  {a.status !== "cancelled" && (
-                    <Button size="icon" variant="ghost" title="Cancelar" onClick={() => onSetStatus(a.id, "cancelled")}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Button size="icon" variant="ghost" title="Confirmar por WhatsApp" onClick={() => onConfirmWa(a)}><MessageCircle className="h-4 w-4" /></Button>
+                  {a.status === "scheduled" && <Button size="icon" variant="ghost" title="Confirmar" onClick={() => onSetStatus(a.id, "confirmed")}><Check className="h-4 w-4" /></Button>}
+                  {(a.status === "scheduled" || a.status === "confirmed") && <Button size="icon" variant="ghost" title="Iniciar" onClick={() => onSetStatus(a.id, "in_progress")}><Play className="h-4 w-4" /></Button>}
+                  {!["completed", "cancelled", "cancelled_by_customer", "cancelled_by_company", "no_show"].includes(a.status) && <Button size="sm" variant="ghost" title="Adicionar serviço" onClick={() => onAddService(a)}><Plus className="h-4 w-4 mr-1" /> Serviço</Button>}
+                  {a.status !== "completed" && a.status !== "cancelled" && <Button size="icon" variant="ghost" title="Finalizar" onClick={() => onFinish(a.id)}><CheckCheck className="h-4 w-4" /></Button>}
+                  {a.status !== "cancelled" && <Button size="icon" variant="ghost" title="Cancelar" onClick={() => onSetStatus(a.id, "cancelled")}><X className="h-4 w-4" /></Button>}
                   <Button size="sm" variant="ghost" onClick={() => onOpen(a)}>Editar</Button>
                   <Button size="sm" variant="ghost" onClick={() => onDelete(a.id)}>Remover</Button>
                 </div>
@@ -607,22 +512,12 @@ function DayView({
           </Card>
         );
       })}
-      <div className="text-center">
-        <Button variant="outline" onClick={() => { const d = new Date(); onNewAt(d); }}>
-          <Plus className="h-4 w-4 mr-2" /> Novo neste dia
-        </Button>
-      </div>
+      <div className="text-center"><Button variant="outline" onClick={() => { const d = new Date(); onNewAt(d); }}><Plus className="h-4 w-4 mr-2" /> Novo neste dia</Button></div>
     </div>
   );
 }
 
-/* ---------- Week view ---------- */
-function WeekView({
-  weekStart, appts, blocks, onNewAt, onOpen,
-}: {
-  weekStart: Date; appts: any[]; blocks: any[];
-  onNewAt: (d: Date) => void; onOpen: (a: any) => void;
-}) {
+function WeekView({ weekStart, appts, blocks, onNewAt, onOpen }: { weekStart: Date; appts: any[]; blocks: any[]; onNewAt: (d: Date) => void; onOpen: (a: any) => void; }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   return (
     <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
@@ -633,33 +528,12 @@ function WeekView({
         return (
           <Card key={d.toISOString()} className={isToday ? "border-primary" : ""}>
             <CardContent className="p-3">
-              <div className="flex items-center justify-between">
-                <p className="text-xs uppercase text-muted-foreground">
-                  {d.toLocaleDateString("pt-BR", { weekday: "short" })}
-                </p>
-                <p className="text-sm font-semibold">{d.getDate()}</p>
-              </div>
+              <div className="flex items-center justify-between"><p className="text-xs uppercase text-muted-foreground">{d.toLocaleDateString("pt-BR", { weekday: "short" })}</p><p className="text-sm font-semibold">{d.getDate()}</p></div>
               <div className="mt-2 space-y-1">
-                {blks.map((b) => (
-                  <div key={b.id} className="text-[11px] px-2 py-1 rounded bg-muted text-muted-foreground">
-                    🚫 {fmtTime(b.starts_at)}–{fmtTime(b.ends_at)}
-                  </div>
-                ))}
-                {list.length === 0 && !blks.length && (
-                  <p className="text-[11px] text-muted-foreground italic">Livre</p>
-                )}
-                {list.map((a) => {
-                  const st = STATUS[a.status] ?? STATUS.scheduled;
-                  return (
-                    <button key={a.id} onClick={() => onOpen(a)}
-                      className={`w-full text-left text-[11px] px-2 py-1 rounded border ${st.color}`}>
-                      <span className="font-medium">{fmtTime(a.starts_at)}</span> · {a.customers?.name ?? "—"}
-                    </button>
-                  );
-                })}
-                <Button size="sm" variant="ghost" className="w-full h-7 text-xs" onClick={() => onNewAt(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9))}>
-                  <Plus className="h-3 w-3 mr-1" /> Novo
-                </Button>
+                {blks.map((b) => <div key={b.id} className="text-[11px] px-2 py-1 rounded bg-muted text-muted-foreground">🚫 {fmtTime(b.starts_at)}–{fmtTime(b.ends_at)}</div>)}
+                {list.length === 0 && !blks.length && <p className="text-[11px] text-muted-foreground italic">Livre</p>}
+                {list.map((a) => { const st = STATUS[a.status] ?? STATUS.scheduled; return <button key={a.id} onClick={() => onOpen(a)} className={`w-full text-left text-[11px] px-2 py-1 rounded border ${st.color}`}><span className="font-medium">{fmtTime(a.starts_at)}</span> · {a.customers?.name ?? "—"}</button>; })}
+                <Button size="sm" variant="ghost" className="w-full h-7 text-xs" onClick={() => onNewAt(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9))}><Plus className="h-3 w-3 mr-1" /> Novo</Button>
               </div>
             </CardContent>
           </Card>
@@ -669,33 +543,23 @@ function WeekView({
   );
 }
 
-/* ---------- Month view ---------- */
-function MonthView({
-  monthStart, appts, onDayClick,
-}: { monthStart: Date; appts: any[]; onDayClick: (d: Date) => void }) {
+function MonthView({ monthStart, appts, onDayClick }: { monthStart: Date; appts: any[]; onDayClick: (d: Date) => void }) {
   const gridStart = startOfWeek(monthStart);
   const days = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
   const monthIdx = monthStart.getMonth();
   return (
     <div>
-      <div className="grid grid-cols-7 gap-1 mb-1 text-center text-[11px] uppercase text-muted-foreground">
-        {["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"].map((w) => <div key={w}>{w}</div>)}
-      </div>
+      <div className="grid grid-cols-7 gap-1 mb-1 text-center text-[11px] uppercase text-muted-foreground">{["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"].map((w) => <div key={w}>{w}</div>)}</div>
       <div className="grid grid-cols-7 gap-1">
         {days.map((d) => {
           const dayList = appts.filter((a) => new Date(a.starts_at).toDateString() === d.toDateString());
           const isCurMonth = d.getMonth() === monthIdx;
           const isToday = d.toDateString() === new Date().toDateString();
           return (
-            <button key={d.toISOString()} onClick={() => onDayClick(d)}
-              className={`min-h-20 rounded-md border p-1.5 text-left hover:bg-accent transition ${!isCurMonth ? "opacity-40" : ""} ${isToday ? "border-primary" : ""}`}>
+            <button key={d.toISOString()} onClick={() => onDayClick(d)} className={`min-h-20 rounded-md border p-1.5 text-left hover:bg-accent transition ${!isCurMonth ? "opacity-40" : ""} ${isToday ? "border-primary" : ""}`}>
               <div className="text-xs font-medium">{d.getDate()}</div>
               <div className="mt-1 space-y-0.5">
-                {dayList.slice(0, 3).map((a) => (
-                  <div key={a.id} className="truncate text-[10px] px-1 rounded bg-primary/10 text-primary">
-                    {fmtTime(a.starts_at)} {a.customers?.name ?? ""}
-                  </div>
-                ))}
+                {dayList.slice(0, 3).map((a) => <div key={a.id} className="truncate text-[10px] px-1 rounded bg-primary/10 text-primary">{fmtTime(a.starts_at)} {a.customers?.name ?? ""}</div>)}
                 {dayList.length > 3 && <div className="text-[10px] text-muted-foreground">+{dayList.length - 3}</div>}
               </div>
             </button>
@@ -706,10 +570,7 @@ function MonthView({
   );
 }
 
-/* ---------- Dialog ---------- */
-function ApptDialog({
-  edit, seedDate, customers, staff, services, defaultStaff, onSave, loading,
-}: {
+function ApptDialog({ edit, seedDate, customers, staff, services, defaultStaff, onSave, loading }: {
   edit: any | null;
   seedDate: Date;
   customers: { id: string; name: string }[];
@@ -720,53 +581,40 @@ function ApptDialog({
   loading: boolean;
 }) {
   const initial = edit
-    ? {
-        customer_id: edit.customer_id ?? "",
-        staff_id: edit.staff_id ?? "",
-        service_id: "",
-        starts_at: toLocalInput(new Date(edit.starts_at)),
-        status: edit.status,
-        notes: edit.notes ?? "",
-      }
-    : {
-        customer_id: "",
-        staff_id: defaultStaff,
-        service_id: "",
-        starts_at: toLocalInput(new Date(seedDate.getFullYear(), seedDate.getMonth(), seedDate.getDate(), 9)),
-        status: "scheduled",
-        notes: "",
-      };
+    ? { customer_id: edit.customer_id ?? "", staff_id: edit.staff_id ?? "", service_id: "", starts_at: toLocalInput(new Date(edit.starts_at)), status: edit.status, notes: edit.notes ?? "" }
+    : { customer_id: "", staff_id: defaultStaff, service_id: "", starts_at: toLocalInput(new Date(seedDate.getFullYear(), seedDate.getMonth(), seedDate.getDate(), 9)), status: "scheduled", notes: "" };
   const [f, setF] = useState<any>(initial);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const filteredCustomers = useMemo(() => {
+    const term = customerSearch.trim().toLocaleLowerCase("pt-BR");
+    if (!term) return customers;
+    return customers.filter((c) => c.name.toLocaleLowerCase("pt-BR").includes(term));
+  }, [customers, customerSearch]);
 
   return (
-    <DialogContent
-      className="sm:max-w-md max-h-[85vh] overflow-y-auto"
-      // O formulário não pode fechar sozinho: só sai por Cancelar / X / Esc.
-      onInteractOutside={(e) => e.preventDefault()}
-      onPointerDownOutside={(e) => e.preventDefault()}
-    >
+    <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto" onInteractOutside={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()}>
       <DialogHeader><DialogTitle>{edit ? "Editar agendamento" : "Novo agendamento"}</DialogTitle></DialogHeader>
       <div className="space-y-3">
-        <div>
+        <div className="space-y-1.5">
           <Label>Cliente</Label>
-          <Select value={f.customer_id} onValueChange={(v) => setF({ ...f, customer_id: v })}>
-            <SelectTrigger><SelectValue placeholder="Selecionar…" /></SelectTrigger>
-            <SelectContent>{customers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+          <Input
+            value={customerSearch}
+            onChange={(e) => setCustomerSearch(e.target.value)}
+            placeholder="Pesquisar cliente pelo nome…"
+            autoComplete="off"
+          />
+          <Select value={f.customer_id} onValueChange={(v) => { setF({ ...f, customer_id: v }); setCustomerSearch(""); }}>
+            <SelectTrigger><SelectValue placeholder="Selecionar cliente…" /></SelectTrigger>
+            <SelectContent>
+              {filteredCustomers.length ? filteredCustomers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>) : <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado.</div>}
+            </SelectContent>
           </Select>
         </div>
-        {f.customer_id && (
-          <SafeBoundary label="as observações do cliente">
-            <SmartProfileSummary customerId={f.customer_id} selectedStaffId={f.staff_id || null} />
-          </SafeBoundary>
-        )}
+        {f.customer_id && <SafeBoundary label="as observações do cliente"><SmartProfileSummary customerId={f.customer_id} selectedStaffId={f.staff_id || null} /></SafeBoundary>}
 
         <div>
           <Label>Funcionário</Label>
-          {staff.length === 0 ? (
-            <p className="rounded-md border border-dashed p-2 text-sm text-muted-foreground">
-              Nenhum profissional cadastrado.
-            </p>
-          ) : (
+          {staff.length === 0 ? <p className="rounded-md border border-dashed p-2 text-sm text-muted-foreground">Nenhum profissional cadastrado.</p> : (
             <Select value={f.staff_id} onValueChange={(v) => setF({ ...f, staff_id: v })}>
               <SelectTrigger><SelectValue placeholder="Selecionar…" /></SelectTrigger>
               <SelectContent>{staff.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
@@ -779,20 +627,11 @@ function ApptDialog({
             <Label>Serviço</Label>
             <Select value={f.service_id} onValueChange={(v) => setF({ ...f, service_id: v })}>
               <SelectTrigger><SelectValue placeholder="Selecionar…" /></SelectTrigger>
-              <SelectContent>
-                {services.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name} — {s.duration_min} min · {brl(s.price_cents / 100)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
+              <SelectContent>{services.map((s) => <SelectItem key={s.id} value={s.id}>{s.name} — {s.duration_min} min · {brl(s.price_cents / 100)}</SelectItem>)}</SelectContent>
             </Select>
           </div>
         )}
-        <div>
-          <Label>Início</Label>
-          <Input type="datetime-local" value={f.starts_at} onChange={(e) => setF({ ...f, starts_at: e.target.value })} />
-        </div>
+        <div><Label>Início</Label><Input type="datetime-local" value={f.starts_at} onChange={(e) => setF({ ...f, starts_at: e.target.value })} /></div>
         <div>
           <Label>Status</Label>
           <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v })}>
@@ -800,25 +639,10 @@ function ApptDialog({
             <SelectContent>{Object.entries(STATUS).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <div>
-          <Label>Observações</Label>
-          <Textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} />
-        </div>
+        <div><Label>Observações</Label><Textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></div>
       </div>
       <DialogFooter>
-        <Button
-          onClick={() => {
-            try {
-              onSave(f);
-            } catch (err) {
-              console.error("[agenda] erro ao salvar agendamento:", err);
-              toast.error("Não foi possível salvar. Tente novamente.");
-            }
-          }}
-          disabled={loading}
-        >
-          Salvar
-        </Button>
+        <Button onClick={() => { try { onSave(f); } catch (err) { console.error("[agenda] erro ao salvar agendamento:", err); toast.error("Não foi possível salvar. Tente novamente."); } }} disabled={loading}>Salvar</Button>
       </DialogFooter>
     </DialogContent>
   );
