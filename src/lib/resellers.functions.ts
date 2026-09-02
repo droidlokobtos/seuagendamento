@@ -20,6 +20,14 @@ export const createReseller = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { data: isAdmin } = await context.supabase.rpc("is_super_admin");
     if (!isAdmin) throw new Error("Acesso negado");
+    const { error: schemaError } = await (context.supabase.from as any)("resellers")
+      .select("id")
+      .limit(1);
+    if (schemaError) {
+      throw new Error(
+        "O banco do módulo de revendedores ainda está sendo atualizado no Lovable Cloud.",
+      );
+    }
     const { createUserWithPublicSignup } = await import("@/lib/public-signup.server");
     const user = await createUserWithPublicSignup({
       email: data.email.toLowerCase(),
