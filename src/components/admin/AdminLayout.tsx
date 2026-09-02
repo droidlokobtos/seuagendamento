@@ -57,8 +57,8 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <aside className="hidden md:flex md:w-64 shrink-0 border-r border-border/60 bg-card/50 flex-col">
+    <div className="premium-shell min-h-screen flex">
+      <aside className="premium-sidebar hidden md:flex md:w-64 shrink-0 border-r flex-col">
         <div className="h-16 flex items-center gap-2 px-4 border-b border-border/60">
           <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">
             <Sparkles className="h-4 w-4" />
@@ -95,7 +95,7 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b border-border/60 bg-card/40 backdrop-blur flex items-center gap-3 px-4 md:px-6 sticky top-0 z-30">
+        <header className="premium-header h-16 border-b flex items-center gap-3 px-4 md:px-6 sticky top-0 z-30">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
@@ -104,7 +104,7 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
             </SheetTrigger>
             <SheetContent
               side="left"
-              className="p-0 w-64 flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden"
+              className="premium-sidebar p-0 w-64 flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden"
             >
               <div className="h-16 shrink-0 flex items-center gap-2 px-4 border-b">
                 <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">
@@ -124,7 +124,7 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
             <h1 className="text-sm font-medium text-muted-foreground">Admin Master</h1>
           </div>
         </header>
-        <main className="flex-1 p-4 md:p-6 lg:p-8">{children ?? <Outlet />}</main>
+        <main className="premium-content flex-1 p-4 md:p-6 lg:p-8">{children ?? <Outlet />}</main>
       </div>
     </div>
   );
