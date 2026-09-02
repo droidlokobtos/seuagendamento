@@ -115,6 +115,7 @@ const GROUPS: NavGroup[] = [
       { to: "/app/reviews", label: "Avaliações", icon: Star, perm: "clientes" },
       { to: "/app/birthdays", label: "Aniversariantes", icon: Cake, perm: "clientes" },
       { to: "/app/campaigns", label: "Campanhas", icon: Megaphone, perm: "clientes" },
+      { to: "/app/referrals", label: "Indique e ganhe", icon: Gift },
     ],
   },
   {
