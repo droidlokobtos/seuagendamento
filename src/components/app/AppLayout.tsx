@@ -37,6 +37,7 @@ import {
   CircleDollarSign,
   History,
   ReceiptText,
+  FileSignature,
   type LucideIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -110,6 +111,7 @@ const GROUPS: NavGroup[] = [
     icon: Users,
     items: [
       { to: "/app/customers", label: "Clientes e fichas", icon: Users, perm: "clientes" },
+      { to: "/app/forms", label: "Formulários e termos", icon: FileSignature, perm: "clientes" },
       { to: "/app/loyalty", label: "Fidelidade", icon: Award, perm: "clientes" },
       { to: "/app/rewards", label: "Recompensas", icon: Gift, perm: "clientes" },
       { to: "/app/reviews", label: "Avaliações", icon: Star, perm: "clientes" },

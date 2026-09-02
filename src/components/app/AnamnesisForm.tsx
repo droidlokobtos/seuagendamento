@@ -5,9 +5,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Eraser } from "lucide-react";
 import { LGPD_TEXT, missingRequired, type Section } from "@/lib/anamnesis";
+import { DEFAULT_TERMS, type ConsentTerm } from "@/lib/custom-forms";
 import { toast } from "sonner";
 
 export type AnamnesisSubmit = {
@@ -16,9 +23,36 @@ export type AnamnesisSubmit = {
   consent_procedure: boolean;
   consent_lgpd: boolean;
   signature_data: string | null;
+  accepted_terms: Record<string, boolean>;
+  before_photos: string[];
+  after_photos: string[];
 };
 
-export function SignaturePad({ value, onChange }: { value: string | null; onChange: (v: string | null) => void }) {
+async function imageFiles(files: FileList | null): Promise<string[]> {
+  const selected = Array.from(files ?? []).slice(0, 4);
+  return Promise.all(
+    selected.map(async (file) => {
+      if (!file.type.startsWith("image/") || file.size > 10 * 1024 * 1024)
+        throw new Error("Use imagens de até 10 MB.");
+      const image = await createImageBitmap(file);
+      const scale = Math.min(1, 1600 / Math.max(image.width, image.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
+      image.close();
+      return canvas.toDataURL("image/jpeg", 0.82);
+    }),
+  );
+}
+
+export function SignaturePad({
+  value,
+  onChange,
+}: {
+  value: string | null;
+  onChange: (v: string | null) => void;
+}) {
   const ref = useRef<HTMLCanvasElement | null>(null);
   const drawing = useRef(false);
 
@@ -37,7 +71,10 @@ export function SignaturePad({ value, onChange }: { value: string | null; onChan
     const c = ref.current;
     if (!c) return { x: 0, y: 0 };
     const r = c.getBoundingClientRect();
-    return { x: ((e.clientX - r.left) / r.width) * c.width, y: ((e.clientY - r.top) / r.height) * c.height };
+    return {
+      x: ((e.clientX - r.left) / r.width) * c.width,
+      y: ((e.clientY - r.top) / r.height) * c.height,
+    };
   };
 
   return (
@@ -94,6 +131,9 @@ export function AnamnesisForm({
   initialAnswers,
   submitLabel = "Salvar ficha",
   requireSignature = true,
+  terms = DEFAULT_TERMS,
+  allowBeforePhotos = false,
+  allowAfterPhotos = false,
   onSubmit,
   submitting,
 }: {
@@ -101,23 +141,36 @@ export function AnamnesisForm({
   initialAnswers?: Record<string, any>;
   submitLabel?: string;
   requireSignature?: boolean;
+  terms?: ConsentTerm[];
+  allowBeforePhotos?: boolean;
+  allowAfterPhotos?: boolean;
   onSubmit: (data: AnamnesisSubmit) => void | Promise<void>;
   submitting?: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, any>>(initialAnswers ?? {});
-  const [truth, setTruth] = useState(false);
-  const [proc, setProc] = useState(false);
-  const [lgpd, setLgpd] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState<Record<string, boolean>>({});
   const [sig, setSig] = useState<string | null>(null);
+  const [beforePhotos, setBeforePhotos] = useState<string[]>([]);
+  const [afterPhotos, setAfterPhotos] = useState<string[]>([]);
 
   const set = (k: string, v: any) => setAnswers((a) => ({ ...a, [k]: v }));
 
   const submit = () => {
     const missing = missingRequired(sections, answers);
     if (missing.length) return toast.error(`Responda: ${missing[0]}`);
-    if (!truth || !proc || !lgpd) return toast.error("É necessário aceitar os três termos.");
+    const missingTerm = terms.find((term) => term.required && !acceptedTerms[term.id]);
+    if (missingTerm) return toast.error(`Aceite o termo: ${missingTerm.label}.`);
     if (requireSignature && !sig) return toast.error("Assinatura digital obrigatória.");
-    void onSubmit({ answers, consent_truth: truth, consent_procedure: proc, consent_lgpd: lgpd, signature_data: sig });
+    void onSubmit({
+      answers,
+      consent_truth: acceptedTerms.truth ?? true,
+      consent_procedure: acceptedTerms.procedure ?? true,
+      consent_lgpd: acceptedTerms.lgpd ?? true,
+      signature_data: sig,
+      accepted_terms: acceptedTerms,
+      before_photos: beforePhotos,
+      after_photos: afterPhotos,
+    });
   };
 
   return (
@@ -126,8 +179,12 @@ export function AnamnesisForm({
         <Card key={sec.key}>
           <CardContent className="space-y-4 p-4">
             <div>
-              <p className="text-sm font-semibold">{sec.emoji} {sec.label}</p>
-              {sec.description && <p className="text-xs text-muted-foreground">{sec.description}</p>}
+              <p className="text-sm font-semibold">
+                {sec.emoji} {sec.label}
+              </p>
+              {sec.description && (
+                <p className="text-xs text-muted-foreground">{sec.description}</p>
+              )}
             </div>
 
             {sec.questions.map((q) => {
@@ -164,11 +221,41 @@ export function AnamnesisForm({
 
                   {q.type === "select" && (
                     <Select value={answers[q.key] ?? ""} onValueChange={(v) => set(q.key, v)}>
-                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
                       <SelectContent>
-                        {(q.options ?? []).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                        {(q.options ?? []).map((o) => (
+                          <SelectItem key={o} value={o}>
+                            {o}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                  )}
+
+                  {q.type === "multi" && (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {(q.options ?? []).map((option) => {
+                        const current = Array.isArray(answers[q.key]) ? answers[q.key] : [];
+                        return (
+                          <label key={option} className="flex items-center gap-2 text-sm">
+                            <Checkbox
+                              checked={current.includes(option)}
+                              onCheckedChange={(checked) =>
+                                set(
+                                  q.key,
+                                  checked
+                                    ? [...current, option]
+                                    : current.filter((v: string) => v !== option),
+                                )
+                              }
+                            />
+                            {option}
+                          </label>
+                        );
+                      })}
+                    </div>
                   )}
 
                   {q.detail && answers[q.key] === true && (
@@ -188,18 +275,62 @@ export function AnamnesisForm({
       <Card>
         <CardContent className="space-y-3 p-4">
           <p className="text-sm font-semibold">📝 Termos e consentimento</p>
-          <label className="flex items-start gap-2 text-xs">
-            <Checkbox checked={truth} onCheckedChange={(v) => setTruth(!!v)} />
-            <span>Declaro que todas as informações prestadas são verdadeiras.</span>
-          </label>
-          <label className="flex items-start gap-2 text-xs">
-            <Checkbox checked={proc} onCheckedChange={(v) => setProc(!!v)} />
-            <span>Estou ciente dos riscos e autorizo a realização do procedimento.</span>
-          </label>
-          <label className="flex items-start gap-2 text-xs">
-            <Checkbox checked={lgpd} onCheckedChange={(v) => setLgpd(!!v)} />
-            <span>{LGPD_TEXT}</span>
-          </label>
+          {terms.map((term) => (
+            <label key={term.id} className="flex items-start gap-2 text-xs">
+              <Checkbox
+                checked={!!acceptedTerms[term.id]}
+                onCheckedChange={(v) =>
+                  setAcceptedTerms((current) => ({ ...current, [term.id]: !!v }))
+                }
+              />
+              <span>
+                <strong>{term.label}:</strong>{" "}
+                {term.id === "lgpd" && term.text === DEFAULT_TERMS[2].text ? LGPD_TEXT : term.text}
+                {term.required && " *"}
+              </span>
+            </label>
+          ))}
+
+          {(allowBeforePhotos || allowAfterPhotos) && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {allowBeforePhotos && (
+                <div className="space-y-2">
+                  <Label className="text-xs">Fotos antes do procedimento (até 4)</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) =>
+                      void imageFiles(e.target.files)
+                        .then(setBeforePhotos)
+                        .catch((error: Error) => toast.error(error.message))
+                    }
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    {beforePhotos.length} foto(s) selecionada(s)
+                  </p>
+                </div>
+              )}
+              {allowAfterPhotos && (
+                <div className="space-y-2">
+                  <Label className="text-xs">Fotos depois do procedimento (até 4)</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) =>
+                      void imageFiles(e.target.files)
+                        .then(setAfterPhotos)
+                        .catch((error: Error) => toast.error(error.message))
+                    }
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    {afterPhotos.length} foto(s) selecionada(s)
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {requireSignature && (
             <div className="space-y-2 pt-1">

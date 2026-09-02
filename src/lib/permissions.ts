@@ -127,6 +127,7 @@ export const ROUTE_PERMISSIONS: { prefix: string; key: PermissionKey }[] = [
   { prefix: "/app/confirmations", key: "agendamentos" },
   { prefix: "/app/attendance", key: "agendamentos" },
   { prefix: "/app/customers", key: "clientes" },
+  { prefix: "/app/forms", key: "clientes" },
   { prefix: "/app/loyalty", key: "clientes" },
   { prefix: "/app/rewards", key: "clientes" },
   { prefix: "/app/reviews", key: "clientes" },

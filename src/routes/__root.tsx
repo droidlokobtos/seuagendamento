@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
+import { CapacitorBridge } from "@/components/mobile/CapacitorBridge";
 
 const RECOVERY_KEY = "beauty:root-error-recovery";
 
@@ -170,6 +171,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <CapacitorBridge />
         <Outlet />
         <Toaster position="top-right" richColors />
       </AuthProvider>

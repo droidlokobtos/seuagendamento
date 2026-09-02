@@ -116,7 +116,6 @@ export const Route = createFileRoute("/api/public/anamnesis")({
             (svcs ?? []).filter((s: any) => s.company_id === company.id),
           );
         }
-
         let lastFilledAt: string | null = null;
         let verificationToken: string | null = null;
         if (phone) {

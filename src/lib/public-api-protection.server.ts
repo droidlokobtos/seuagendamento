@@ -4,8 +4,6 @@ type AdminClient = {
   rpc: (name: any, args?: any) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
   from: (table: any) => any;
 };
-
-
 type GuardOptions = { scope: string; limit: number; windowSeconds: number };
 
 export function requestFingerprint(request: Request) {

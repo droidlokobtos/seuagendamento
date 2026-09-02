@@ -16,6 +16,25 @@ export type AnamnesisRecord = {
   consent_procedure: boolean;
   consent_lgpd: boolean;
   signature_data: string | null;
+  template_id: string | null;
+  template_snapshot: {
+    name?: string;
+    description?: string;
+    sections?: Section[];
+    validity_months?: number;
+    allow_before_photos?: boolean;
+    allow_after_photos?: boolean;
+  } | null;
+  consent_snapshot: Array<{
+    id: string;
+    label: string;
+    text: string;
+    required: boolean;
+    accepted: boolean;
+    accepted_at: string;
+  }> | null;
+  before_photo_paths: string[];
+  after_photo_paths: string[];
   filled_by: string;
   actor_user_id: string | null;
   filled_at: string;
@@ -73,4 +92,3 @@ export async function logAnamnesisAccess(input: {
     actor_user_id: u?.user?.id ?? null,
   } as any);
 }
-
