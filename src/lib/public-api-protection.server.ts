@@ -1,15 +1,10 @@
 import { createHash, randomBytes } from "node:crypto";
 
 type AdminClient = {
-  rpc: (
-    name: string,
-    args?: Record<string, unknown>,
-  ) => Promise<{ data: unknown; error: { message: string } | null }>;
-  from: (table: string) => {
-    insert: (value: Record<string, unknown>) => PromiseLike<{ error: { message: string } | null }>;
-    select: (columns: string) => unknown;
-  };
+  rpc: (name: any, args?: any) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
+  from: (table: any) => any;
 };
+
 
 type GuardOptions = { scope: string; limit: number; windowSeconds: number };
 
