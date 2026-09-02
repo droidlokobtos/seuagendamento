@@ -26,6 +26,12 @@ import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/_authenticated/admin/marketing")({
   component: MarketingStudio,
+  head: () => ({
+    meta: [
+      { title: "Marketing e publicidade | Admin Master" },
+      { name: "description", content: "Estúdio de campanhas do SeuAgendamento." },
+    ],
+  }),
 });
 
 type Theme = "features" | "practicality" | "plans" | "referral" | "custom";
