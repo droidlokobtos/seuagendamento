@@ -497,7 +497,7 @@ function BookingPage() {
       `\n\n🙏 Aguardo a confirmação. Obrigado(a)!`;
     const depositCents = Number(done.deposit_required_cents ?? 0);
     return (
-      <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background">
+      <div className="booking-premium min-h-screen bg-gradient-to-b from-muted/40 via-background to-background">
         <Hero
           company={company}
           primary={primary}
@@ -593,7 +593,7 @@ function BookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background pb-24">
+    <div className="booking-premium min-h-screen bg-gradient-to-b from-muted/40 via-background to-background pb-24">
       <Hero
         company={company}
         primary={primary}
