@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Layers3,
   Gift,
+  Megaphone,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ const NAV = [
   { to: "/admin/niches", label: "Nichos", icon: Tag },
   { to: "/admin/payments", label: "Pagamentos", icon: CreditCard },
   { to: "/admin/referrals", label: "Indicações", icon: Gift },
+  { to: "/admin/marketing", label: "Marketing e publicidade", icon: Megaphone },
   { to: "/admin/logs", label: "Logs de acesso", icon: ShieldCheck },
   { to: "/admin/settings", label: "Configurações", icon: Settings },
 ];
