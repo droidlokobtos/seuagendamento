@@ -47,6 +47,7 @@ import { Route as AuthenticatedAppSalesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAppRewardsRouteImport } from './routes/_authenticated/app/rewards'
 import { Route as AuthenticatedAppReviewsRouteImport } from './routes/_authenticated/app/reviews'
 import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app/reports'
+import { Route as AuthenticatedAppReferralsRouteImport } from './routes/_authenticated/app/referrals'
 import { Route as AuthenticatedAppProductsRouteImport } from './routes/_authenticated/app/products'
 import { Route as AuthenticatedAppProceduresRouteImport } from './routes/_authenticated/app/procedures'
 import { Route as AuthenticatedAppPortalRouteImport } from './routes/_authenticated/app/portal'
@@ -73,9 +74,11 @@ import { Route as AuthenticatedAppAiAlertsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppAiRouteImport } from './routes/_authenticated/app/ai'
 import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app/agenda'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
+import { Route as AuthenticatedAdminReferralsRouteImport } from './routes/_authenticated/admin/referrals'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
 import { Route as AuthenticatedAdminNichesRouteImport } from './routes/_authenticated/admin/niches'
+import { Route as AuthenticatedAdminMarketingRouteImport } from './routes/_authenticated/admin/marketing'
 import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated/admin/logs'
 import { Route as AuthenticatedAdminCompaniesRouteImport } from './routes/_authenticated/admin/companies'
 import { Route as BSlugAvaliarAppointmentIdRouteImport } from './routes/b.$slug.avaliar.$appointmentId'
@@ -276,6 +279,12 @@ const AuthenticatedAppReportsRoute = AuthenticatedAppReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AuthenticatedAppRouteRoute,
 } as any)
+const AuthenticatedAppReferralsRoute =
+  AuthenticatedAppReferralsRouteImport.update({
+    id: '/referrals',
+    path: '/referrals',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
 const AuthenticatedAppProductsRoute =
   AuthenticatedAppProductsRouteImport.update({
     id: '/products',
@@ -420,6 +429,12 @@ const AuthenticatedAdminSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminReferralsRoute =
+  AuthenticatedAdminReferralsRouteImport.update({
+    id: '/referrals',
+    path: '/referrals',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminPlansRoute = AuthenticatedAdminPlansRouteImport.update({
   id: '/plans',
   path: '/plans',
@@ -435,6 +450,12 @@ const AuthenticatedAdminNichesRoute =
   AuthenticatedAdminNichesRouteImport.update({
     id: '/niches',
     path: '/niches',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminMarketingRoute =
+  AuthenticatedAdminMarketingRouteImport.update({
+    id: '/marketing',
+    path: '/marketing',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAdminLogsRoute = AuthenticatedAdminLogsRouteImport.update({
@@ -490,9 +511,11 @@ export interface FileRoutesByFullPath {
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/admin/marketing': typeof AuthenticatedAdminMarketingRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
+  '/admin/referrals': typeof AuthenticatedAdminReferralsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
@@ -519,6 +542,7 @@ export interface FileRoutesByFullPath {
   '/app/portal': typeof AuthenticatedAppPortalRoute
   '/app/procedures': typeof AuthenticatedAppProceduresRoute
   '/app/products': typeof AuthenticatedAppProductsRoute
+  '/app/referrals': typeof AuthenticatedAppReferralsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/reviews': typeof AuthenticatedAppReviewsRoute
   '/app/rewards': typeof AuthenticatedAppRewardsRoute
@@ -562,9 +586,11 @@ export interface FileRoutesByTo {
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/admin/marketing': typeof AuthenticatedAdminMarketingRoute
   '/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
+  '/admin/referrals': typeof AuthenticatedAdminReferralsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
@@ -591,6 +617,7 @@ export interface FileRoutesByTo {
   '/app/portal': typeof AuthenticatedAppPortalRoute
   '/app/procedures': typeof AuthenticatedAppProceduresRoute
   '/app/products': typeof AuthenticatedAppProductsRoute
+  '/app/referrals': typeof AuthenticatedAppReferralsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/reviews': typeof AuthenticatedAppReviewsRoute
   '/app/rewards': typeof AuthenticatedAppRewardsRoute
@@ -638,9 +665,11 @@ export interface FileRoutesById {
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/_authenticated/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/_authenticated/admin/marketing': typeof AuthenticatedAdminMarketingRoute
   '/_authenticated/admin/niches': typeof AuthenticatedAdminNichesRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
+  '/_authenticated/admin/referrals': typeof AuthenticatedAdminReferralsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
@@ -667,6 +696,7 @@ export interface FileRoutesById {
   '/_authenticated/app/portal': typeof AuthenticatedAppPortalRoute
   '/_authenticated/app/procedures': typeof AuthenticatedAppProceduresRoute
   '/_authenticated/app/products': typeof AuthenticatedAppProductsRoute
+  '/_authenticated/app/referrals': typeof AuthenticatedAppReferralsRoute
   '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
   '/_authenticated/app/reviews': typeof AuthenticatedAppReviewsRoute
   '/_authenticated/app/rewards': typeof AuthenticatedAppRewardsRoute
@@ -714,9 +744,11 @@ export interface FileRouteTypes {
     | '/confirmar/$token'
     | '/admin/companies'
     | '/admin/logs'
+    | '/admin/marketing'
     | '/admin/niches'
     | '/admin/payments'
     | '/admin/plans'
+    | '/admin/referrals'
     | '/admin/settings'
     | '/app/agenda'
     | '/app/ai'
@@ -743,6 +775,7 @@ export interface FileRouteTypes {
     | '/app/portal'
     | '/app/procedures'
     | '/app/products'
+    | '/app/referrals'
     | '/app/reports'
     | '/app/reviews'
     | '/app/rewards'
@@ -786,9 +819,11 @@ export interface FileRouteTypes {
     | '/confirmar/$token'
     | '/admin/companies'
     | '/admin/logs'
+    | '/admin/marketing'
     | '/admin/niches'
     | '/admin/payments'
     | '/admin/plans'
+    | '/admin/referrals'
     | '/admin/settings'
     | '/app/agenda'
     | '/app/ai'
@@ -815,6 +850,7 @@ export interface FileRouteTypes {
     | '/app/portal'
     | '/app/procedures'
     | '/app/products'
+    | '/app/referrals'
     | '/app/reports'
     | '/app/reviews'
     | '/app/rewards'
@@ -861,9 +897,11 @@ export interface FileRouteTypes {
     | '/confirmar/$token'
     | '/_authenticated/admin/companies'
     | '/_authenticated/admin/logs'
+    | '/_authenticated/admin/marketing'
     | '/_authenticated/admin/niches'
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/plans'
+    | '/_authenticated/admin/referrals'
     | '/_authenticated/admin/settings'
     | '/_authenticated/app/agenda'
     | '/_authenticated/app/ai'
@@ -890,6 +928,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/portal'
     | '/_authenticated/app/procedures'
     | '/_authenticated/app/products'
+    | '/_authenticated/app/referrals'
     | '/_authenticated/app/reports'
     | '/_authenticated/app/reviews'
     | '/_authenticated/app/rewards'
@@ -1214,6 +1253,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppReportsRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/referrals': {
+      id: '/_authenticated/app/referrals'
+      path: '/referrals'
+      fullPath: '/app/referrals'
+      preLoaderRoute: typeof AuthenticatedAppReferralsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/products': {
       id: '/_authenticated/app/products'
       path: '/products'
@@ -1396,6 +1442,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/referrals': {
+      id: '/_authenticated/admin/referrals'
+      path: '/referrals'
+      fullPath: '/admin/referrals'
+      preLoaderRoute: typeof AuthenticatedAdminReferralsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/plans': {
       id: '/_authenticated/admin/plans'
       path: '/plans'
@@ -1415,6 +1468,13 @@ declare module '@tanstack/react-router' {
       path: '/niches'
       fullPath: '/admin/niches'
       preLoaderRoute: typeof AuthenticatedAdminNichesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/marketing': {
+      id: '/_authenticated/admin/marketing'
+      path: '/marketing'
+      fullPath: '/admin/marketing'
+      preLoaderRoute: typeof AuthenticatedAdminMarketingRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/logs': {
@@ -1465,9 +1525,11 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminCompaniesRoute: typeof AuthenticatedAdminCompaniesRoute
   AuthenticatedAdminLogsRoute: typeof AuthenticatedAdminLogsRoute
+  AuthenticatedAdminMarketingRoute: typeof AuthenticatedAdminMarketingRoute
   AuthenticatedAdminNichesRoute: typeof AuthenticatedAdminNichesRoute
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
   AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRoute
+  AuthenticatedAdminReferralsRoute: typeof AuthenticatedAdminReferralsRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
@@ -1476,9 +1538,11 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
   {
     AuthenticatedAdminCompaniesRoute: AuthenticatedAdminCompaniesRoute,
     AuthenticatedAdminLogsRoute: AuthenticatedAdminLogsRoute,
+    AuthenticatedAdminMarketingRoute: AuthenticatedAdminMarketingRoute,
     AuthenticatedAdminNichesRoute: AuthenticatedAdminNichesRoute,
     AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
     AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRoute,
+    AuthenticatedAdminReferralsRoute: AuthenticatedAdminReferralsRoute,
     AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   }
@@ -1514,6 +1578,7 @@ interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppPortalRoute: typeof AuthenticatedAppPortalRoute
   AuthenticatedAppProceduresRoute: typeof AuthenticatedAppProceduresRoute
   AuthenticatedAppProductsRoute: typeof AuthenticatedAppProductsRoute
+  AuthenticatedAppReferralsRoute: typeof AuthenticatedAppReferralsRoute
   AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
   AuthenticatedAppReviewsRoute: typeof AuthenticatedAppReviewsRoute
   AuthenticatedAppRewardsRoute: typeof AuthenticatedAppRewardsRoute
@@ -1552,6 +1617,7 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppPortalRoute: AuthenticatedAppPortalRoute,
   AuthenticatedAppProceduresRoute: AuthenticatedAppProceduresRoute,
   AuthenticatedAppProductsRoute: AuthenticatedAppProductsRoute,
+  AuthenticatedAppReferralsRoute: AuthenticatedAppReferralsRoute,
   AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
   AuthenticatedAppReviewsRoute: AuthenticatedAppReviewsRoute,
   AuthenticatedAppRewardsRoute: AuthenticatedAppRewardsRoute,
