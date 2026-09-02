@@ -10,17 +10,33 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { toast } from "sonner";
-import { Palette, Sparkles, MapPin, Clock, ExternalLink } from "lucide-react";
-import { BG_STYLES, CARD_STYLES, HIGHLIGHTS, portalTheme, heroBackground, heroImageOpacity, heroTextClass, highlightStyle } from "@/lib/portal-theme";
+import { Palette, Sparkles, MapPin, Clock, ExternalLink, RotateCcw } from "lucide-react";
+import {
+  BG_STYLES,
+  CARD_STYLES,
+  HIGHLIGHTS,
+  portalTheme,
+  heroBackground,
+  heroImageOpacity,
+  heroTextClass,
+  highlightStyle,
+} from "@/lib/portal-theme";
 
 export const Route = createFileRoute("/_authenticated/app/portal")({
   component: PortalCustomizePage,
   head: () => ({
     meta: [
       { title: "Personalizar página de agendamento" },
-      { name: "description", content: "Defina cores, imagem de fundo, logotipo e slogan da sua página pública de agendamento." },
+      {
+        name: "description",
+        content:
+          "Defina cores, imagem de fundo, logotipo e slogan da sua página pública de agendamento.",
+      },
       { property: "og:title", content: "Personalizar página de agendamento" },
-      { property: "og:description", content: "Identidade visual própria para o seu link de agendamento." },
+      {
+        property: "og:description",
+        content: "Identidade visual própria para o seu link de agendamento.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -55,7 +71,15 @@ const DEFAULTS: Form = {
   welcome_message: "",
 };
 
-function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <div>
       <Label>{label}</Label>
@@ -67,7 +91,11 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
           className="h-9 w-12 cursor-pointer rounded border border-border bg-transparent p-0.5"
           aria-label={label}
         />
-        <Input value={value} onChange={(e) => onChange(e.target.value)} className="font-mono text-xs" />
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="font-mono text-xs"
+        />
       </div>
     </div>
   );
@@ -107,10 +135,12 @@ function PortalCustomizePage() {
   const { activeCompany } = useCompany();
   const companyId = activeCompany!.id;
   const [form, setForm] = useState<Form>(DEFAULTS);
+  const [hasChanges, setHasChanges] = useState(false);
 
   const { data: company } = useQuery({
     queryKey: ["company-full", companyId],
-    queryFn: async () => (await supabase.from("companies").select("*").eq("id", companyId).single()).data,
+    queryFn: async () =>
+      (await supabase.from("companies").select("*").eq("id", companyId).single()).data,
   });
 
   useEffect(() => {
@@ -129,16 +159,24 @@ function PortalCustomizePage() {
       portal_slogan: c.portal_slogan ?? "",
       welcome_message: c.welcome_message ?? "",
     });
+    setHasChanges(false);
   }, [company]);
+
+  const updateForm = (change: Partial<Form>) => {
+    setForm((current) => ({ ...current, ...change }));
+    setHasChanges(true);
+  };
 
   const { data: gallery = [] } = useQuery({
     queryKey: ["portal-gallery", companyId],
     queryFn: async () =>
-      (await supabase
-        .from("gallery_photos")
-        .select("id,photo_url")
-        .eq("company_id", companyId)
-        .limit(24)).data ?? [],
+      (
+        await supabase
+          .from("gallery_photos")
+          .select("id,photo_url")
+          .eq("company_id", companyId)
+          .limit(24)
+      ).data ?? [],
   });
 
   const save = useMutation({
@@ -163,6 +201,7 @@ function PortalCustomizePage() {
     },
     onSuccess: () => {
       toast.success("Personalização publicada");
+      setHasChanges(false);
       qc.invalidateQueries({ queryKey: ["company-full", companyId] });
       qc.invalidateQueries({ queryKey: ["my-companies"] });
     },
@@ -183,7 +222,8 @@ function PortalCustomizePage() {
             <Palette className="h-5 w-5 text-primary" /> Personalizar página de agendamento
           </h1>
           <p className="text-sm text-muted-foreground">
-            Deixe seu link com a identidade visual da sua marca. As alterações aparecem no preview antes de publicar.
+            Deixe seu link com a identidade visual da sua marca. As alterações aparecem no preview
+            antes de publicar.
           </p>
         </div>
         {publicUrl && (
@@ -203,7 +243,7 @@ function PortalCustomizePage() {
                   <Label>Logotipo</Label>
                   <ImageUpload
                     value={form.logo_url}
-                    onChange={(url) => setForm((f) => ({ ...f, logo_url: url }))}
+                    onChange={(url) => updateForm({ logo_url: url })}
                     folder="logos"
                     preset="logo"
                     label="Enviar logotipo"
@@ -214,7 +254,7 @@ function PortalCustomizePage() {
                     <Label>Slogan / mensagem de destaque</Label>
                     <Input
                       value={form.portal_slogan}
-                      onChange={(e) => setForm((f) => ({ ...f, portal_slogan: e.target.value }))}
+                      onChange={(e) => updateForm({ portal_slogan: e.target.value })}
                       placeholder="Ex.: Estilo e precisão em cada corte"
                       maxLength={90}
                     />
@@ -224,7 +264,7 @@ function PortalCustomizePage() {
                     <Textarea
                       rows={3}
                       value={form.welcome_message}
-                      onChange={(e) => setForm((f) => ({ ...f, welcome_message: e.target.value }))}
+                      onChange={(e) => updateForm({ welcome_message: e.target.value })}
                       placeholder="Boas-vindas exibidas na página pública"
                     />
                   </div>
@@ -239,14 +279,14 @@ function PortalCustomizePage() {
               <OptionGroup
                 options={BG_STYLES}
                 value={form.portal_bg_style}
-                onChange={(v) => setForm((f) => ({ ...f, portal_bg_style: v }))}
+                onChange={(v) => updateForm({ portal_bg_style: v })}
               />
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <Label>Imagem própria (capa)</Label>
                   <ImageUpload
                     value={form.portal_bg_url}
-                    onChange={(url) => setForm((f) => ({ ...f, portal_bg_url: url }))}
+                    onChange={(url) => updateForm({ portal_bg_url: url })}
                     folder="banners"
                     aspect="wide"
                     preset="banner"
@@ -265,9 +305,13 @@ function PortalCustomizePage() {
                         <button
                           key={g.id}
                           type="button"
-                          onClick={() => setForm((f) => ({ ...f, portal_bg_url: g.photo_url, portal_bg_style: "image" }))}
+                          onClick={() =>
+                            updateForm({ portal_bg_url: g.photo_url, portal_bg_style: "image" })
+                          }
                           className={`aspect-square overflow-hidden rounded-lg border-2 ${
-                            form.portal_bg_url === g.photo_url ? "border-primary" : "border-transparent"
+                            form.portal_bg_url === g.photo_url
+                              ? "border-primary"
+                              : "border-transparent"
                           }`}
                         >
                           <img src={g.photo_url} alt="" className="h-full w-full object-cover" />
@@ -284,17 +328,33 @@ function PortalCustomizePage() {
             <CardContent className="p-6 space-y-4">
               <h2 className="font-semibold">Cores e destaques</h2>
               <div className="grid md:grid-cols-2 gap-4">
-                <ColorField label="Cor principal" value={form.primary_color} onChange={(v) => setForm((f) => ({ ...f, primary_color: v }))} />
-                <ColorField label="Cor de destaque" value={form.secondary_color} onChange={(v) => setForm((f) => ({ ...f, secondary_color: v }))} />
-                <ColorField label="Cor dos botões" value={form.portal_button_color} onChange={(v) => setForm((f) => ({ ...f, portal_button_color: v }))} />
-                <ColorField label="Cor dos textos" value={form.portal_text_color} onChange={(v) => setForm((f) => ({ ...f, portal_text_color: v }))} />
+                <ColorField
+                  label="Cor principal"
+                  value={form.primary_color}
+                  onChange={(v) => updateForm({ primary_color: v })}
+                />
+                <ColorField
+                  label="Cor de destaque"
+                  value={form.secondary_color}
+                  onChange={(v) => updateForm({ secondary_color: v })}
+                />
+                <ColorField
+                  label="Cor dos botões"
+                  value={form.portal_button_color}
+                  onChange={(v) => updateForm({ portal_button_color: v })}
+                />
+                <ColorField
+                  label="Cor dos textos"
+                  value={form.portal_text_color}
+                  onChange={(v) => updateForm({ portal_text_color: v })}
+                />
               </div>
               <div>
                 <Label>Estilo de destaque</Label>
                 <OptionGroup
                   options={HIGHLIGHTS}
                   value={form.portal_highlight}
-                  onChange={(v) => setForm((f) => ({ ...f, portal_highlight: v }))}
+                  onChange={(v) => updateForm({ portal_highlight: v })}
                 />
               </div>
               <div>
@@ -302,17 +362,24 @@ function PortalCustomizePage() {
                 <OptionGroup
                   options={CARD_STYLES}
                   value={form.portal_card_style}
-                  onChange={(v) => setForm((f) => ({ ...f, portal_card_style: v }))}
+                  onChange={(v) => updateForm({ portal_card_style: v })}
                 />
               </div>
             </CardContent>
           </Card>
 
           <div className="flex gap-2">
-            <Button onClick={() => save.mutate()} disabled={save.isPending}>
+            <Button onClick={() => save.mutate()} disabled={save.isPending || !hasChanges}>
               {save.isPending ? "Publicando..." : "Publicar alterações"}
             </Button>
-            <Button variant="outline" onClick={() => company && setForm({ ...form, ...DEFAULTS })}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setForm(DEFAULTS);
+                setHasChanges(true);
+              }}
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
               Restaurar padrão
             </Button>
           </div>
@@ -336,7 +403,11 @@ function PortalCustomizePage() {
               <div className={`relative px-5 py-6 ${heroTextClass(theme)}`}>
                 <div className="flex items-center gap-3">
                   {form.logo_url ? (
-                    <img src={form.logo_url} className="h-12 w-12 rounded-2xl object-cover ring-2 ring-white/40" alt="" />
+                    <img
+                      src={form.logo_url}
+                      className="h-12 w-12 rounded-2xl object-cover ring-2 ring-white/40"
+                      alt=""
+                    />
                   ) : (
                     <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/15 ring-2 ring-white/40">
                       <Sparkles className="h-6 w-6" />
@@ -348,7 +419,8 @@ function PortalCustomizePage() {
                   </div>
                 </div>
                 <p className="mt-3 flex items-center gap-1 text-[11px] opacity-80">
-                  <MapPin className="h-3 w-3" /> {(company as any)?.address ?? "Endereço da empresa"}
+                  <MapPin className="h-3 w-3" />{" "}
+                  {(company as any)?.address ?? "Endereço da empresa"}
                 </p>
               </div>
             </div>
@@ -356,12 +428,18 @@ function PortalCustomizePage() {
               {form.welcome_message && (
                 <p
                   className="rounded-lg p-2.5 text-xs"
-                  style={{ background: `${theme.accent}15`, borderLeft: `3px solid ${theme.accent}` }}
+                  style={{
+                    background: `${theme.accent}15`,
+                    borderLeft: `3px solid ${theme.accent}`,
+                  }}
                 >
                   {form.welcome_message}
                 </p>
               )}
-              <span className="inline-flex rounded-full border px-2.5 py-1 text-[10px] font-medium" style={highlightStyle(theme)}>
+              <span
+                className="inline-flex rounded-full border px-2.5 py-1 text-[10px] font-medium"
+                style={highlightStyle(theme)}
+              >
                 Agendamento online
               </span>
               {[
@@ -375,11 +453,16 @@ function PortalCustomizePage() {
                       ? "flex items-center justify-between border-b py-2"
                       : "flex items-center justify-between rounded-xl border p-3 shadow-sm"
                   }
-                  style={theme.cardStyle === "minimal" ? undefined : { borderColor: `${theme.accent}40` }}
+                  style={
+                    theme.cardStyle === "minimal" ? undefined : { borderColor: `${theme.accent}40` }
+                  }
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     {theme.cardStyle === "photo" && (
-                      <div className="h-10 w-10 shrink-0 rounded-lg" style={{ background: `${theme.accent}30` }} />
+                      <div
+                        className="h-10 w-10 shrink-0 rounded-lg"
+                        style={{ background: `${theme.accent}30` }}
+                      />
                     )}
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{s.n}</p>
