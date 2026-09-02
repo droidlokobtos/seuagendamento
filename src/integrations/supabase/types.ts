@@ -4070,6 +4070,128 @@ export type Database = {
         }
         Relationships: []
       }
+      reseller_sales: {
+        Row: {
+          commission_amount: number | null
+          commission_percent: number
+          company_id: string
+          created_at: string
+          earned_at: string | null
+          first_payment_amount: number | null
+          first_payment_id: string | null
+          id: string
+          paid_at: string | null
+          payout_reference: string | null
+          reseller_id: string
+          scheduled_payout_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          commission_amount?: number | null
+          commission_percent: number
+          company_id: string
+          created_at?: string
+          earned_at?: string | null
+          first_payment_amount?: number | null
+          first_payment_id?: string | null
+          id?: string
+          paid_at?: string | null
+          payout_reference?: string | null
+          reseller_id: string
+          scheduled_payout_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          commission_amount?: number | null
+          commission_percent?: number
+          company_id?: string
+          created_at?: string
+          earned_at?: string | null
+          first_payment_amount?: number | null
+          first_payment_id?: string | null
+          id?: string
+          paid_at?: string | null
+          payout_reference?: string | null
+          reseller_id?: string
+          scheduled_payout_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_sales_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reseller_sales_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reseller_sales_first_payment_id_fkey"
+            columns: ["first_payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reseller_sales_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resellers: {
+        Row: {
+          active: boolean
+          commission_percent: number
+          created_at: string
+          email: string
+          id: string
+          name: string
+          payout_day: number
+          phone: string | null
+          pix_key: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          commission_percent: number
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          payout_day?: number
+          phone?: string | null
+          pix_key?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          commission_percent?: number
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          payout_day?: number
+          phone?: string | null
+          pix_key?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       review_invites: {
         Row: {
           appointment_id: string
@@ -5816,10 +5938,19 @@ export type Database = {
       is_company_admin: { Args: { _company: string }; Returns: boolean }
       is_company_blocked: { Args: { _company: string }; Returns: boolean }
       is_company_member: { Args: { _company: string }; Returns: boolean }
+      is_reseller: { Args: never; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      link_reseller_company: {
+        Args: { _company_id: string; _reseller_id: string }
+        Returns: Json
+      }
       mark_business_expense_paid: {
         Args: { p_expense_id: string; p_payment_method_id: string }
         Returns: string
+      }
+      mark_reseller_commission_paid: {
+        Args: { _reference?: string; _sale_id: string }
+        Returns: Json
       }
       plan_mark_expired: { Args: never; Returns: undefined }
       recalc_appointment_finance: {
