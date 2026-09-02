@@ -6,15 +6,20 @@ import { Loader2 } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/home")({ component: Redirector });
 
 function Redirector() {
-  const { loading, isSuperAdmin, companyIds } = useAuth();
+  const { loading, isSuperAdmin, isReseller, companyIds } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (loading) return;
     if (isSuperAdmin) void navigate({ to: "/admin", replace: true });
+    else if (isReseller) void navigate({ to: "/reseller" as any, replace: true });
     else if (companyIds.length > 0) void navigate({ to: "/app", replace: true });
     else void navigate({ to: "/onboarding" as any, replace: true });
-  }, [loading, isSuperAdmin, companyIds, navigate]);
+  }, [loading, isSuperAdmin, isReseller, companyIds, navigate]);
 
-  return <div className="min-h-screen grid place-items-center bg-background"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  return (
+    <div className="min-h-screen grid place-items-center bg-background">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
+  );
 }
