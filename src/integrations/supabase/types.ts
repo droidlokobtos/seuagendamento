@@ -4070,6 +4070,143 @@ export type Database = {
         }
         Relationships: []
       }
+      public_api_events: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          detail: string | null
+          duration_ms: number | null
+          id: number
+          identifier_hash: string | null
+          outcome: string
+          scope: string
+          status_code: number | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          detail?: string | null
+          duration_ms?: number | null
+          id?: never
+          identifier_hash?: string | null
+          outcome: string
+          scope: string
+          status_code?: number | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          detail?: string | null
+          duration_ms?: number | null
+          id?: never
+          identifier_hash?: string | null
+          outcome?: string
+          scope?: string
+          status_code?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_api_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_api_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_api_rate_limits: {
+        Row: {
+          identifier_hash: string
+          request_count: number
+          scope: string
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          identifier_hash: string
+          request_count?: number
+          scope: string
+          updated_at?: string
+          window_started_at: string
+        }
+        Update: {
+          identifier_hash?: string
+          request_count?: number
+          scope?: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: []
+      }
+      public_client_verifications: {
+        Row: {
+          company_id: string
+          consumed_at: string | null
+          created_at: string
+          customer_id: string | null
+          expires_at: string
+          id: string
+          phone_hash: string
+          token_hash: string
+        }
+        Insert: {
+          company_id: string
+          consumed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          expires_at: string
+          id?: string
+          phone_hash: string
+          token_hash: string
+        }
+        Update: {
+          company_id?: string
+          consumed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          expires_at?: string
+          id?: string
+          phone_hash?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_client_verifications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_client_verifications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_client_verifications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_client_verifications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reseller_sales: {
         Row: {
           commission_amount: number | null
@@ -5870,6 +6007,19 @@ export type Database = {
         Returns: Json
       }
       company_features: { Args: { _company: string }; Returns: Json }
+      consume_public_rate_limit: {
+        Args: {
+          _identifier_hash: string
+          _limit: number
+          _scope: string
+          _window_seconds: number
+        }
+        Returns: {
+          allowed: boolean
+          remaining: number
+          retry_after_seconds: number
+        }[]
+      }
       create_company_for_user_as_super_admin: {
         Args: {
           _admin_notes: string
@@ -5965,6 +6115,7 @@ export type Database = {
         Args: { _appt: string }
         Returns: undefined
       }
+      system_health_snapshot: { Args: never; Returns: Json }
       user_company_ids: { Args: { _user_id: string }; Returns: string[] }
       validate_coupon: {
         Args: { _code: string; _company: string; _subtotal_cents: number }
