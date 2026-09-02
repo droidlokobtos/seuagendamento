@@ -24,7 +24,15 @@ export async function createUserWithPublicSignup(input: {
     password: input.password,
     options: { data: { full_name: input.fullName } },
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (/weak|easy to guess|pwned|compromis/i.test(error.message)) {
+      throw new Error(
+        "Senha muito fraca ou já vazada em outros sites. Use uma senha forte (8+ caracteres, com letras, números e símbolos).",
+      );
+    }
+    throw new Error(error.message);
+  }
+
   if (!data.user) throw new Error("Não foi possível criar o usuário da empresa.");
 
   // Supabase can return an obfuscated user for an existing account.
