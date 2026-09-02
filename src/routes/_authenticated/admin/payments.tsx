@@ -66,7 +66,7 @@ function Payments() {
       (
         await supabase
           .from("companies")
-          .select("id, name, slug, monthly_fee, next_due_at, status, suspended_at")
+          .select("id, name, slug, monthly_fee, next_due_at, status, suspended_at, plan_code")
           .order("name")
       ).data ?? [],
   });
@@ -76,9 +76,25 @@ function Payments() {
     queryFn: async () => (await supabase.from("platform_settings").select("*").maybeSingle()).data,
   });
 
+  const { data: referralData } = useQuery({
+    queryKey: ["admin-referrals-for-billing"],
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)("get_admin_referral_dashboard");
+      if (error) throw error;
+      return data as any;
+    },
+  });
+
   const selected = useMemo(
     () => companies.find((c: any) => c.id === selectedId) as any,
     [companies, selectedId],
+  );
+  const nextReferral = useMemo(
+    () =>
+      (referralData?.referrals ?? [])
+        .filter((r: any) => r.referrer_company_id === selectedId && r.status === "qualified")
+        .sort((a: any, b: any) => String(a.qualified_at).localeCompare(String(b.qualified_at)))[0],
+    [referralData, selectedId],
   );
 
   const openDialog = (m: DialogMode, cid?: string) => {
@@ -98,30 +114,23 @@ function Payments() {
 
   const registerPayment = useMutation({
     mutationFn: async () => {
-      const { data: inserted, error } = await supabase
-        .from("payments")
-        .insert({
-          company_id: selectedId,
-          amount: Number(amount),
-          note: note || null,
-          paid_at: new Date().toISOString(),
-        })
-        .select("id, amount, paid_at, note")
-        .single();
+      const { data: inserted, error } = await (supabase.rpc as any)(
+        "register_subscription_payment",
+        {
+          _company_id: selectedId,
+          _gross_amount: Number(amount),
+          _note: note || null,
+        },
+      );
       if (error) throw error;
-      // Roll next_due_at forward by 1 month
-      if (selected?.next_due_at) {
-        const d = new Date(selected.next_due_at);
-        d.setMonth(d.getMonth() + 1);
-        await supabase
-          .from("companies")
-          .update({ next_due_at: d.toISOString().slice(0, 10) })
-          .eq("id", selectedId);
-      }
       return inserted;
     },
     onSuccess: (inserted) => {
-      toast.success("Pagamento registrado — gerando comprovante");
+      toast.success(
+        inserted?.discount_amount > 0
+          ? `Pagamento registrado com ${inserted.discount_percent}% de desconto por indicação`
+          : "Pagamento registrado — gerando comprovante",
+      );
       qc.invalidateQueries({ queryKey: ["admin-payments"] });
       qc.invalidateQueries({ queryKey: ["admin-companies-billing"] });
       qc.invalidateQueries({ queryKey: ["admin-companies"] });
@@ -181,7 +190,10 @@ function Payments() {
   const chargeMessage = useMemo(() => {
     if (!selected) return "";
     const due = selected.next_due_at ? dateBR(selected.next_due_at) : "—";
-    const val = brl(Number(amount || selected.monthly_fee || 49.9));
+    const gross = Number(amount || selected.monthly_fee || 49.9);
+    const discountPercent = Number(nextReferral?.reward_percent ?? 0);
+    const discount = Math.round(gross * discountPercent) / 100;
+    const val = brl(Math.max(0, gross - discount));
     return [
       `Olá! 😊`,
       ``,
@@ -189,6 +201,7 @@ function Payments() {
       ``,
       `Data: ${due}`,
       `Valor: ${val}`,
+      discountPercent ? `Desconto por indicação: ${discountPercent}% (${brl(discount)})` : "",
       ``,
       `PIX: ${settings?.pix_key ?? "(configure em Configurações)"}`,
       settings?.pix_holder ? `Titular: ${settings.pix_holder}` : "",
@@ -198,7 +211,7 @@ function Payments() {
     ]
       .filter(Boolean)
       .join("\n");
-  }, [selected, amount, settings]);
+  }, [selected, amount, settings, nextReferral]);
 
   const copyMessage = async () => {
     await navigator.clipboard.writeText(chargeMessage);
@@ -333,6 +346,7 @@ function Payments() {
                   <tr>
                     <th className="text-left p-3 pl-6">Empresa</th>
                     <th className="text-left p-3">Valor</th>
+                    <th className="text-left p-3">Desconto</th>
                     <th className="text-left p-3">Pago em</th>
                     <th className="text-left p-3">Observação</th>
                     <th className="text-right p-3 pr-6">Comprovante</th>
@@ -345,7 +359,24 @@ function Payments() {
                         <p className="font-medium">{p.companies?.name ?? "—"}</p>
                         <p className="text-xs text-muted-foreground">/{p.companies?.slug}</p>
                       </td>
-                      <td className="p-3 font-medium">{brl(Number(p.amount))}</td>
+                      <td className="p-3 font-medium">
+                        {brl(Number(p.amount))}
+                        {Number(p.gross_amount ?? p.amount) !== Number(p.amount) && (
+                          <p className="text-xs font-normal text-muted-foreground line-through">
+                            {brl(Number(p.gross_amount))}
+                          </p>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        {Number(p.referral_discount_amount) > 0 ? (
+                          <BadgePercentLabel
+                            percent={p.referral_discount_percent}
+                            amount={p.referral_discount_amount}
+                          />
+                        ) : (
+                          "—"
+                        )}
+                      </td>
                       <td className="p-3 text-muted-foreground">{dateBR(p.paid_at)}</td>
                       <td className="p-3 text-muted-foreground">{p.note ?? "—"}</td>
                       <td className="p-3 pr-6 text-right">
@@ -402,7 +433,8 @@ function Payments() {
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Ao confirmar, o próximo vencimento avança 1 mês automaticamente.
+              Ao confirmar, o sistema aplica automaticamente no máximo um desconto de indicação
+              disponível e avança o vencimento.
             </p>
           </div>
           <DialogFooter>
@@ -514,5 +546,13 @@ function Payments() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function BadgePercentLabel({ percent, amount }: { percent: number | null; amount: number }) {
+  return (
+    <span className="inline-flex rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-700">
+      {Number(percent)}% · {brl(Number(amount))}
+    </span>
   );
 }
