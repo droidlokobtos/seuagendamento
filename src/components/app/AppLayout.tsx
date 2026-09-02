@@ -348,7 +348,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(135deg,var(--color-background)_0%,var(--color-muted)_160%)] flex flex-col">
+    <div className="premium-shell min-h-screen flex flex-col">
       {impersonating && (
         <div className="bg-amber-500 text-black px-4 py-2 text-sm flex items-center gap-3 flex-wrap sticky top-0 z-40">
           <ShieldAlert className="h-4 w-4 shrink-0" />
@@ -370,7 +370,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
         </div>
       )}
       <div className="flex flex-1 min-h-0">
-        <aside className="hidden md:flex md:w-72 shrink-0 border-r border-border/70 bg-card/90 backdrop-blur-xl flex-col shadow-[8px_0_30px_-24px_rgba(0,0,0,0.25)]">
+        <aside className="premium-sidebar hidden md:flex md:w-72 shrink-0 border-r flex-col">
           <div className="h-[72px] flex items-center px-5 border-b border-border/70">
             <Brand />
           </div>
@@ -398,7 +398,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
           </div>
         </aside>
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-[72px] border-b border-border/70 bg-card/80 backdrop-blur-xl flex items-center gap-3 px-4 md:px-7 sticky top-0 z-30 shadow-[0_8px_30px_-26px_rgba(0,0,0,0.35)]">
+          <header className="premium-header h-[72px] border-b flex items-center gap-3 px-4 md:px-7 sticky top-0 z-30">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden rounded-xl">
@@ -407,7 +407,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
               </SheetTrigger>
               <SheetContent
                 side="left"
-                className="p-0 w-72 flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden bg-card"
+                className="premium-sidebar p-0 w-72 flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden"
               >
                 <div className="h-[72px] shrink-0 flex items-center px-5 border-b">
                   <Brand />
@@ -497,7 +497,9 @@ export function AppLayout({ children }: { children?: ReactNode }) {
               <NotificationsBell />
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-7 lg:p-9 pb-24 md:pb-9">{children ?? <Outlet />}</main>
+          <main className="premium-content flex-1 p-4 md:p-7 lg:p-9 pb-24 md:pb-9">
+            {children ?? <Outlet />}
+          </main>
         </div>
       </div>
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border/70 bg-card/95 backdrop-blur-xl shadow-[0_-10px_30px_-25px_rgba(0,0,0,0.3)]">
