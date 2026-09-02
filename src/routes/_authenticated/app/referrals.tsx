@@ -1,6 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Copy, Gift, Hourglass, Link2, Percent, Users } from "lucide-react";
+import {
+  CheckCircle2,
+  Copy,
+  Gift,
+  Hourglass,
+  Link2,
+  MessageCircle,
+  Percent,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/lib/company";
@@ -24,7 +33,7 @@ const statusMeta: Record<
 function Referrals() {
   const { activeCompany } = useCompany();
   const companyId = activeCompany?.id;
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["company-referrals", companyId],
     enabled: !!companyId,
     queryFn: async () => {
@@ -42,6 +51,9 @@ function Referrals() {
     await navigator.clipboard.writeText(value);
     toast.success(`${label} copiado`);
   };
+  const shareText = encodeURIComponent(
+    `Conheça o sistema de agendamento que uso na minha empresa. Cadastre-se pelo meu link: ${link}`,
+  );
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -74,6 +86,12 @@ function Referrals() {
                 <Copy className="mr-2 h-4 w-4" />
                 Copiar link
               </Button>
+              <Button variant="outline" disabled={!link} asChild>
+                <a href={`https://wa.me/?text=${shareText}`} target="_blank" rel="noreferrer">
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Enviar
+                </a>
+              </Button>
             </div>
           </div>
           <div className="rounded-2xl border bg-background p-5 text-center">
@@ -99,6 +117,22 @@ function Referrals() {
         <Stat icon={Percent} label="Descontos disponíveis" value={data?.summary?.available ?? 0} />
       </div>
 
+      {isError && (
+        <Card className="border-destructive/30">
+          <CardContent className="flex flex-col items-start gap-3 p-5 sm:flex-row sm:items-center">
+            <div className="flex-1">
+              <p className="font-medium">Não foi possível carregar suas indicações.</p>
+              <p className="text-sm text-muted-foreground">
+                Seus dados continuam seguros. Tente novamente.
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => refetch()}>
+              Tentar novamente
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Como funciona</CardTitle>
@@ -111,6 +145,41 @@ function Referrals() {
             Somente um desconto é aplicado por cobrança. Se houver várias recompensas, elas serão
             usadas automaticamente nos meses seguintes, por ordem de liberação.
           </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Ordem dos próximos descontos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {(data?.referrals ?? []).filter((r: any) => r.status === "qualified").length ? (
+            <div className="space-y-2">
+              {(data.referrals as any[])
+                .filter((r) => r.status === "qualified")
+                .map((r, index) => (
+                  <div key={r.id} className="flex items-center gap-3 rounded-xl border p-4">
+                    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                      {index + 1}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{r.company_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Próxima cobrança disponível na fila
+                      </p>
+                    </div>
+                    <Badge>
+                      <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+                      {r.reward_percent}%
+                    </Badge>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <p className="py-5 text-center text-sm text-muted-foreground">
+              Nenhum desconto aguardando aplicação.
+            </p>
+          )}
         </CardContent>
       </Card>
 
