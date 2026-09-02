@@ -19,6 +19,7 @@ type AuthState = {
   loading: boolean;
   roles: AppRole[];
   isSuperAdmin: boolean;
+  isReseller: boolean;
   companyIds: string[];
   memberships: Membership[];
   mustChangePassword: boolean;
@@ -34,19 +35,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [isReseller, setIsReseller] = useState(false);
 
   const loadRoles = async (uid: string | undefined) => {
     if (!uid) {
-      setRoles([]); setMemberships([]); setMustChangePassword(false);
+      setRoles([]);
+      setMemberships([]);
+      setMustChangePassword(false);
+      setIsReseller(false);
       return;
     }
-    const [{ data: r }, { data: cu }, { data: p }] = await Promise.all([
+    const [{ data: r }, { data: cu }, { data: p }, reseller] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", uid),
       supabase
         .from("company_users")
         .select("company_id,role,permissions,active,staff_id")
         .eq("user_id", uid),
       supabase.from("profiles").select("must_change_password").eq("id", uid).maybeSingle(),
+      (supabase.rpc as any)("is_reseller"),
     ]);
     setRoles((r ?? []).map((x) => x.role as AppRole));
     setMemberships(
@@ -61,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })),
     );
     setMustChangePassword(!!(p as any)?.must_change_password);
+    setIsReseller(!!reseller.data);
   };
 
   useEffect(() => {
@@ -82,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRoles([]);
         setMemberships([]);
         setMustChangePassword(false);
+        setIsReseller(false);
         setLoading(false);
         return;
       }
@@ -102,20 +110,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const value: AuthState = useMemo(() => ({
-    user: session?.user ?? null,
-    session,
-    loading,
-    roles,
-    isSuperAdmin: roles.includes("super_admin"),
-    companyIds: memberships.map((m) => m.companyId),
-    memberships,
-    mustChangePassword,
-    refresh: async () => loadRoles(session?.user.id),
-    signOut: async () => { await supabase.auth.signOut(); },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [session, loading, roles, memberships, mustChangePassword]);
-
+  const value: AuthState = useMemo(
+    () => ({
+      user: session?.user ?? null,
+      session,
+      loading,
+      roles,
+      isSuperAdmin: roles.includes("super_admin"),
+      isReseller,
+      companyIds: memberships.map((m) => m.companyId),
+      memberships,
+      mustChangePassword,
+      refresh: async () => loadRoles(session?.user.id),
+      signOut: async () => {
+        await supabase.auth.signOut();
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }),
+    [session, loading, roles, memberships, mustChangePassword, isReseller],
+  );
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
