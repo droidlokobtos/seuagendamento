@@ -4070,6 +4070,265 @@ export type Database = {
         }
         Relationships: []
       }
+      public_api_events: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          detail: string | null
+          duration_ms: number | null
+          id: number
+          identifier_hash: string | null
+          outcome: string
+          scope: string
+          status_code: number | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          detail?: string | null
+          duration_ms?: number | null
+          id?: never
+          identifier_hash?: string | null
+          outcome: string
+          scope: string
+          status_code?: number | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          detail?: string | null
+          duration_ms?: number | null
+          id?: never
+          identifier_hash?: string | null
+          outcome?: string
+          scope?: string
+          status_code?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_api_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_api_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_api_rate_limits: {
+        Row: {
+          identifier_hash: string
+          request_count: number
+          scope: string
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          identifier_hash: string
+          request_count?: number
+          scope: string
+          updated_at?: string
+          window_started_at: string
+        }
+        Update: {
+          identifier_hash?: string
+          request_count?: number
+          scope?: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: []
+      }
+      public_client_verifications: {
+        Row: {
+          company_id: string
+          consumed_at: string | null
+          created_at: string
+          customer_id: string | null
+          expires_at: string
+          id: string
+          phone_hash: string
+          token_hash: string
+        }
+        Insert: {
+          company_id: string
+          consumed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          expires_at: string
+          id?: string
+          phone_hash: string
+          token_hash: string
+        }
+        Update: {
+          company_id?: string
+          consumed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          expires_at?: string
+          id?: string
+          phone_hash?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_client_verifications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_client_verifications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_client_verifications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_birthdays_this_month"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_client_verifications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reseller_sales: {
+        Row: {
+          commission_amount: number | null
+          commission_percent: number
+          company_id: string
+          created_at: string
+          earned_at: string | null
+          first_payment_amount: number | null
+          first_payment_id: string | null
+          id: string
+          paid_at: string | null
+          payout_reference: string | null
+          reseller_id: string
+          scheduled_payout_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          commission_amount?: number | null
+          commission_percent: number
+          company_id: string
+          created_at?: string
+          earned_at?: string | null
+          first_payment_amount?: number | null
+          first_payment_id?: string | null
+          id?: string
+          paid_at?: string | null
+          payout_reference?: string | null
+          reseller_id: string
+          scheduled_payout_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          commission_amount?: number | null
+          commission_percent?: number
+          company_id?: string
+          created_at?: string
+          earned_at?: string | null
+          first_payment_amount?: number | null
+          first_payment_id?: string | null
+          id?: string
+          paid_at?: string | null
+          payout_reference?: string | null
+          reseller_id?: string
+          scheduled_payout_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_sales_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reseller_sales_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reseller_sales_first_payment_id_fkey"
+            columns: ["first_payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reseller_sales_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resellers: {
+        Row: {
+          active: boolean
+          commission_percent: number
+          created_at: string
+          email: string
+          id: string
+          name: string
+          payout_day: number
+          phone: string | null
+          pix_key: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          commission_percent: number
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          payout_day?: number
+          phone?: string | null
+          pix_key?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          commission_percent?: number
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          payout_day?: number
+          phone?: string | null
+          pix_key?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       review_invites: {
         Row: {
           appointment_id: string
@@ -5748,6 +6007,19 @@ export type Database = {
         Returns: Json
       }
       company_features: { Args: { _company: string }; Returns: Json }
+      consume_public_rate_limit: {
+        Args: {
+          _identifier_hash: string
+          _limit: number
+          _scope: string
+          _window_seconds: number
+        }
+        Returns: {
+          allowed: boolean
+          remaining: number
+          retry_after_seconds: number
+        }[]
+      }
       create_company_for_user_as_super_admin: {
         Args: {
           _admin_notes: string
@@ -5816,10 +6088,19 @@ export type Database = {
       is_company_admin: { Args: { _company: string }; Returns: boolean }
       is_company_blocked: { Args: { _company: string }; Returns: boolean }
       is_company_member: { Args: { _company: string }; Returns: boolean }
+      is_reseller: { Args: never; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      link_reseller_company: {
+        Args: { _company_id: string; _reseller_id: string }
+        Returns: Json
+      }
       mark_business_expense_paid: {
         Args: { p_expense_id: string; p_payment_method_id: string }
         Returns: string
+      }
+      mark_reseller_commission_paid: {
+        Args: { _reference?: string; _sale_id: string }
+        Returns: Json
       }
       plan_mark_expired: { Args: never; Returns: undefined }
       recalc_appointment_finance: {
@@ -5834,6 +6115,7 @@ export type Database = {
         Args: { _appt: string }
         Returns: undefined
       }
+      system_health_snapshot: { Args: never; Returns: Json }
       user_company_ids: { Args: { _user_id: string }; Returns: string[] }
       validate_coupon: {
         Args: { _code: string; _company: string; _subtotal_cents: number }
