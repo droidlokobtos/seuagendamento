@@ -48,7 +48,7 @@
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 1rem;
   --background: oklch(0.985 0.005 80);
   --foreground: oklch(0.22 0.015 60);
   --card: oklch(1 0 0);
@@ -119,11 +119,182 @@
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
+  * {
+    border-color: var(--color-border);
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}
+
+/* Luxury-modern visual system shared by all authenticated panels. */
+.premium-shell {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(
+      circle at 88% -8%,
+      color-mix(in oklab, var(--primary) 10%, transparent) 0,
+      transparent 31rem
+    ),
+    radial-gradient(
+      circle at 16% 108%,
+      color-mix(in oklab, var(--accent) 12%, transparent) 0,
+      transparent 34rem
+    ),
+    linear-gradient(145deg, oklch(0.992 0.004 80), oklch(0.963 0.012 78));
+}
+
+.premium-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.28;
+  background-image: radial-gradient(oklch(0.3 0.02 60 / 13%) 0.55px, transparent 0.55px);
+  background-size: 5px 5px;
+  mask-image: linear-gradient(to bottom, black, transparent 70%);
+}
+
+.premium-sidebar {
+  color: oklch(0.94 0.014 78);
+  border-color: oklch(0.88 0.05 75 / 18%);
+  background:
+    radial-gradient(circle at 12% 5%, oklch(0.48 0.08 67 / 30%), transparent 17rem),
+    linear-gradient(180deg, oklch(0.205 0.025 58), oklch(0.145 0.018 55));
+  box-shadow: 18px 0 50px -38px oklch(0.12 0.02 55 / 80%);
+}
+
+.premium-sidebar .text-muted-foreground {
+  color: oklch(0.78 0.025 76);
+}
+.premium-sidebar .border-border\/70,
+.premium-sidebar .border-border\/60,
+.premium-sidebar .border-border {
+  border-color: oklch(0.9 0.04 78 / 13%);
+}
+.premium-sidebar button:hover,
+.premium-sidebar a:hover {
+  background-color: oklch(1 0 0 / 8%);
+  color: white;
+}
+.premium-sidebar a.bg-primary {
+  color: oklch(0.18 0.025 55);
+  background: linear-gradient(135deg, oklch(0.88 0.09 84), oklch(0.72 0.12 72));
+  box-shadow: 0 10px 30px -16px oklch(0.79 0.13 75 / 85%);
+}
+
+.premium-header {
+  border-color: oklch(0.82 0.022 75 / 45%);
+  background: oklch(0.99 0.005 80 / 78%);
+  backdrop-filter: blur(24px) saturate(155%);
+  box-shadow: 0 12px 35px -32px oklch(0.2 0.03 55 / 65%);
+}
+
+.premium-content > div > div:first-child h1,
+.premium-content > div > div:first-child h2 {
+  letter-spacing: -0.035em;
+  font-weight: 680;
+}
+
+.premium-content [data-slot="card"],
+.premium-content .rounded-2xl.border {
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.premium-content [data-slot="card"]:hover {
+  border-color: color-mix(in oklab, var(--primary) 22%, var(--border));
+  box-shadow:
+    0 2px 4px oklch(0.25 0.02 60 / 4%),
+    0 24px 60px -40px oklch(0.2 0.04 55 / 45%);
+}
+
+.premium-content table thead {
+  background: linear-gradient(90deg, oklch(0.955 0.014 78), oklch(0.975 0.008 80));
+  letter-spacing: 0.075em;
+}
+
+.premium-content input,
+.premium-content textarea,
+.premium-content [role="combobox"] {
+  border-radius: 0.8rem;
+  background-color: oklch(1 0 0 / 78%);
+  box-shadow: inset 0 1px 1px oklch(0.2 0.02 55 / 4%);
+}
+
+/* Public booking: premium structure that still inherits each company's colors. */
+.booking-premium {
+  position: relative;
+  background:
+    radial-gradient(
+      circle at 50% 8%,
+      color-mix(in oklab, var(--primary) 9%, transparent),
+      transparent 34rem
+    ),
+    linear-gradient(180deg, oklch(0.985 0.006 80), oklch(0.955 0.014 76));
+}
+
+.booking-premium [data-slot="card"] {
+  border-color: oklch(0.82 0.018 75 / 58%);
+  background: oklch(1 0 0 / 91%);
+  box-shadow:
+    0 2px 3px oklch(0.2 0.02 55 / 4%),
+    0 26px 70px -45px oklch(0.18 0.035 55 / 48%);
+  backdrop-filter: blur(20px) saturate(135%);
+}
+
+.booking-premium h1,
+.booking-premium h2 {
+  letter-spacing: -0.035em;
+}
+.booking-premium img {
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.booking-premium [data-slot="card"]:hover img {
+  transform: scale(1.025);
+}
+.booking-premium .fixed.bottom-0 {
+  background: oklch(1 0 0 / 86%);
+  border-color: oklch(0.82 0.018 75 / 55%);
+  box-shadow: 0 -18px 50px -36px oklch(0.2 0.03 55 / 55%);
+  backdrop-filter: blur(24px) saturate(150%);
+}
+
+.premium-landing {
+  background:
+    radial-gradient(circle at 50% 0%, oklch(0.91 0.065 80 / 55%), transparent 36rem),
+    linear-gradient(180deg, oklch(0.992 0.004 80), oklch(0.965 0.012 78));
+}
+.premium-landing header {
+  background: oklch(0.99 0.005 80 / 78%);
+  backdrop-filter: blur(24px) saturate(150%);
+}
+.premium-landing [class*="rounded-2xl"][class*="border"] {
+  box-shadow: 0 22px 60px -44px oklch(0.2 0.04 55 / 50%);
+}
+
+@media (max-width: 767px) {
+  .premium-content {
+    padding-top: 1.25rem;
+  }
+  .premium-content [data-slot="card"] {
+    border-radius: 1.1rem;
+  }
+  .booking-premium [data-slot="card"] {
+    border-radius: 1.2rem;
   }
 }
 
@@ -144,7 +315,9 @@ body:has(a[href*="/b/"][href$="/entrar"]) [data-slot="card"],
 body:has(a[href*="/b/"][href$="/minha-conta"]) [data-slot="card"] {
   border-color: oklch(0.87 0.012 75 / 72%);
   border-radius: 1.15rem;
-  box-shadow: 0 1px 2px oklch(0.2 0.01 60 / 4%), 0 16px 42px -28px oklch(0.2 0.02 55 / 28%);
+  box-shadow:
+    0 1px 2px oklch(0.2 0.01 60 / 4%),
+    0 16px 42px -28px oklch(0.2 0.02 55 / 28%);
   background: oklch(1 0 0 / 92%);
   backdrop-filter: blur(14px);
 }
