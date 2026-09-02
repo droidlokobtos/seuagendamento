@@ -77,7 +77,7 @@ const GROUPS: NavGroup[] = [
     icon: LayoutDashboard,
     items: [
       { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true, perm: "dashboard" },
-      { to: "/app/reports", label: "Relatórios", icon: BarChart3, perm: "relatorios" },
+      { to: "/app/reports", label: "Relatórios e análises", icon: BarChart3, perm: "relatorios" },
     ],
   },
   {
@@ -92,8 +92,8 @@ const GROUPS: NavGroup[] = [
         icon: CalendarCheck,
         perm: "agendamentos",
       },
-      { to: "/app/link", label: "Link exclusivo", icon: Link2, perm: "configuracoes" },
-      { to: "/app/portal", label: "Personalizar página", icon: Palette, perm: "configuracoes" },
+      { to: "/app/link", label: "Link de agendamento", icon: Link2, perm: "configuracoes" },
+      { to: "/app/portal", label: "Marca e página pública", icon: Palette, perm: "configuracoes" },
       {
         to: "/app/confirmations",
         label: "Confirmações automáticas",
@@ -115,7 +115,6 @@ const GROUPS: NavGroup[] = [
       { to: "/app/reviews", label: "Avaliações", icon: Star, perm: "clientes" },
       { to: "/app/birthdays", label: "Aniversariantes", icon: Cake, perm: "clientes" },
       { to: "/app/campaigns", label: "Campanhas", icon: Megaphone, perm: "clientes" },
-      { to: "/app/referrals", label: "Indique e ganhe", icon: Gift },
     ],
   },
   {
@@ -168,12 +167,7 @@ const GROUPS: NavGroup[] = [
     icon: UserCog,
     items: [
       { to: "/app/staff", label: "Funcionários", icon: UserCog, perm: "configuracoes" },
-      {
-        to: "/app/commissions",
-        label: "Comissões individuais",
-        icon: BadgePercent,
-        perm: "comissoes",
-      },
+      { to: "/app/referrals", label: "Programa de indicação", icon: Gift },
     ],
   },
   {
@@ -181,8 +175,7 @@ const GROUPS: NavGroup[] = [
     label: "Inteligência",
     icon: Sparkles,
     items: [
-      { to: "/app/ai", label: "Assistente IA", icon: Sparkles, perm: "relatorios" },
-      { to: "/app/reports", label: "Relatórios inteligentes", icon: BarChart3, perm: "relatorios" },
+      { to: "/app/ai", label: "Central de inteligência", icon: Sparkles, perm: "relatorios" },
     ],
   },
   {
