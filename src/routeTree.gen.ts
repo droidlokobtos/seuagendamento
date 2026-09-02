@@ -23,9 +23,11 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedNoAccessRouteImport } from './routes/_authenticated/no-access'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
+import { Route as AuthenticatedResellerRouteRouteImport } from './routes/_authenticated/reseller/route'
 import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticated/app/route'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as BSlugIndexRouteImport } from './routes/b.$slug.index'
+import { Route as AuthenticatedResellerIndexRouteImport } from './routes/_authenticated/reseller/index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as BSlugMinhaContaRouteImport } from './routes/b.$slug.minha-conta'
@@ -74,6 +76,7 @@ import { Route as AuthenticatedAppAiAlertsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppAiRouteImport } from './routes/_authenticated/app/ai'
 import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app/agenda'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
+import { Route as AuthenticatedAdminResellersRouteImport } from './routes/_authenticated/admin/resellers'
 import { Route as AuthenticatedAdminReferralsRouteImport } from './routes/_authenticated/admin/referrals'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
@@ -156,6 +159,12 @@ const AuthenticatedChangePasswordRoute =
     path: '/change-password',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedResellerRouteRoute =
+  AuthenticatedResellerRouteRouteImport.update({
+    id: '/reseller',
+    path: '/reseller',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppRouteRoute = AuthenticatedAppRouteRouteImport.update({
   id: '/app',
   path: '/app',
@@ -171,6 +180,12 @@ const BSlugIndexRoute = BSlugIndexRouteImport.update({
   path: '/b/$slug/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedResellerIndexRoute =
+  AuthenticatedResellerIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedResellerRouteRoute,
+  } as any)
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -429,6 +444,12 @@ const AuthenticatedAdminSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminResellersRoute =
+  AuthenticatedAdminResellersRouteImport.update({
+    id: '/resellers',
+    path: '/resellers',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminReferralsRoute =
   AuthenticatedAdminReferralsRouteImport.update({
     id: '/referrals',
@@ -501,6 +522,7 @@ export interface FileRoutesByFullPath {
   '/termos': typeof TermosRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/app': typeof AuthenticatedAppRouteRouteWithChildren
+  '/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/home': typeof AuthenticatedHomeRoute
   '/no-access': typeof AuthenticatedNoAccessRoute
@@ -516,6 +538,7 @@ export interface FileRoutesByFullPath {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/admin/referrals': typeof AuthenticatedAdminReferralsRoute
+  '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
@@ -564,6 +587,7 @@ export interface FileRoutesByFullPath {
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/reseller/': typeof AuthenticatedResellerIndexRoute
   '/b/$slug/': typeof BSlugIndexRoute
   '/api/public/hooks/confirmations': typeof ApiPublicHooksConfirmationsRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
@@ -591,6 +615,7 @@ export interface FileRoutesByTo {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/admin/referrals': typeof AuthenticatedAdminReferralsRoute
+  '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
@@ -639,6 +664,7 @@ export interface FileRoutesByTo {
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/reseller': typeof AuthenticatedResellerIndexRoute
   '/b/$slug': typeof BSlugIndexRoute
   '/api/public/hooks/confirmations': typeof ApiPublicHooksConfirmationsRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
@@ -655,6 +681,7 @@ export interface FileRoutesById {
   '/termos': typeof TermosRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteRouteWithChildren
+  '/_authenticated/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/no-access': typeof AuthenticatedNoAccessRoute
@@ -670,6 +697,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/_authenticated/admin/referrals': typeof AuthenticatedAdminReferralsRoute
+  '/_authenticated/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/app/agenda': typeof AuthenticatedAppAgendaRoute
   '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
@@ -718,6 +746,7 @@ export interface FileRoutesById {
   '/b/$slug/minha-conta': typeof BSlugMinhaContaRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/reseller/': typeof AuthenticatedResellerIndexRoute
   '/b/$slug/': typeof BSlugIndexRoute
   '/api/public/hooks/confirmations': typeof ApiPublicHooksConfirmationsRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
@@ -734,6 +763,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/admin'
     | '/app'
+    | '/reseller'
     | '/change-password'
     | '/home'
     | '/no-access'
@@ -749,6 +779,7 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/plans'
     | '/admin/referrals'
+    | '/admin/resellers'
     | '/admin/settings'
     | '/app/agenda'
     | '/app/ai'
@@ -797,6 +828,7 @@ export interface FileRouteTypes {
     | '/b/$slug/minha-conta'
     | '/admin/'
     | '/app/'
+    | '/reseller/'
     | '/b/$slug/'
     | '/api/public/hooks/confirmations'
     | '/api/public/hooks/reminders'
@@ -824,6 +856,7 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/plans'
     | '/admin/referrals'
+    | '/admin/resellers'
     | '/admin/settings'
     | '/app/agenda'
     | '/app/ai'
@@ -872,6 +905,7 @@ export interface FileRouteTypes {
     | '/b/$slug/minha-conta'
     | '/admin'
     | '/app'
+    | '/reseller'
     | '/b/$slug'
     | '/api/public/hooks/confirmations'
     | '/api/public/hooks/reminders'
@@ -887,6 +921,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/_authenticated/admin'
     | '/_authenticated/app'
+    | '/_authenticated/reseller'
     | '/_authenticated/change-password'
     | '/_authenticated/home'
     | '/_authenticated/no-access'
@@ -902,6 +937,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/plans'
     | '/_authenticated/admin/referrals'
+    | '/_authenticated/admin/resellers'
     | '/_authenticated/admin/settings'
     | '/_authenticated/app/agenda'
     | '/_authenticated/app/ai'
@@ -950,6 +986,7 @@ export interface FileRouteTypes {
     | '/b/$slug/minha-conta'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
+    | '/_authenticated/reseller/'
     | '/b/$slug/'
     | '/api/public/hooks/confirmations'
     | '/api/public/hooks/reminders'
@@ -1085,6 +1122,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChangePasswordRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reseller': {
+      id: '/_authenticated/reseller'
+      path: '/reseller'
+      fullPath: '/reseller'
+      preLoaderRoute: typeof AuthenticatedResellerRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/app': {
       id: '/_authenticated/app'
       path: '/app'
@@ -1105,6 +1149,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/b/$slug/'
       preLoaderRoute: typeof BSlugIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/reseller/': {
+      id: '/_authenticated/reseller/'
+      path: '/'
+      fullPath: '/reseller/'
+      preLoaderRoute: typeof AuthenticatedResellerIndexRouteImport
+      parentRoute: typeof AuthenticatedResellerRouteRoute
     }
     '/_authenticated/app/': {
       id: '/_authenticated/app/'
@@ -1442,6 +1493,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/resellers': {
+      id: '/_authenticated/admin/resellers'
+      path: '/resellers'
+      fullPath: '/admin/resellers'
+      preLoaderRoute: typeof AuthenticatedAdminResellersRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/referrals': {
       id: '/_authenticated/admin/referrals'
       path: '/referrals'
@@ -1530,6 +1588,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
   AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRoute
   AuthenticatedAdminReferralsRoute: typeof AuthenticatedAdminReferralsRoute
+  AuthenticatedAdminResellersRoute: typeof AuthenticatedAdminResellersRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
@@ -1543,6 +1602,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
     AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRoute,
     AuthenticatedAdminReferralsRoute: AuthenticatedAdminReferralsRoute,
+    AuthenticatedAdminResellersRoute: AuthenticatedAdminResellersRoute,
     AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   }
@@ -1635,9 +1695,24 @@ const AuthenticatedAppRouteRouteWithChildren =
     AuthenticatedAppRouteRouteChildren,
   )
 
+interface AuthenticatedResellerRouteRouteChildren {
+  AuthenticatedResellerIndexRoute: typeof AuthenticatedResellerIndexRoute
+}
+
+const AuthenticatedResellerRouteRouteChildren: AuthenticatedResellerRouteRouteChildren =
+  {
+    AuthenticatedResellerIndexRoute: AuthenticatedResellerIndexRoute,
+  }
+
+const AuthenticatedResellerRouteRouteWithChildren =
+  AuthenticatedResellerRouteRoute._addFileChildren(
+    AuthenticatedResellerRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedAppRouteRoute: typeof AuthenticatedAppRouteRouteWithChildren
+  AuthenticatedResellerRouteRoute: typeof AuthenticatedResellerRouteRouteWithChildren
   AuthenticatedChangePasswordRoute: typeof AuthenticatedChangePasswordRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedNoAccessRoute: typeof AuthenticatedNoAccessRoute
@@ -1647,6 +1722,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedAppRouteRoute: AuthenticatedAppRouteRouteWithChildren,
+  AuthenticatedResellerRouteRoute: AuthenticatedResellerRouteRouteWithChildren,
   AuthenticatedChangePasswordRoute: AuthenticatedChangePasswordRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedNoAccessRoute: AuthenticatedNoAccessRoute,
