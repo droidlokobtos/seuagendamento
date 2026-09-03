@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Section } from "./anamnesis-core";
 export * from "./anamnesis-core";
 
 /* ---------------- Tipos e queries ---------------- */
@@ -25,6 +24,8 @@ export type AnamnesisRecord = {
     validity_months?: number;
     allow_before_photos?: boolean;
     allow_after_photos?: boolean;
+    service_ids?: string[];
+    service_names?: string[];
   } | null;
   consent_snapshot: Array<{
     id: string;

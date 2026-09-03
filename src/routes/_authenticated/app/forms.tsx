@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileSignature, Plus, Save, Trash2 } from "lucide-react";
+import { CalendarCheck, FileSignature, Plus, Save, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/lib/company";
@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { AnamnesisTab } from "@/components/app/AnamnesisTab";
 import {
   Select,
   SelectContent,
@@ -53,6 +54,8 @@ function CustomFormsPage() {
   const companyId = activeCompany?.id ?? "";
   const qc = useQueryClient();
   const [draft, setDraft] = useState<Draft>(blank);
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState("");
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
 
   const { data: templates = [] } = useQuery({
     enabled: !!companyId,
@@ -80,6 +83,51 @@ function CustomFormsPage() {
       return data ?? [];
     },
   });
+  const { data: appointments = [], isLoading: loadingAppointments } = useQuery({
+    enabled: !!companyId,
+    queryKey: ["form-appointments", companyId],
+    queryFn: async () => {
+      const since = new Date();
+      since.setDate(since.getDate() - 30);
+      const { data, error } = await supabase
+        .from("appointments")
+        .select(
+          "id,starts_at,status,customer_id,customers(id,name,phone),appointment_services(service_id,services(id,name,active))",
+        )
+        .eq("company_id", companyId)
+        .gte("starts_at", since.toISOString())
+        .not("customer_id", "is", null)
+        .in("status", ["scheduled", "confirmed", "in_progress", "completed", "reminder_sent"])
+        .order("starts_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      const now = Date.now();
+      return (data ?? []).sort((left, right) => {
+        const leftTime = new Date(left.starts_at).getTime();
+        const rightTime = new Date(right.starts_at).getTime();
+        const leftIsFuture = leftTime >= now;
+        const rightIsFuture = rightTime >= now;
+        if (leftIsFuture !== rightIsFuture) return leftIsFuture ? -1 : 1;
+        return leftIsFuture ? leftTime - rightTime : rightTime - leftTime;
+      });
+    },
+  });
+
+  const selectedAppointment = appointments.find(
+    (appointment: any) => appointment.id === selectedAppointmentId,
+  ) as any;
+
+  useEffect(() => {
+    if (!selectedAppointment) {
+      setSelectedServiceIds([]);
+      return;
+    }
+    setSelectedServiceIds(
+      (selectedAppointment.appointment_services ?? [])
+        .map((item: any) => item.service_id ?? item.services?.id)
+        .filter(Boolean),
+    );
+  }, [selectedAppointment]);
 
   useEffect(() => {
     setDraft(blank());
@@ -138,6 +186,113 @@ function CustomFormsPage() {
         </p>
       </div>
 
+      <Card className="overflow-hidden border-primary/20 shadow-sm">
+        <CardHeader className="border-b bg-primary/[0.035]">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <CalendarCheck className="h-5 w-5 text-primary" /> Preencher para um atendimento
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Selecione o cliente agendado e confirme os serviços antes de preencher e assinar.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-5 p-4 md:p-6">
+          <div className="space-y-2">
+            <Label>Cliente agendado *</Label>
+            <Select value={selectedAppointmentId} onValueChange={setSelectedAppointmentId}>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    loadingAppointments ? "Carregando agendamentos…" : "Selecione um atendimento"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {appointments.map((appointment: any) => (
+                  <SelectItem key={appointment.id} value={appointment.id}>
+                    {formatAppointment(appointment.starts_at)} ·{" "}
+                    {appointment.customers?.name ?? "Cliente"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!loadingAppointments && !appointments.length && (
+              <p className="text-xs text-muted-foreground">
+                Nenhum cliente agendado nos últimos 30 dias ou em datas futuras.
+              </p>
+            )}
+          </div>
+
+          {selectedAppointment && (
+            <>
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-muted/25 p-4">
+                <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
+                  <UserRound className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{selectedAppointment.customers?.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatAppointment(selectedAppointment.starts_at)}
+                    {selectedAppointment.customers?.phone
+                      ? ` · ${selectedAppointment.customers.phone}`
+                      : ""}
+                  </p>
+                </div>
+                <Badge variant="outline">Cliente agendado</Badge>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Serviços deste formulário *</Label>
+                <p className="text-xs text-muted-foreground">
+                  Os serviços do agendamento já vêm marcados. Ajuste se necessário.
+                </p>
+                <div className="grid gap-2 rounded-xl border p-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {services.map((service) => (
+                    <label key={service.id} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={selectedServiceIds.includes(service.id)}
+                        onCheckedChange={(checked) =>
+                          setSelectedServiceIds((current) =>
+                            checked
+                              ? Array.from(new Set([...current, service.id]))
+                              : current.filter((id) => id !== service.id),
+                          )
+                        }
+                      />
+                      {service.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {selectedServiceIds.length ? (
+                <AnamnesisTab
+                  key={`${selectedAppointment.id}:${selectedServiceIds.join(",")}`}
+                  companyId={companyId}
+                  customerId={selectedAppointment.customer_id}
+                  customerName={selectedAppointment.customers?.name ?? "Cliente"}
+                  appointmentId={selectedAppointment.id}
+                  serviceIds={selectedServiceIds}
+                  serviceNames={services
+                    .filter((service) => selectedServiceIds.includes(service.id))
+                    .map((service) => service.name)}
+                />
+              ) : (
+                <p className="rounded-xl border border-dashed p-5 text-center text-sm text-muted-foreground">
+                  Selecione ao menos um serviço para continuar.
+                </p>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <div>
+        <h2 className="text-lg font-semibold">Modelos e serviços vinculados</h2>
+        <p className="text-sm text-muted-foreground">
+          Defina quais formulários devem ser usados em cada serviço cadastrado.
+        </p>
+      </div>
+
       {!!templates.length && (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {templates.map((template) => (
@@ -149,6 +304,9 @@ function CustomFormsPage() {
                     <p className="text-xs text-muted-foreground">
                       {template.sections.flatMap((s) => s.questions).length} perguntas · validade{" "}
                       {template.validity_months} meses
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                      Serviços: {serviceNamesForTemplate(template, services)}
                     </p>
                   </div>
                   <Badge variant={template.active ? "default" : "secondary"}>
@@ -441,4 +599,22 @@ function CustomFormsPage() {
       </Card>
     </div>
   );
+}
+
+function formatAppointment(value: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function serviceNamesForTemplate(
+  template: AnamnesisTemplate,
+  services: Array<{ id: string; name: string }>,
+) {
+  if (!template.service_ids.length) return "todos os serviços";
+  const names = services
+    .filter((service) => template.service_ids.includes(service.id))
+    .map((service) => service.name);
+  return names.length ? names.join(", ") : "serviços anteriormente vinculados";
 }

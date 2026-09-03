@@ -21,10 +21,9 @@ import {
   useAnamnesisLog,
   useAnamnesisRecords,
   type AnamnesisRecord,
-  type Section,
 } from "@/lib/anamnesis";
 import { AnamnesisForm, type AnamnesisSubmit } from "@/components/app/AnamnesisForm";
-import { DEFAULT_TERMS, type AnamnesisTemplate } from "@/lib/custom-forms";
+import { DEFAULT_TERMS, templateMatchesServices, type AnamnesisTemplate } from "@/lib/custom-forms";
 import {
   Select,
   SelectContent,
@@ -54,7 +53,7 @@ function SignedAnamnesisPhoto({ path, label }: { path: string; label: string }) 
   );
 }
 
-const recordSections = (record: AnamnesisRecord): Section[] =>
+const recordSections = (record: AnamnesisRecord) =>
   record.template_snapshot?.sections?.length
     ? [BASE_SECTION, ...record.template_snapshot.sections]
     : buildQuestionnaire(record.sections ?? []);
@@ -82,10 +81,16 @@ export function AnamnesisTab({
   companyId,
   customerId,
   customerName,
+  appointmentId,
+  serviceIds,
+  serviceNames = [],
 }: {
   companyId: string;
   customerId: string;
   customerName: string;
+  appointmentId?: string;
+  serviceIds?: string[];
+  serviceNames?: string[];
 }) {
   const qc = useQueryClient();
   const isAdmin = useIsCompanyAdmin(companyId);
@@ -109,7 +114,12 @@ export function AnamnesisTab({
       return (data ?? []) as AnamnesisTemplate[];
     },
   });
-  const selectedTemplate = templates.find((template) => template.id === selectedTemplateId) ?? null;
+  const availableTemplates =
+    serviceIds === undefined
+      ? templates
+      : templates.filter((template) => templateMatchesServices(template, serviceIds));
+  const selectedTemplate =
+    availableTemplates.find((template) => template.id === selectedTemplateId) ?? null;
 
   const last = records[0] ?? null;
   const expired = isExpired(last?.filled_at);
@@ -197,6 +207,7 @@ export function AnamnesisTab({
         .insert({
           company_id: companyId,
           customer_id: customerId,
+          appointment_id: appointmentId ?? null,
           sections: [],
           answers: submission.answers,
           alerts,
@@ -212,6 +223,8 @@ export function AnamnesisTab({
             validity_months: selectedTemplate.validity_months,
             allow_before_photos: selectedTemplate.allow_before_photos,
             allow_after_photos: selectedTemplate.allow_after_photos,
+            service_ids: serviceIds ?? [],
+            service_names: serviceNames,
           },
           consent_snapshot: terms.map((term) => ({
             ...term,
@@ -236,7 +249,7 @@ export function AnamnesisTab({
         customerId,
         recordId: record.id,
         action: "create",
-        detail: `Formulário “${selectedTemplate.name}” preenchido pela empresa`,
+        detail: `Formulário “${selectedTemplate.name}” preenchido pela empresa${serviceNames.length ? ` · Serviços: ${serviceNames.join(", ")}` : ""}`,
       });
     },
     onSuccess: () => {
@@ -264,6 +277,10 @@ export function AnamnesisTab({
       y,
     );
     y += 8;
+    if (r.template_snapshot?.service_names?.length) {
+      doc.text(`Serviços: ${r.template_snapshot.service_names.join(", ")}`, 14, y);
+      y += 8;
+    }
 
     for (const sec of recordSections(r)) {
       doc.setFont(undefined as any, "bold");
@@ -363,12 +380,19 @@ export function AnamnesisTab({
         <p className="text-xs text-muted-foreground">
           Os formulários personalizados são internos e preenchidos somente pela empresa.
         </p>
-        {!!templates.length && (
+        {!!availableTemplates.length && (
           <Button size="sm" onClick={() => setShowNewForm((value) => !value)}>
             <Plus className="mr-2 h-4 w-4" /> Preencher formulário
           </Button>
         )}
       </div>
+
+      {!availableTemplates.length && (
+        <p className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
+          Nenhum formulário ativo atende aos serviços selecionados. Vincule esses serviços a um
+          modelo ou crie um modelo geral nesta página.
+        </p>
+      )}
 
       {showNewForm && (
         <Card>
@@ -380,7 +404,7 @@ export function AnamnesisTab({
                   <SelectValue placeholder="Selecione o formulário" />
                 </SelectTrigger>
                 <SelectContent>
-                  {templates.map((template) => (
+                  {availableTemplates.map((template) => (
                     <SelectItem key={template.id} value={template.id}>
                       {template.name}
                     </SelectItem>
@@ -437,6 +461,11 @@ export function AnamnesisTab({
                   {" · "}
                   {r.filled_by === "admin" ? "preenchida no salão" : "preenchida pelo cliente"}
                 </p>
+                {!!r.template_snapshot?.service_names?.length && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Serviços: {r.template_snapshot.service_names.join(", ")}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-1">
                 <Button
