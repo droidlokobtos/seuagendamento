@@ -6,14 +6,37 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Plus, Search, Building2, LogIn, KeyRound, Trash2, Sparkles } from "lucide-react";
-import { dateBR, slugify, statusLabel } from "@/lib/format";
+import { brl, dateBR, slugify, statusLabel } from "@/lib/format";
+import {
+  calculatePlanCyclePrice,
+  PLAN_CYCLE_OPTIONS,
+  type PlanCycleMonths,
+} from "@/lib/plan-cycle";
 import { toast } from "sonner";
 import { startImpersonation } from "@/lib/impersonation";
 import { useServerFn } from "@tanstack/react-start";
-import { resetUserPassword, deleteCompany, createCompanyWithAdmin, setCompanyPlan } from "@/lib/admin-users.functions";
+import {
+  resetUserPassword,
+  deleteCompany,
+  createCompanyWithAdmin,
+  setCompanyPlan,
+} from "@/lib/admin-users.functions";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/admin/companies")({
@@ -33,7 +56,11 @@ function Companies() {
   const delCompany = useServerFn(deleteCompany);
   const createCompanyFn = useServerFn(createCompanyWithAdmin);
   const setPlanFn = useServerFn(setCompanyPlan);
-  const [createdInfo, setCreatedInfo] = useState<{ email: string; password: string | null; name: string } | null>(null);
+  const [createdInfo, setCreatedInfo] = useState<{
+    email: string;
+    password: string | null;
+    name: string;
+  } | null>(null);
   const { isSuperAdmin } = useAuth();
 
   const { data: companies = [], isLoading } = useQuery({
@@ -42,7 +69,7 @@ function Companies() {
       const { data, error } = await supabase
         .from("companies")
         .select(
-          "id, name, slug, status, niche_id, email, created_at, next_due_at, monthly_fee, plan_code, is_trial, trial_ends_at, niches(name)",
+          "id, name, slug, status, niche_id, email, created_at, next_due_at, monthly_fee, plan_code, plan_cycle_months, is_trial, trial_days, trial_ends_at, niches(name)",
         )
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -53,18 +80,28 @@ function Companies() {
   const { data: plans = [] } = useQuery({
     queryKey: ["subscription-plans"],
     queryFn: async () =>
-      (await supabase.from("subscription_plans").select("code, name, monthly_cents").eq("active", true).order("sort_order"))
-        .data ?? [],
+      (
+        await supabase
+          .from("subscription_plans")
+          .select("code, name, monthly_cents, cycle_months, cycle_total_cents, discount_percent")
+          .eq("active", true)
+          .order("sort_order")
+      ).data ?? [],
   });
 
   const { data: niches = [] } = useQuery({
     queryKey: ["niches"],
-    queryFn: async () => (await supabase.from("niches").select("id, name").order("name")).data ?? [],
+    queryFn: async () =>
+      (await supabase.from("niches").select("id, name").order("name")).data ?? [],
   });
 
   const filtered = companies.filter((c: any) => {
     const term = q.toLowerCase();
-    const matchQ = !q || c.name.toLowerCase().includes(term) || c.slug?.toLowerCase().includes(term) || c.email?.toLowerCase().includes(term);
+    const matchQ =
+      !q ||
+      c.name.toLowerCase().includes(term) ||
+      c.slug?.toLowerCase().includes(term) ||
+      c.email?.toLowerCase().includes(term);
     const matchS = statusFilter === "all" || c.status === statusFilter;
     return matchQ && matchS;
   });
@@ -87,13 +124,21 @@ function Companies() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Empresas</h2>
-          <p className="text-sm text-muted-foreground mt-1">Gerencie todos os clientes da plataforma.</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Gerencie todos os clientes da plataforma.
+          </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" /> Nova empresa</Button>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" /> Nova empresa
+            </Button>
           </DialogTrigger>
-          <NewCompanyDialog niches={niches as any} onSubmit={(v) => createMutation.mutate(v)} busy={createMutation.isPending} />
+          <NewCompanyDialog
+            niches={niches as any}
+            onSubmit={(v) => createMutation.mutate(v)}
+            busy={createMutation.isPending}
+          />
         </Dialog>
       </div>
 
@@ -101,10 +146,17 @@ function Companies() {
         <CardContent className="p-4 flex flex-wrap gap-3 items-center">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar por nome, e-mail ou slug…" className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} />
+            <Input
+              placeholder="Buscar por nome, e-mail ou slug…"
+              className="pl-9"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os status</SelectItem>
               <SelectItem value="active">Ativas</SelectItem>
@@ -142,7 +194,11 @@ function Companies() {
                 </thead>
                 <tbody>
                   {filtered.map((c: any) => {
-                    const s = statusLabel[c.status] ?? { label: c.status, className: "bg-muted", dot: "bg-muted-foreground" };
+                    const s = statusLabel[c.status] ?? {
+                      label: c.status,
+                      className: "bg-muted",
+                      dot: "bg-muted-foreground",
+                    };
                     return (
                       <tr key={c.id} className="border-t border-border/60 hover:bg-muted/30">
                         <td className="p-3 pl-6">
@@ -151,15 +207,30 @@ function Companies() {
                         </td>
                         <td className="p-3 text-muted-foreground">
                           {c.email ? (
-                            <a href={`mailto:${c.email}`} className="hover:text-foreground hover:underline whitespace-nowrap">{c.email}</a>
-                          ) : "—"}
+                            <a
+                              href={`mailto:${c.email}`}
+                              className="hover:text-foreground hover:underline whitespace-nowrap"
+                            >
+                              {c.email}
+                            </a>
+                          ) : (
+                            "—"
+                          )}
                         </td>
                         <td className="p-3 text-muted-foreground">{c.niches?.name ?? "—"}</td>
                         <td className="p-3">
                           <div className="flex flex-col gap-1">
                             <span className="text-xs font-medium">
-                              {(plans as any[]).find((p) => p.code === c.plan_code)?.name ?? c.plan_code ?? "—"}
+                              {(plans as any[]).find((p) => p.code === c.plan_code)?.name ??
+                                c.plan_code ??
+                                "—"}
                             </span>
+                            {c.plan_code && c.plan_cycle_months && (
+                              <span className="text-[11px] text-muted-foreground">
+                                Ciclo de {c.plan_cycle_months}{" "}
+                                {c.plan_cycle_months === 1 ? "mês" : "meses"}
+                              </span>
+                            )}
                             {c.is_trial && (
                               <span className="inline-flex w-fit items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
                                 <Sparkles className="h-3 w-3" /> Teste até {dateBR(c.trial_ends_at)}
@@ -168,7 +239,9 @@ function Companies() {
                           </div>
                         </td>
                         <td className="p-3">
-                          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${s.className}`}>
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${s.className}`}
+                          >
                             <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
                             {s.label}
                           </span>
@@ -188,7 +261,11 @@ function Companies() {
                             <LogIn className="h-3.5 w-3.5 mr-1.5" /> Entrar como admin
                           </Button>
                           {c.email && (
-                            <Button size="sm" variant="ghost" onClick={() => setPwOpen({ email: c.email })}>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setPwOpen({ email: c.email })}
+                            >
                               <KeyRound className="h-3.5 w-3.5 mr-1.5" /> Resetar senha
                             </Button>
                           )}
@@ -277,18 +354,35 @@ function Companies() {
       <Dialog open={!!createdInfo} onOpenChange={(o) => !o && setCreatedInfo(null)}>
         {createdInfo && (
           <DialogContent>
-            <DialogHeader><DialogTitle>Empresa criada</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Empresa criada</DialogTitle>
+            </DialogHeader>
             <div className="space-y-3 text-sm">
-              <p>A empresa <b>{createdInfo.name}</b> foi criada com sucesso.</p>
+              <p>
+                A empresa <b>{createdInfo.name}</b> foi criada com sucesso.
+              </p>
               <div className="rounded-lg border p-3 bg-muted/40 space-y-1">
-                <p><b>E-mail do admin:</b> {createdInfo.email}</p>
+                <p>
+                  <b>E-mail do admin:</b> {createdInfo.email}
+                </p>
                 {createdInfo.password ? (
                   <>
-                    <p><b>Senha temporária:</b> <code className="bg-background px-2 py-0.5 rounded">{createdInfo.password}</code></p>
-                    <p className="text-xs text-muted-foreground">Envie esses dados ao responsável. Ele será obrigado a trocar a senha no primeiro login.</p>
+                    <p>
+                      <b>Senha temporária:</b>{" "}
+                      <code className="bg-background px-2 py-0.5 rounded">
+                        {createdInfo.password}
+                      </code>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Envie esses dados ao responsável. Ele será obrigado a trocar a senha no
+                      primeiro login.
+                    </p>
                   </>
                 ) : (
-                  <p className="text-xs text-muted-foreground">Este e-mail já possuía uma conta. O acesso à empresa foi vinculado à conta existente.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Este e-mail já possuía uma conta. O acesso à empresa foi vinculado à conta
+                    existente.
+                  </p>
                 )}
               </div>
             </div>
@@ -302,26 +396,52 @@ function Companies() {
   );
 }
 
-function ResetPasswordDialog({ email, onSubmit, busy }: { email: string; onSubmit: (pw: string) => void; busy: boolean }) {
+function ResetPasswordDialog({
+  email,
+  onSubmit,
+  busy,
+}: {
+  email: string;
+  onSubmit: (pw: string) => void;
+  busy: boolean;
+}) {
   const [pw, setPw] = useState("");
   return (
     <DialogContent>
-      <DialogHeader><DialogTitle>Redefinir senha</DialogTitle></DialogHeader>
+      <DialogHeader>
+        <DialogTitle>Redefinir senha</DialogTitle>
+      </DialogHeader>
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">Definir nova senha para <b>{email}</b>. O usuário será obrigado a trocá-la no próximo login.</p>
+        <p className="text-sm text-muted-foreground">
+          Definir nova senha para <b>{email}</b>. O usuário será obrigado a trocá-la no próximo
+          login.
+        </p>
         <div>
           <Label>Nova senha (mín. 8 caracteres)</Label>
-          <Input type="text" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="nova senha temporária" />
+          <Input
+            type="text"
+            value={pw}
+            onChange={(e) => setPw(e.target.value)}
+            placeholder="nova senha temporária"
+          />
         </div>
       </div>
       <DialogFooter>
-        <Button onClick={() => onSubmit(pw)} disabled={busy || pw.length < 8}>Redefinir</Button>
+        <Button onClick={() => onSubmit(pw)} disabled={busy || pw.length < 8}>
+          Redefinir
+        </Button>
       </DialogFooter>
     </DialogContent>
   );
 }
 
-function DeleteCompanyDialog({ name, onConfirm }: { name: string; onConfirm: () => Promise<void> }) {
+function DeleteCompanyDialog({
+  name,
+  onConfirm,
+}: {
+  name: string;
+  onConfirm: () => Promise<void>;
+}) {
   const [confirmText, setConfirmText] = useState("");
   const [busy, setBusy] = useState(false);
   return (
@@ -333,14 +453,22 @@ function DeleteCompanyDialog({ name, onConfirm }: { name: string; onConfirm: () 
       </DialogHeader>
       <div className="space-y-3">
         <p className="text-sm">
-          Tem certeza de que deseja excluir <b>{name}</b>? Esta ação é <b>permanente</b> e não poderá ser desfeita.
+          Tem certeza de que deseja excluir <b>{name}</b>? Esta ação é <b>permanente</b> e não
+          poderá ser desfeita.
         </p>
         <p className="text-xs text-muted-foreground">
-          Todos os dados relacionados (agendamentos, clientes, serviços, financeiro, estoque, fidelidade, etc.) serão removidos.
+          Todos os dados relacionados (agendamentos, clientes, serviços, financeiro, estoque,
+          fidelidade, etc.) serão removidos.
         </p>
         <div>
-          <Label>Para confirmar, digite <b>EXCLUIR</b></Label>
-          <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="EXCLUIR" />
+          <Label>
+            Para confirmar, digite <b>EXCLUIR</b>
+          </Label>
+          <Input
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder="EXCLUIR"
+          />
         </div>
       </div>
       <DialogFooter>
@@ -349,7 +477,11 @@ function DeleteCompanyDialog({ name, onConfirm }: { name: string; onConfirm: () 
           disabled={busy || confirmText.trim().toUpperCase() !== "EXCLUIR"}
           onClick={async () => {
             setBusy(true);
-            try { await onConfirm(); } finally { setBusy(false); }
+            try {
+              await onConfirm();
+            } finally {
+              setBusy(false);
+            }
           }}
         >
           {busy ? "Excluindo…" : "Excluir permanentemente"}
@@ -410,65 +542,134 @@ function NewCompanyDialog({
     queryKey: ["sub-niches", niche],
     enabled: !!niche,
     queryFn: async () =>
-      (await supabase.from("sub_niches" as any).select("id, name").eq("niche_id", niche).order("name")).data ?? [],
+      (
+        await supabase
+          .from("sub_niches" as any)
+          .select("id, name")
+          .eq("niche_id", niche)
+          .order("name")
+      ).data ?? [],
   });
 
   return (
     <DialogContent>
-      <DialogHeader><DialogTitle>Nova empresa</DialogTitle></DialogHeader>
+      <DialogHeader>
+        <DialogTitle>Nova empresa</DialogTitle>
+      </DialogHeader>
       <div className="space-y-3">
         <div>
           <Label>Nome da empresa</Label>
-          <Input value={name} onChange={(e) => { setName(e.target.value); setSlug(slugify(e.target.value)); }} placeholder="Ex.: Studio Bella" />
+          <Input
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              setSlug(slugify(e.target.value));
+            }}
+            placeholder="Ex.: Studio Bella"
+          />
         </div>
         <div>
           <Label>Nome do proprietário</Label>
-          <Input value={ownerName} onChange={(e) => setOwnerName(e.target.value)} maxLength={160} placeholder="Nome completo" />
+          <Input
+            value={ownerName}
+            onChange={(e) => setOwnerName(e.target.value)}
+            maxLength={160}
+            placeholder="Nome completo"
+          />
         </div>
         <div>
           <Label>Slug (URL pública)</Label>
-          <Input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} placeholder="studio-bella" />
+          <Input
+            value={slug}
+            onChange={(e) => setSlug(slugify(e.target.value))}
+            placeholder="studio-bella"
+          />
         </div>
         <div>
           <Label>Nicho</Label>
           <Select value={niche} onValueChange={setNiche}>
-            <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione…" />
+            </SelectTrigger>
             <SelectContent>
-              {niches.map((n) => <SelectItem key={n.id} value={n.id}>{n.name}</SelectItem>)}
+              {niches.map((n) => (
+                <SelectItem key={n.id} value={n.id}>
+                  {n.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
         <div>
           <Label>Sub-nicho (opcional)</Label>
-          <Select value={subNiche || "none"} onValueChange={(v) => setSubNiche(v === "none" ? "" : v)} disabled={!niche}>
-            <SelectTrigger><SelectValue placeholder={niche ? "Selecione…" : "Escolha um nicho primeiro"} /></SelectTrigger>
+          <Select
+            value={subNiche || "none"}
+            onValueChange={(v) => setSubNiche(v === "none" ? "" : v)}
+            disabled={!niche}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={niche ? "Selecione…" : "Escolha um nicho primeiro"} />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">— Nenhum —</SelectItem>
-              {(subNiches as any[]).map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+              {(subNiches as any[]).map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
         <div>
           <Label>E-mail do proprietário</Label>
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="dono@empresa.com" />
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="dono@empresa.com"
+          />
         </div>
         <div>
           <Label>Telefone/WhatsApp do proprietário</Label>
-          <Input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(formatBrazilianMobile(e.target.value))} placeholder="(11) 99999-9999" maxLength={15} />
+          <Input
+            type="tel"
+            inputMode="tel"
+            value={phone}
+            onChange={(e) => setPhone(formatBrazilianMobile(e.target.value))}
+            placeholder="(11) 99999-9999"
+            maxLength={15}
+          />
         </div>
         <div>
           <Label>Senha inicial</Label>
-          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} maxLength={72} autoComplete="new-password" />
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            minLength={8}
+            maxLength={72}
+            autoComplete="new-password"
+          />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <Label>Plano contratado</Label>
-            <Input value={plan} onChange={(e) => setPlan(e.target.value)} maxLength={100} placeholder="Ex.: Profissional" />
+            <Input
+              value={plan}
+              onChange={(e) => setPlan(e.target.value)}
+              maxLength={100}
+              placeholder="Ex.: Profissional"
+            />
           </div>
           <div>
             <Label>Status da empresa</Label>
-            <Select value={status} onValueChange={(value) => setStatus(value as NewCompanyInput["status"])}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select
+              value={status}
+              onValueChange={(value) => setStatus(value as NewCompanyInput["status"])}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="active">Ativa</SelectItem>
                 <SelectItem value="due_soon">Próximo vencimento</SelectItem>
@@ -488,7 +689,12 @@ function NewCompanyDialog({
         </div>
         <div>
           <Label>Observações (opcional)</Label>
-          <textarea className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} />
+          <textarea
+            className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            maxLength={2000}
+          />
         </div>
         <label className="flex items-start gap-2 text-xs text-muted-foreground leading-snug pt-1">
           <input
@@ -499,7 +705,12 @@ function NewCompanyDialog({
           />
           <span>
             O responsável pela empresa concorda com os{" "}
-            <a href="/termos" target="_blank" rel="noreferrer" className="text-primary underline hover:no-underline">
+            <a
+              href="/termos"
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary underline hover:no-underline"
+            >
               Termos de Uso e Contratação
             </a>{" "}
             da plataforma.
@@ -508,12 +719,36 @@ function NewCompanyDialog({
       </div>
       <DialogFooter>
         <Button
-          onClick={() => onSubmit({
-            name, owner_name: ownerName, slug, niche_id: niche, sub_niche_id: subNiche || null,
-            email, phone, temp_password: password, contracted_plan: plan, status,
-            next_due_at: dueDate, admin_notes: notes.trim() || null, monthly_fee: Number(fee),
-          })}
-          disabled={busy || !name || !ownerName || !slug || !niche || !email || phone.replace(/\D/g, "").length !== 11 || password.length < 8 || !plan || !dueDate || !accepted}
+          onClick={() =>
+            onSubmit({
+              name,
+              owner_name: ownerName,
+              slug,
+              niche_id: niche,
+              sub_niche_id: subNiche || null,
+              email,
+              phone,
+              temp_password: password,
+              contracted_plan: plan,
+              status,
+              next_due_at: dueDate,
+              admin_notes: notes.trim() || null,
+              monthly_fee: Number(fee),
+            })
+          }
+          disabled={
+            busy ||
+            !name ||
+            !ownerName ||
+            !slug ||
+            !niche ||
+            !email ||
+            phone.replace(/\D/g, "").length !== 11 ||
+            password.length < 8 ||
+            !plan ||
+            !dueDate ||
+            !accepted
+          }
         >
           {busy ? "Criando…" : "Criar empresa"}
         </Button>
@@ -525,6 +760,7 @@ function NewCompanyDialog({
 type PlanUpdate = {
   plan_code?: string | null;
   monthly_fee?: number | null;
+  cycle_months?: PlanCycleMonths;
   trial?: boolean;
   trial_days?: number;
 };
@@ -535,20 +771,44 @@ function PlanDialog({
   onSubmit,
 }: {
   company: any;
-  plans: { code: string; name: string; monthly_cents: number }[];
+  plans: {
+    code: string;
+    name: string;
+    monthly_cents: number;
+    cycle_months: number | null;
+    cycle_total_cents: number | null;
+    discount_percent: number | null;
+  }[];
   onSubmit: (v: PlanUpdate) => Promise<void>;
 }) {
   const [code, setCode] = useState<string>(company.plan_code ?? "none");
-  const [fee, setFee] = useState<string>(company.monthly_fee != null ? String(company.monthly_fee) : "");
+  const [fee, setFee] = useState<string>(
+    company.monthly_fee != null ? String(company.monthly_fee) : "",
+  );
+  const [months, setMonths] = useState<PlanCycleMonths>(
+    PLAN_CYCLE_OPTIONS.includes(company.plan_cycle_months) ? company.plan_cycle_months : 1,
+  );
   const [trial, setTrial] = useState<boolean>(!!company.is_trial);
   const [days, setDays] = useState<string>(String(company.trial_days ?? 14));
   const [busy, setBusy] = useState(false);
+  const selectedPlan = plans.find((plan) => plan.code === code);
+  const monthlyCents = Math.max(0, Math.round((Number(fee) || 0) * 100));
+  const cycle = selectedPlan
+    ? calculatePlanCyclePrice({
+        monthlyCents,
+        months,
+        discountPercent: selectedPlan.discount_percent,
+        configuredMonthlyCents: selectedPlan.monthly_cents,
+        configuredMonths: selectedPlan.cycle_months,
+        configuredTotalCents: selectedPlan.cycle_total_cents,
+      })
+    : { totalCents: 0, discountPercent: 0 };
 
   return (
     <DialogContent>
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" /> Plano e período de teste
+          <Sparkles className="h-5 w-5 text-primary" /> Plano, ciclo e período de teste
         </DialogTitle>
       </DialogHeader>
       <div className="space-y-3">
@@ -565,7 +825,9 @@ function PlanDialog({
               if (p) setFee(((p.monthly_cents ?? 0) / 100).toFixed(2));
             }}
           >
-            <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione…" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">— Sem plano —</SelectItem>
               {plans.map((p) => (
@@ -580,6 +842,39 @@ function PlanDialog({
           <Label>Mensalidade (R$)</Label>
           <Input type="number" step="0.01" value={fee} onChange={(e) => setFee(e.target.value)} />
         </div>
+        <div className="space-y-2">
+          <Label>Período contratado</Label>
+          <div className="grid grid-cols-4 gap-2">
+            {PLAN_CYCLE_OPTIONS.map((option) => (
+              <Button
+                key={option}
+                type="button"
+                variant={months === option ? "default" : "outline"}
+                onClick={() => setMonths(option)}
+              >
+                {option} {option === 1 ? "mês" : "meses"}
+              </Button>
+            ))}
+          </div>
+        </div>
+        {selectedPlan && (
+          <div className="grid gap-2 rounded-xl border bg-muted/30 p-3 text-sm sm:grid-cols-3">
+            <div>
+              <p className="text-xs text-muted-foreground">Desconto do ciclo</p>
+              <p className="font-semibold">{cycle.discountPercent}%</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Total do período</p>
+              <p className="font-semibold">{brl(cycle.totalCents / 100)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Vigência por pagamento</p>
+              <p className="font-semibold">
+                {months} {months === 1 ? "mês" : "meses"}
+              </p>
+            </div>
+          </div>
+        )}
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -592,7 +887,13 @@ function PlanDialog({
         {trial && (
           <div>
             <Label>Dias de teste</Label>
-            <Input type="number" min={1} max={365} value={days} onChange={(e) => setDays(e.target.value)} />
+            <Input
+              type="number"
+              min={1}
+              max={365}
+              value={days}
+              onChange={(e) => setDays(e.target.value)}
+            />
             {company.is_trial && company.trial_ends_at && (
               <p className="mt-1 text-xs text-muted-foreground">
                 Teste atual termina em {dateBR(company.trial_ends_at)}. Salvar reinicia a contagem.
@@ -610,6 +911,7 @@ function PlanDialog({
               await onSubmit({
                 plan_code: code === "none" ? null : code,
                 monthly_fee: fee === "" ? null : Number(fee),
+                cycle_months: months,
                 trial,
                 ...(trial ? { trial_days: Math.max(1, Number(days) || 14) } : {}),
               });

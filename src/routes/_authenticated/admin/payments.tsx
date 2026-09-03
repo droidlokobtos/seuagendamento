@@ -33,6 +33,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { generatePaymentReceipt } from "@/lib/receipt";
+import {
+  calculatePlanCyclePrice,
+  PLAN_CYCLE_OPTIONS,
+  type PlanCycleMonths,
+} from "@/lib/plan-cycle";
 
 export const Route = createFileRoute("/_authenticated/admin/payments")({
   component: Payments,
@@ -66,8 +71,21 @@ function Payments() {
       (
         await supabase
           .from("companies")
-          .select("id, name, slug, monthly_fee, next_due_at, status, suspended_at, plan_code")
+          .select(
+            "id, name, slug, monthly_fee, next_due_at, status, suspended_at, plan_code, plan_cycle_months",
+          )
           .order("name")
+      ).data ?? [],
+  });
+
+  const { data: plans = [] } = useQuery({
+    queryKey: ["subscription-plans", "billing"],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("subscription_plans")
+          .select("code, monthly_cents, cycle_months, cycle_total_cents, discount_percent")
+          .eq("active", true)
       ).data ?? [],
   });
 
@@ -97,11 +115,28 @@ function Payments() {
     [referralData, selectedId],
   );
 
+  const cycleAmount = (company: any) => {
+    const months = PLAN_CYCLE_OPTIONS.includes(company?.plan_cycle_months)
+      ? (company.plan_cycle_months as PlanCycleMonths)
+      : 1;
+    const plan = plans.find((item) => item.code === company?.plan_code);
+    return (
+      calculatePlanCyclePrice({
+        monthlyCents: Number(company?.monthly_fee ?? 0) * 100,
+        months,
+        discountPercent: plan?.discount_percent,
+        configuredMonthlyCents: plan?.monthly_cents,
+        configuredMonths: plan?.cycle_months,
+        configuredTotalCents: plan?.cycle_total_cents,
+      }).totalCents / 100
+    );
+  };
+
   const openDialog = (m: DialogMode, cid?: string) => {
     if (cid) {
       setSelectedId(cid);
       const c: any = companies.find((x: any) => x.id === cid);
-      if (c?.monthly_fee) setAmount(String(c.monthly_fee));
+      if (c?.monthly_fee) setAmount(String(cycleAmount(c)));
       if (c?.next_due_at) setNewDue(c.next_due_at);
     }
     setMode(m);
@@ -197,7 +232,7 @@ function Payments() {
     return [
       `Olá! 😊`,
       ``,
-      `Sua mensalidade do sistema vence em:`,
+      `Sua assinatura do sistema vence em:`,
       ``,
       `Data: ${due}`,
       `Valor: ${val}`,
@@ -239,7 +274,7 @@ function Payments() {
               <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="text-left p-3 pl-6">Empresa</th>
-                  <th className="text-left p-3">Mensalidade</th>
+                  <th className="text-left p-3">Valor do ciclo</th>
                   <th className="text-left p-3">Próx. venc.</th>
                   <th className="text-left p-3">Status</th>
                   <th className="text-right p-3 pr-6">Ações</th>
@@ -259,7 +294,13 @@ function Payments() {
                         <p className="font-medium">{c.name}</p>
                         <p className="text-xs text-muted-foreground">/{c.slug}</p>
                       </td>
-                      <td className="p-3">{brl(Number(c.monthly_fee ?? 0))}</td>
+                      <td className="p-3">
+                        <p>{brl(cycleAmount(c))}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {c.plan_cycle_months ?? 1} {c.plan_cycle_months === 1 ? "mês" : "meses"} ·{" "}
+                          {brl(Number(c.monthly_fee ?? 0))}/mês
+                        </p>
+                      </td>
                       <td className="p-3 text-muted-foreground">{dateBR(c.next_due_at)}</td>
                       <td className="p-3">
                         <span

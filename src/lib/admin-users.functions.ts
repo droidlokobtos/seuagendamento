@@ -1,14 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { PLAN_CYCLE_OPTIONS } from "@/lib/plan-cycle";
 
 export const resetUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data) => z.object({
-    email: z.string().email(),
-    phone: z.string().min(10).optional(),
-    new_password: z.string().min(8),
-  }).parse(data))
+  .validator((data) =>
+    z
+      .object({
+        email: z.string().email(),
+        phone: z.string().min(10).optional(),
+        new_password: z.string().min(8),
+      })
+      .parse(data),
+  )
   .handler(async ({ context, data }) => {
     const { data: isAdmin, error: adminError } = await context.supabase.rpc("is_super_admin");
     if (adminError) throw new Error(adminError.message);
@@ -47,28 +52,40 @@ export const deleteCompany = createServerFn({ method: "POST" })
 
 export const createCompanyWithAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data) => z.object({
-    name: z.string().trim().min(2).max(160),
-    owner_name: z.string().trim().min(2).max(160),
-    slug: z.string().trim().min(2).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-    niche_id: z.string().uuid(),
-    sub_niche_id: z.string().uuid().nullable().optional(),
-    email: z.string().trim().email().max(255),
-    phone: z.string().transform((value, ctx) => {
-      const digits = value.replace(/\D/g, "");
-      if (!/^[1-9]{2}9\d{8}$/.test(digits)) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe um celular brasileiro válido com DDD." });
-        return z.NEVER;
-      }
-      return digits;
-    }),
-    monthly_fee: z.number().nonnegative(),
-    temp_password: z.string().min(8).max(72),
-    contracted_plan: z.string().trim().min(1).max(100),
-    status: z.enum(["active", "due_soon", "overdue", "suspended"]),
-    next_due_at: z.string().date(),
-    admin_notes: z.string().trim().max(2000).nullable().optional(),
-  }).parse(data))
+  .validator((data) =>
+    z
+      .object({
+        name: z.string().trim().min(2).max(160),
+        owner_name: z.string().trim().min(2).max(160),
+        slug: z
+          .string()
+          .trim()
+          .min(2)
+          .max(100)
+          .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+        niche_id: z.string().uuid(),
+        sub_niche_id: z.string().uuid().nullable().optional(),
+        email: z.string().trim().email().max(255),
+        phone: z.string().transform((value, ctx) => {
+          const digits = value.replace(/\D/g, "");
+          if (!/^[1-9]{2}9\d{8}$/.test(digits)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Informe um celular brasileiro válido com DDD.",
+            });
+            return z.NEVER;
+          }
+          return digits;
+        }),
+        monthly_fee: z.number().nonnegative(),
+        temp_password: z.string().min(8).max(72),
+        contracted_plan: z.string().trim().min(1).max(100),
+        status: z.enum(["active", "due_soon", "overdue", "suspended"]),
+        next_due_at: z.string().date(),
+        admin_notes: z.string().trim().max(2000).nullable().optional(),
+      })
+      .parse(data),
+  )
   .handler(async ({ context, data }) => {
     const { data: isAdmin, error: adminError } = await context.supabase.rpc("is_super_admin");
     if (adminError) throw new Error(adminError.message);
@@ -115,13 +132,23 @@ export const createCompanyWithAdmin = createServerFn({ method: "POST" })
 export const setCompanyPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data) =>
-    z.object({
-      company_id: z.string().uuid(),
-      plan_code: z.string().min(1).max(50).nullable().optional(),
-      monthly_fee: z.number().min(0).nullable().optional(),
-      trial: z.boolean().optional(),
-      trial_days: z.number().int().min(1).max(365).optional(),
-    }).parse(data),
+    z
+      .object({
+        company_id: z.string().uuid(),
+        plan_code: z.string().min(1).max(50).nullable().optional(),
+        monthly_fee: z.number().min(0).nullable().optional(),
+        cycle_months: z
+          .number()
+          .int()
+          .refine(
+            (value) => PLAN_CYCLE_OPTIONS.includes(value as (typeof PLAN_CYCLE_OPTIONS)[number]),
+            "Selecione um ciclo de 1, 3, 6 ou 12 meses.",
+          )
+          .optional(),
+        trial: z.boolean().optional(),
+        trial_days: z.number().int().min(1).max(365).optional(),
+      })
+      .parse(data),
   )
   .handler(async ({ context, data }) => {
     const { data: isAdmin, error: adminError } = await context.supabase.rpc("is_super_admin");
@@ -139,12 +166,15 @@ export const setCompanyPlan = createServerFn({ method: "POST" })
         if (planError) throw new Error(planError.message);
         if (!plan) throw new Error("Plano inexistente.");
         patch["plan_code"] = plan.code;
-        if (data.monthly_fee === undefined) patch["monthly_fee"] = (plan.monthly_cents ?? 0) / 100;
+        const monthlyFee = data.monthly_fee ?? (plan.monthly_cents ?? 0) / 100;
+        const months = (data.cycle_months ?? 1) as (typeof PLAN_CYCLE_OPTIONS)[number];
+        patch["monthly_fee"] = monthlyFee;
+        patch["plan_cycle_months"] = months;
       } else {
         patch["plan_code"] = null;
+        patch["plan_cycle_months"] = null;
       }
     }
-    if (data.monthly_fee !== undefined && data.monthly_fee !== null) patch["monthly_fee"] = data.monthly_fee;
 
     if (data.trial === true) {
       const days = data.trial_days ?? 14;
