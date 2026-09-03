@@ -240,12 +240,15 @@ export type Database = {
       anamnesis_records: {
         Row: {
           actor_user_id: string | null
+          after_photo_paths: string[]
           alerts: string[]
           answers: Json
           appointment_id: string | null
+          before_photo_paths: string[]
           company_id: string
           consent_lgpd: boolean
           consent_procedure: boolean
+          consent_snapshot: Json | null
           consent_truth: boolean
           created_at: string
           customer_id: string
@@ -254,16 +257,21 @@ export type Database = {
           id: string
           sections: string[]
           signature_data: string | null
+          template_id: string | null
+          template_snapshot: Json | null
           updated_at: string
         }
         Insert: {
           actor_user_id?: string | null
+          after_photo_paths?: string[]
           alerts?: string[]
           answers?: Json
           appointment_id?: string | null
+          before_photo_paths?: string[]
           company_id: string
           consent_lgpd?: boolean
           consent_procedure?: boolean
+          consent_snapshot?: Json | null
           consent_truth?: boolean
           created_at?: string
           customer_id: string
@@ -272,16 +280,21 @@ export type Database = {
           id?: string
           sections?: string[]
           signature_data?: string | null
+          template_id?: string | null
+          template_snapshot?: Json | null
           updated_at?: string
         }
         Update: {
           actor_user_id?: string | null
+          after_photo_paths?: string[]
           alerts?: string[]
           answers?: Json
           appointment_id?: string | null
+          before_photo_paths?: string[]
           company_id?: string
           consent_lgpd?: boolean
           consent_procedure?: boolean
+          consent_snapshot?: Json | null
           consent_truth?: boolean
           created_at?: string
           customer_id?: string
@@ -290,6 +303,8 @@ export type Database = {
           id?: string
           sections?: string[]
           signature_data?: string | null
+          template_id?: string | null
+          template_snapshot?: Json | null
           updated_at?: string
         }
         Relationships: [
@@ -326,6 +341,79 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamnesis_records_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "anamnesis_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      anamnesis_templates: {
+        Row: {
+          active: boolean
+          allow_after_photos: boolean
+          allow_before_photos: boolean
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          require_signature: boolean
+          sections: Json
+          service_ids: string[]
+          terms: Json
+          updated_at: string
+          validity_months: number
+        }
+        Insert: {
+          active?: boolean
+          allow_after_photos?: boolean
+          allow_before_photos?: boolean
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          require_signature?: boolean
+          sections?: Json
+          service_ids?: string[]
+          terms?: Json
+          updated_at?: string
+          validity_months?: number
+        }
+        Update: {
+          active?: boolean
+          allow_after_photos?: boolean
+          allow_before_photos?: boolean
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          require_signature?: boolean
+          sections?: Json
+          service_ids?: string[]
+          terms?: Json
+          updated_at?: string
+          validity_months?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anamnesis_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamnesis_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
             referencedColumns: ["id"]
           },
         ]
