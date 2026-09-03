@@ -251,13 +251,9 @@ export function AppLayout({ children }: { children?: ReactNode }) {
     () => GROUPS.find((g) => g.items.some((i) => isActive(i.to, i.end)))?.id ?? "inicio",
     [isActive],
   );
-  const [openGroups, setOpenGroups] = useState<string[]>([activeGroup]);
-  useEffect(
-    () => setOpenGroups((prev) => (prev.includes(activeGroup) ? prev : [...prev, activeGroup])),
-    [activeGroup],
-  );
-  const toggleGroup = (id: string) =>
-    setOpenGroups((prev) => (prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]));
+  const [openGroup, setOpenGroup] = useState<string | null>(activeGroup);
+  useEffect(() => setOpenGroup(activeGroup), [activeGroup]);
+  const toggleGroup = (id: string) => setOpenGroup((current) => (current === id ? null : id));
 
   const Brand = () => (
     <div className="flex items-center gap-3 min-w-0">
@@ -286,7 +282,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const NavList = () => (
     <nav className="flex flex-col gap-1.5 p-3">
       {groups.map((group) => {
-        const expanded = openGroups.includes(group.id);
+        const expanded = openGroup === group.id;
         const groupActive = group.items.some((i) => !i.external && isActive(i.to, i.end));
         return (
           <div key={group.id} className="rounded-xl">
