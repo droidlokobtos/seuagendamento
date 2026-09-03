@@ -21,6 +21,7 @@ import {
   useAnamnesisLog,
   useAnamnesisRecords,
   type AnamnesisRecord,
+  type Section,
 } from "@/lib/anamnesis";
 import { AnamnesisForm, type AnamnesisSubmit } from "@/components/app/AnamnesisForm";
 import { DEFAULT_TERMS, type AnamnesisTemplate } from "@/lib/custom-forms";
@@ -53,7 +54,7 @@ function SignedAnamnesisPhoto({ path, label }: { path: string; label: string }) 
   );
 }
 
-const recordSections = (record: AnamnesisRecord) =>
+const recordSections = (record: AnamnesisRecord): Section[] =>
   record.template_snapshot?.sections?.length
     ? [BASE_SECTION, ...record.template_snapshot.sections]
     : buildQuestionnaire(record.sections ?? []);
