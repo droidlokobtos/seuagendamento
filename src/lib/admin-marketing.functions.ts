@@ -106,7 +106,7 @@ NON-NEGOTIABLE: generate background artwork only. No words, letters, numbers, lo
       prompt,
       size: data.format === "story" ? "1024x1536" : "1024x1024",
       model: data.quality === "premium" ? "openai/gpt-image-2" : "openai/gpt-image-1-mini",
-      quality: data.quality === "premium" ? "high" : "medium",
+      quality: "medium",
     });
     return { image };
   });

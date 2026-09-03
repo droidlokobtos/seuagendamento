@@ -347,7 +347,8 @@ function MarketingStudio() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Premium entrega maior realismo, direção de arte e acabamento.
+                Premium usa o modelo profissional com qualidade equilibrada para concluir mais
+                rápido.
               </p>
             </div>
             <div className="space-y-2">

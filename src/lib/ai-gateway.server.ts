@@ -45,7 +45,9 @@ export async function generateLovableImage(opts: {
   if (!key) throw new Error("IA da Lovable não está disponível neste projeto.");
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 120_000);
+  // O GPT Image 2 pode ultrapassar dois minutos em horários de pico.
+  // O limite maior evita descartar uma imagem que já está quase concluída.
+  const timeout = setTimeout(() => controller.abort(), 180_000);
   let res: Response;
   try {
     res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
@@ -56,13 +58,15 @@ export async function generateLovableImage(opts: {
         model: opts.model ?? "openai/gpt-image-2",
         prompt: opts.prompt,
         size: opts.size ?? "1024x1024",
-        quality: opts.quality ?? "high",
+        quality: opts.quality ?? "medium",
         output_format: "png",
       }),
     });
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("A geração premium excedeu 2 minutos. Tente uma nova versão.");
+      throw new Error(
+        "A geração excedeu 3 minutos e foi interrompida. Tente novamente ou use o rascunho rápido.",
+      );
     }
     throw error;
   } finally {
