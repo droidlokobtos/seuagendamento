@@ -31,9 +31,29 @@ const statusMeta: Record<
 };
 
 function Referrals() {
-  const { activeCompany } = useCompany();
+  const { activeCompany, loading: companyLoading } = useCompany();
   const companyId = activeCompany?.id;
-  const { data, isLoading, isError, refetch } = useQuery({
+  const {
+    data: referralCode,
+    isLoading: isCodeLoading,
+    isError: isCodeError,
+    refetch: refetchCode,
+  } = useQuery({
+    queryKey: ["company-referral-code", companyId],
+    enabled: !!companyId,
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)(
+        "get_or_create_company_referral_code",
+        { _company_id: companyId },
+      );
+      if (error) throw error;
+      const value = String(data ?? "").trim();
+      if (!value) throw new Error("Código de indicação não retornado");
+      return value;
+    },
+    retry: 2,
+  });
+  const { data, isLoading: isDashboardLoading, isError, refetch } = useQuery({
     queryKey: ["company-referrals", companyId],
     enabled: !!companyId,
     queryFn: async () => {
@@ -44,7 +64,8 @@ function Referrals() {
       return data as any;
     },
   });
-  const code = String(data?.code ?? "");
+  const code = String(referralCode || data?.code || "");
+  const isLoading = companyLoading || isCodeLoading || isDashboardLoading;
   const link =
     typeof window === "undefined" || !code ? "" : `${window.location.origin}/auth?ref=${code}`;
   const copy = async (value: string, label: string) => {
@@ -80,7 +101,11 @@ function Referrals() {
             </p>
             <div className="mt-4 flex flex-col gap-2 sm:flex-row">
               <div className="min-w-0 flex-1 rounded-xl border bg-background px-4 py-3 font-mono text-sm break-all">
-                {isLoading ? "Carregando…" : link}
+                {isLoading
+                  ? "Gerando seu link…"
+                  : isCodeError
+                    ? "Não foi possível gerar o link"
+                    : link}
               </div>
               <Button disabled={!link} onClick={() => copy(link, "Link")}>
                 <Copy className="mr-2 h-4 w-4" />
@@ -110,6 +135,22 @@ function Referrals() {
           </div>
         </CardContent>
       </Card>
+
+      {isCodeError && (
+        <Card className="border-destructive/30">
+          <CardContent className="flex flex-col items-start gap-3 p-5 sm:flex-row sm:items-center">
+            <div className="flex-1">
+              <p className="font-medium">Seu código de indicação ainda não foi gerado.</p>
+              <p className="text-sm text-muted-foreground">
+                Clique abaixo para tentar a geração novamente.
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => refetchCode()}>
+              Gerar meu link
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat icon={Users} label="Indicações" value={data?.summary?.total ?? 0} />
