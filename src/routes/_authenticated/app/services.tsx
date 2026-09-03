@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ import { Plus, Pencil, Trash2, Scissors, ArrowUp, ArrowDown, Move, ZoomIn, ZoomO
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/app/services")({ component: Services });
 
@@ -58,6 +59,7 @@ export function framedImgStyle(pos: string | null | undefined): React.CSSPropert
 
 function Services() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { activeCompany } = useCompany();
   const companyId = activeCompany!.id;
   const [edit, setEdit] = useState<S | null>(null);
@@ -77,6 +79,26 @@ function Services() {
       return (data ?? []) as S[];
     },
   });
+
+  const { data: formServiceIds = [], isLoading: loadingFormServiceIds } = useQuery({
+    queryKey: ["anamnesis-templates", companyId, "service-ids"],
+    queryFn: async () => {
+      const { data: templates, error } = await (supabase as any)
+        .from("anamnesis_templates")
+        .select("service_ids")
+        .eq("company_id", companyId)
+        .eq("active", true);
+      if (error) throw error;
+      return Array.from(
+        new Set(
+          (templates ?? []).flatMap((template: { service_ids?: string[] }) =>
+            template.service_ids ?? [],
+          ),
+        ),
+      ) as string[];
+    },
+  });
+  const servicesWithForms = useMemo(() => new Set(formServiceIds), [formServiceIds]);
 
   useEffect(() => {
     try {
@@ -145,7 +167,7 @@ function Services() {
         serviceId = created.id;
       }
       if (clean.category) persistCategories([...savedCategories, clean.category]);
-      if (!serviceId) return;
+      if (!serviceId) throw new Error("Não foi possível identificar o serviço salvo.");
       const current = links.filter((l) => l.service_id === serviceId).map((l) => l.staff_id);
       const toAdd = staffIds.filter((id) => !current.includes(id));
       const toRemove = current.filter((id) => !staffIds.includes(id));
@@ -159,12 +181,16 @@ function Services() {
           .insert(toAdd.map((staff_id) => ({ staff_id, service_id: serviceId! })));
         if (error) throw error;
       }
+      return { serviceId, created: !edit?.id };
     },
-    onSuccess: () => {
-      toast.success(edit ? "Serviço atualizado" : "Serviço criado");
+    onSuccess: (result) => {
+      toast.success(edit ? "Serviço atualizado" : "Serviço criado. Agora prepare a ficha dele.");
       qc.invalidateQueries({ queryKey: ["services", companyId] });
       qc.invalidateQueries({ queryKey: ["svc_staff_links", companyId] });
       setOpen(false); setEdit(null);
+      if (result.created) {
+        void navigate({ to: "/app/forms", search: { service: result.serviceId } });
+      }
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -276,7 +302,9 @@ function Services() {
         <>
           {canReorder && <p className="text-xs text-muted-foreground">Arraste os cartões pelo ícone <GripVertical className="inline h-3 w-3" /> para reorganizar a ordem — ela é salva automaticamente e usada em todas as telas.</p>}
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {items.map((s, idx) => (
+            {items.map((s, idx) => {
+              const hasForm = servicesWithForms.has(s.id);
+              return (
               <Card
                 key={s.id}
                 draggable={canReorder}
@@ -300,6 +328,17 @@ function Services() {
                         </div>
                         {s.category && <p className="text-xs text-muted-foreground mt-0.5">{s.category}</p>}
                         <p className={`text-xs mt-1 ${s.show_on_booking === false ? "text-amber-600" : "text-muted-foreground"}`}>{s.show_on_booking === false ? "Oculto no link do cliente" : "Visível no link do cliente"}</p>
+                        <div className="mt-2">
+                          <Badge
+                            variant={loadingFormServiceIds || hasForm ? "secondary" : "destructive"}
+                          >
+                            {loadingFormServiceIds
+                              ? "Verificando ficha"
+                              : hasForm
+                                ? "Ficha pronta"
+                                : "Ficha pendente"}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-1">
@@ -309,9 +348,19 @@ function Services() {
                     </div>
                   </div>
                   <div className="mt-3 flex items-center justify-between text-sm"><span className="text-muted-foreground">{s.duration_min} min</span><span className="font-semibold">{brl(s.price_cents / 100)}</span></div>
+                  {!loadingFormServiceIds && !hasForm && (
+                    <Button
+                      className="mt-3 w-full"
+                      variant="outline"
+                      onClick={() => void navigate({ to: "/app/forms", search: { service: s.id } })}
+                    >
+                      Criar ficha obrigatória
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
           </div>
         </>
       )}

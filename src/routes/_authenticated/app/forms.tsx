@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarCheck, FileSignature, Plus, Save, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
@@ -15,6 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { AnamnesisTab } from "@/components/app/AnamnesisTab";
+import { defaultSectionsForService } from "@/lib/default-service-forms";
+import { z } from "zod";
 import {
   Select,
   SelectContent,
@@ -23,7 +25,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export const Route = createFileRoute("/_authenticated/app/forms")({ component: CustomFormsPage });
+export const Route = createFileRoute("/_authenticated/app/forms")({
+  validateSearch: z.object({ service: z.string().uuid().optional() }),
+  component: CustomFormsPage,
+});
 
 type Draft = Omit<AnamnesisTemplate, "id" | "company_id"> & { id?: string };
 const blank = (): Draft => ({
@@ -39,6 +44,15 @@ const blank = (): Draft => ({
   active: true,
 });
 
+const editableSections = (sections: Section[]): Section[] => [
+  {
+    key: "personalizado",
+    label: "Perguntas",
+    emoji: "📋",
+    questions: sections.flatMap((section) => section.questions),
+  },
+];
+
 const keyFor = (label: string, index: number) =>
   `${
     label
@@ -50,12 +64,14 @@ const keyFor = (label: string, index: number) =>
   }_${index + 1}`;
 
 function CustomFormsPage() {
+  const { service: requestedServiceId } = Route.useSearch();
   const { activeCompany } = useCompany();
   const companyId = activeCompany?.id ?? "";
   const qc = useQueryClient();
   const [draft, setDraft] = useState<Draft>(blank);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState("");
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const initializedServiceId = useRef("");
 
   const { data: templates = [] } = useQuery({
     enabled: !!companyId,
@@ -76,7 +92,7 @@ function CustomFormsPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("services")
-        .select("id,name,active")
+        .select("id,name,category,active")
         .eq("company_id", companyId)
         .eq("active", true)
         .order("name");
@@ -131,7 +147,27 @@ function CustomFormsPage() {
 
   useEffect(() => {
     setDraft(blank());
+    initializedServiceId.current = "";
   }, [companyId]);
+
+  useEffect(() => {
+    if (!requestedServiceId || initializedServiceId.current === requestedServiceId) return;
+    const service = services.find((item) => item.id === requestedServiceId);
+    if (!service) return;
+    initializedServiceId.current = requestedServiceId;
+    setDraft({
+      ...blank(),
+      name: `Ficha de ${service.name}`,
+      description: `Ficha de avaliação, segurança e consentimento para o serviço ${service.name}.`,
+      service_ids: [service.id],
+      sections: editableSections(defaultSectionsForService(service.name, service.category)),
+    });
+    document.getElementById("form-template-editor")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+    toast.info("Complete e salve a ficha obrigatória do novo serviço.");
+  }, [requestedServiceId, services]);
   const section = draft.sections[0];
   const updateQuestions = (questions: Question[]) =>
     setDraft((d) => ({ ...d, sections: [{ ...d.sections[0], questions }] }));
@@ -140,10 +176,11 @@ function CustomFormsPage() {
     mutationFn: async () => {
       if (!companyId) throw new Error("Selecione uma empresa.");
       if (!draft.name.trim()) throw new Error("Informe o nome do formulário.");
-      if (!section.questions.length) throw new Error("Adicione pelo menos uma pergunta.");
+      if (!draft.sections.some((item) => item.questions.length))
+        throw new Error("Adicione pelo menos uma pergunta.");
       const sections = draft.sections.map((s) => ({
         ...s,
-        questions: s.questions.map((q, i) => ({ ...q, key: keyFor(q.label, i) })),
+        questions: s.questions.map((q, i) => ({ ...q, key: q.key || keyFor(q.label, i) })),
       }));
       const payload = { ...draft, company_id: companyId, sections };
       const query = (supabase as any).from("anamnesis_templates");
@@ -321,6 +358,7 @@ function CustomFormsPage() {
                       setDraft({
                         ...template,
                         terms: template.terms?.length ? template.terms : DEFAULT_TERMS,
+                        sections: editableSections(template.sections),
                       })
                     }
                   >
@@ -336,9 +374,14 @@ function CustomFormsPage() {
         </div>
       )}
 
-      <Card>
+      <Card id="form-template-editor">
         <CardHeader>
           <CardTitle>{draft.id ? "Editar formulário" : "Novo formulário"}</CardTitle>
+          {requestedServiceId && draft.service_ids.includes(requestedServiceId) && (
+            <p className="text-sm font-medium text-primary">
+              Serviço novo: revise as perguntas e salve esta ficha antes de utilizá-lo.
+            </p>
+          )}
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
