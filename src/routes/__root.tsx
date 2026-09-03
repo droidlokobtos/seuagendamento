@@ -98,6 +98,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "theme-color", content: "#241713" },
+      { name: "application-name", content: "SeuAgendamento" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "SeuAgendamento" },
       { title: "BeautySaaS — Sistema de agendamento white label" },
       {
         name: "description",
@@ -132,6 +137,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png", sizes: "180x180" },
     ],
   }),
   shellComponent: RootShell,
@@ -165,6 +172,13 @@ function RootComponent() {
       }
     }, 15_000);
     return () => window.clearTimeout(timer);
+  }, []);
+  useEffect(() => {
+    if (import.meta.env.PROD && "serviceWorker" in navigator) {
+      void navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch((error) => {
+        console.warn("Não foi possível ativar o modo instalável:", error);
+      });
+    }
   }, []);
   const { queryClient } = Route.useRouteContext();
 
