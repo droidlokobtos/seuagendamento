@@ -36,41 +36,48 @@ export const Route = createFileRoute("/_authenticated/admin/marketing")({
 
 type Theme = "features" | "practicality" | "plans" | "referral" | "custom";
 type Format = "square" | "story";
+type CreativeStyle = "impact" | "editorial" | "product" | "human";
+type Audience = "multi" | "salon" | "barber" | "aesthetic" | "wellness";
+type Quality = "premium" | "fast";
 const CAMPAIGNS: Record<
   Theme,
-  { label: string; eyebrow: string; title: string; subtitle: string; caption: string }
+  { label: string; eyebrow: string; title: string; subtitle: string; caption: string; cta: string }
 > = {
   features: {
     label: "Funcionalidades",
-    eyebrow: "GESTÃO COMPLETA",
-    title: "Tudo o que sua empresa precisa. Em um só lugar.",
-    subtitle: "Agenda, clientes, financeiro, equipe e crescimento trabalhando juntos.",
+    eyebrow: "CHEGA DE GESTÃO ESPALHADA",
+    title: "Sua empresa inteira sob controle.",
+    subtitle: "Agenda, equipe, clientes e financeiro conectados para você decidir melhor.",
     caption:
-      "Sua gestão não precisa estar espalhada em vários lugares. Com o SeuAgendamento, agenda, clientes, financeiro e equipe trabalham em conjunto. Conheça a plataforma.",
+      "Planilha de um lado, mensagens do outro e informações que nunca batem? Centralize agenda, clientes, equipe e financeiro no SeuAgendamento. Mais controle para decidir. Mais tempo para crescer.",
+    cta: "CONHEÇA A PLATAFORMA",
   },
   practicality: {
     label: "Praticidade",
-    eyebrow: "MENOS TAREFAS. MAIS NEGÓCIO.",
-    title: "Sua rotina mais simples. Sua empresa mais forte.",
-    subtitle: "Organize o dia, acompanhe resultados e atenda melhor de qualquer lugar.",
+    eyebrow: "TEMPO É FATURAMENTO",
+    title: "Menos improviso. Mais crescimento.",
+    subtitle: "Organize o dia, acompanhe resultados e atenda melhor sem ficar preso à gestão.",
     caption:
-      "Menos tempo organizando tarefas. Mais tempo cuidando dos seus clientes e fazendo sua empresa crescer. Descubra a praticidade do SeuAgendamento.",
+      "Sua empresa não pode depender de memória, papel e conversa perdida. O SeuAgendamento organiza a rotina para você focar no que gera resultado: atender bem e crescer.",
+    cta: "SIMPLIFIQUE SUA GESTÃO",
   },
   plans: {
     label: "Planos",
-    eyebrow: "UM PLANO PARA CADA MOMENTO",
-    title: "Comece agora. Cresça sem limites.",
-    subtitle: "Escolha o plano ideal para a fase atual da sua empresa.",
+    eyebrow: "CRESÇA NO SEU RITMO",
+    title: "Seu negócio evolui. Seu plano acompanha.",
+    subtitle: "Escolha 1, 3, 6 ou 12 meses e avance com a estrutura certa para cada fase.",
     caption:
-      "Do primeiro agendamento a uma operação completa: existe um plano SeuAgendamento para cada fase da sua empresa. Compare e escolha o seu.",
+      "Não pague por complexidade que você ainda não precisa — nem fique limitado quando crescer. Escolha o plano e o ciclo ideais para o momento da sua empresa.",
+    cta: "COMPARE OS PLANOS",
   },
   referral: {
     label: "Plano de indicação",
-    eyebrow: "INDIQUE E GANHE",
-    title: "Boas indicações viram desconto.",
-    subtitle: "Indique uma empresa e acumule benefícios nas próximas mensalidades.",
+    eyebrow: "SUA REDE VALE DINHEIRO",
+    title: "Indicação boa reduz sua fatura.",
+    subtitle: "Ganhe 2%, 5% ou 10% quando a empresa indicada pagar o primeiro plano.",
     caption:
-      "Conhece uma empresa que precisa organizar melhor a rotina? Indique o SeuAgendamento. Quando ela contratar, você recebe desconto nas próximas mensalidades.",
+      "Indique uma empresa para o SeuAgendamento. Quando ela pagar o primeiro plano, você ganha desconto: 2% no Básico, 5% no Business ou 10% no Pro. Indicações extras viram benefícios nos meses seguintes.",
+    cta: "INDIQUE AGORA",
   },
   custom: {
     label: "Campanha personalizada",
@@ -78,15 +85,35 @@ const CAMPAIGNS: Record<
     title: "Gestão que acompanha o seu crescimento.",
     subtitle: "Tecnologia prática para empresas que querem ir mais longe.",
     caption: "Transforme a gestão da sua empresa com o SeuAgendamento.",
+    cta: "COMECE AGORA",
   },
+};
+
+const CREATIVE_STYLES: Record<CreativeStyle, string> = {
+  impact: "Impacto e conversão",
+  editorial: "Editorial premium",
+  product: "Tecnologia e produto",
+  human: "Humano e autêntico",
+};
+
+const AUDIENCES: Record<Audience, string> = {
+  multi: "Todos os negócios",
+  salon: "Salões de beleza",
+  barber: "Barbearias",
+  aesthetic: "Estética",
+  wellness: "Bem-estar",
 };
 
 function MarketingStudio() {
   const generate = useServerFn(generateAdminMarketingImage);
   const [theme, setTheme] = useState<Theme>("features");
   const [format, setFormat] = useState<Format>("square");
+  const [style, setStyle] = useState<CreativeStyle>("impact");
+  const [audience, setAudience] = useState<Audience>("multi");
+  const [quality, setQuality] = useState<Quality>("premium");
   const [title, setTitle] = useState(CAMPAIGNS.features.title);
   const [subtitle, setSubtitle] = useState(CAMPAIGNS.features.subtitle);
+  const [cta, setCta] = useState(CAMPAIGNS.features.cta);
   const [direction, setDirection] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -99,12 +126,15 @@ function MarketingStudio() {
     setTheme(value);
     setTitle(CAMPAIGNS[value].title);
     setSubtitle(CAMPAIGNS[value].subtitle);
+    setCta(CAMPAIGNS[value].cta);
     setImage(null);
   };
   const create = async () => {
     setLoading(true);
     try {
-      const result = await generate({ data: { theme, format, direction } });
+      const result = await generate({
+        data: { theme, format, style, audience, quality, title, subtitle, direction },
+      });
       setImage(result.image);
       toast.success("Arte criada com a identidade do SeuAgendamento");
     } catch (error: any) {
@@ -171,13 +201,27 @@ function MarketingStudio() {
     );
     ctx.fillStyle = "#F5EEE8";
     ctx.font = `400 ${Math.round(width * 0.03)}px Arial`;
-    drawLines(
+    const afterSubtitle = drawLines(
       subtitle,
       afterTitle + Math.round(width * 0.018),
       Math.round(width * 0.03),
       width - pad * 2,
       Math.round(width * 0.042),
     );
+    ctx.font = `700 ${Math.round(width * 0.022)}px Arial`;
+    const ctaWidth = ctx.measureText(cta).width + Math.round(width * 0.05);
+    const ctaHeight = Math.round(width * 0.055);
+    const ctaY = Math.min(
+      afterSubtitle + Math.round(width * 0.025),
+      height - Math.round(width * 0.12),
+    );
+    ctx.fillStyle = "#C9A86A";
+    ctx.beginPath();
+    ctx.roundRect(pad, ctaY, ctaWidth, ctaHeight, ctaHeight / 2);
+    ctx.fill();
+    ctx.fillStyle = "#241713";
+    ctx.textAlign = "left";
+    ctx.fillText(cta, pad + Math.round(width * 0.025), ctaY + Math.round(ctaHeight * 0.67));
     ctx.fillStyle = "#C9A86A";
     ctx.font = `700 ${Math.round(width * 0.025)}px Arial`;
     ctx.textAlign = "right";
@@ -241,6 +285,71 @@ function MarketingStudio() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Direção visual</Label>
+                <Select
+                  value={style}
+                  onValueChange={(v) => {
+                    setStyle(v as CreativeStyle);
+                    setImage(null);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(CREATIVE_STYLES).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Público</Label>
+                <Select
+                  value={audience}
+                  onValueChange={(v) => {
+                    setAudience(v as Audience);
+                    setImage(null);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(AUDIENCES).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Qualidade da geração</Label>
+              <Select
+                value={quality}
+                onValueChange={(v) => {
+                  setQuality(v as Quality);
+                  setImage(null);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="premium">Premium · GPT Image 2</SelectItem>
+                  <SelectItem value="fast">Rascunho rápido · Mini</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Premium entrega maior realismo, direção de arte e acabamento.
+              </p>
+            </div>
             <div className="space-y-2">
               <Label>Título</Label>
               <Input value={title} maxLength={90} onChange={(e) => setTitle(e.target.value)} />
@@ -252,6 +361,14 @@ function MarketingStudio() {
                 rows={3}
                 maxLength={150}
                 onChange={(e) => setSubtitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Chamada para ação</Label>
+              <Input
+                value={cta}
+                maxLength={36}
+                onChange={(e) => setCta(e.target.value.toUpperCase())}
               />
             </div>
             <div className="space-y-2">
@@ -279,11 +396,16 @@ function MarketingStudio() {
                 Cores, acabamento e assinatura são aplicados automaticamente.
               </p>
             </div>
-            <Button className="w-full" size="lg" onClick={create} disabled={loading}>
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={create}
+              disabled={loading || title.trim().length < 3 || subtitle.trim().length < 3}
+            >
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Criando arte rápida…
+                  {quality === "premium" ? "Criando campanha premium…" : "Criando rascunho…"}
                 </>
               ) : (
                 <>
@@ -341,9 +463,14 @@ function MarketingStudio() {
                   <p className="mt-4 max-w-[85%] text-[clamp(.75rem,1.5vw,1.1rem)] leading-relaxed text-[#F5EEE8]">
                     {subtitle}
                   </p>
-                  <p className="mt-7 text-right text-[clamp(.55rem,1vw,.8rem)] font-bold tracking-[.16em] text-[#C9A86A]">
-                    SEUAGENDAMENTO
-                  </p>
+                  <div className="mt-6 flex items-end justify-between gap-4">
+                    <span className="rounded-full bg-[#C9A86A] px-4 py-2 text-[clamp(.5rem,1vw,.72rem)] font-bold tracking-wide text-[#241713]">
+                      {cta}
+                    </span>
+                    <p className="text-[clamp(.55rem,1vw,.8rem)] font-bold tracking-[.16em] text-[#C9A86A]">
+                      SEUAGENDAMENTO
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>

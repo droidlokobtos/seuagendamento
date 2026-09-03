@@ -38,12 +38,14 @@ export async function callLovableAI(opts: {
 export async function generateLovableImage(opts: {
   prompt: string;
   size?: "1024x1024" | "1024x1536";
+  model?: "openai/gpt-image-2" | "openai/gpt-image-1-mini";
+  quality?: "low" | "medium" | "high";
 }): Promise<string> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("IA da Lovable não está disponível neste projeto.");
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 75_000);
+  const timeout = setTimeout(() => controller.abort(), 120_000);
   let res: Response;
   try {
     res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
@@ -51,16 +53,16 @@ export async function generateLovableImage(opts: {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
       signal: controller.signal,
       body: JSON.stringify({
-        model: "openai/gpt-image-1-mini",
+        model: opts.model ?? "openai/gpt-image-2",
         prompt: opts.prompt,
         size: opts.size ?? "1024x1024",
-        quality: "medium",
+        quality: opts.quality ?? "high",
         output_format: "png",
       }),
     });
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("A geração excedeu 75 segundos. Tente novamente.");
+      throw new Error("A geração premium excedeu 2 minutos. Tente uma nova versão.");
     }
     throw error;
   } finally {
