@@ -53,7 +53,7 @@ function SignedAnamnesisPhoto({ path, label }: { path: string; label: string }) 
   );
 }
 
-const recordSections = (record: AnamnesisRecord) =>
+const recordSections = (record: AnamnesisRecord): Section[] =>
   record.template_snapshot?.sections?.length
     ? [BASE_SECTION, ...record.template_snapshot.sections]
     : buildQuestionnaire(record.sections ?? []);
