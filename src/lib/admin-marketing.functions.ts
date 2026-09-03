@@ -140,7 +140,7 @@ export const generateAdminMarketingImage = createServerFn({ method: "POST" })
       ]);
       if (companyError || !company) throw new Error("Empresa não encontrada ou sem acesso.");
       if (!isAdmin && !membership) throw new Error("Você não tem acesso a esta empresa.");
-      if (company.plan_code?.toLowerCase() !== "pro") {
+      if (company.plan_code?.trim().toLowerCase() !== "pro") {
         throw new Error("O estúdio de marketing com IA é exclusivo do plano Pro.");
       }
       if (["suspended", "overdue", "trial_expired"].includes(company.status ?? "")) {

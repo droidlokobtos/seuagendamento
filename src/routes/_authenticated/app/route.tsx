@@ -62,7 +62,9 @@ function PermissionGate() {
   const isHelp = path === "/app/help" || path.startsWith("/app/help/");
   const permissionDenied = isDashboard ? !can("dashboard") : (!isHelp && ((!key) || !can(key)));
   const planDenied = !!feature && !hasFeature(feature);
-  const proPlanDenied = path.startsWith("/app/marketing") && activeCompany?.plan_code !== "pro";
+  const proPlanDenied =
+    path.startsWith("/app/marketing") &&
+    activeCompany?.plan_code?.trim().toLowerCase() !== "pro";
 
   if (permissionDenied || planDenied || proPlanDenied) {
     const deniedByPlan = planDenied || proPlanDenied;

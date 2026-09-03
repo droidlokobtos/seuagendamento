@@ -80,6 +80,7 @@ const GROUPS: NavGroup[] = [
     items: [
       { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true, perm: "dashboard" },
       { to: "/app/reports", label: "Relatórios e análises", icon: BarChart3, perm: "relatorios" },
+      { to: "/app/marketing", label: "Marketing IA (Pro)", icon: Megaphone, perm: "configuracoes", proOnly: true },
     ],
   },
   {
@@ -179,7 +180,6 @@ const GROUPS: NavGroup[] = [
     icon: Sparkles,
     items: [
       { to: "/app/ai", label: "Central de inteligência", icon: Sparkles, perm: "relatorios" },
-      { to: "/app/marketing", label: "Marketing e publicidade", icon: Megaphone, perm: "configuracoes", proOnly: true },
     ],
   },
   {
@@ -238,7 +238,9 @@ export function AppLayout({ children }: { children?: ReactNode }) {
       GROUPS.map((g) => ({
         ...g,
         items: g.items.filter(
-          (i) => (!i.perm || can(i.perm)) && (!i.proOnly || activeCompany?.plan_code === "pro"),
+          (i) =>
+            (!i.perm || can(i.perm)) &&
+            (!i.proOnly || activeCompany?.plan_code?.trim().toLowerCase() === "pro"),
         ),
       })).filter((g) => g.items.length > 0),
     [activeCompany?.plan_code, can],
