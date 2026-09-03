@@ -21,6 +21,7 @@ import {
   useAnamnesisLog,
   useAnamnesisRecords,
   type AnamnesisRecord,
+  type Section,
 } from "@/lib/anamnesis";
 import { AnamnesisForm, type AnamnesisSubmit } from "@/components/app/AnamnesisForm";
 import { DEFAULT_TERMS, type AnamnesisTemplate } from "@/lib/custom-forms";
