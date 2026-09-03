@@ -23,7 +23,13 @@ import {
   type AnamnesisRecord,
 } from "@/lib/anamnesis";
 import { AnamnesisForm, type AnamnesisSubmit } from "@/components/app/AnamnesisForm";
-import { DEFAULT_TERMS, templateMatchesServices, type AnamnesisTemplate } from "@/lib/custom-forms";
+import {
+  completedTemplateIdsForAppointment,
+  DEFAULT_TERMS,
+  pendingServiceIdsForAppointment,
+  templateMatchesServices,
+  type AnamnesisTemplate,
+} from "@/lib/custom-forms";
 import {
   Select,
   SelectContent,
@@ -118,8 +124,25 @@ export function AnamnesisTab({
     serviceIds === undefined
       ? templates
       : templates.filter((template) => templateMatchesServices(template, serviceIds));
+  const completedTemplateIds = completedTemplateIdsForAppointment(records, appointmentId);
+  const pendingServiceIds =
+    serviceIds === undefined
+      ? []
+      : pendingServiceIdsForAppointment(templates, records, appointmentId, serviceIds);
+  const pendingServiceNames = pendingServiceIds
+    .map((serviceId) => serviceNames[serviceIds?.indexOf(serviceId) ?? -1])
+    .filter(Boolean);
+  const selectableTemplates =
+    serviceIds === undefined
+      ? availableTemplates
+      : availableTemplates.filter(
+          (template) =>
+            template.service_ids.length > 0 &&
+            !completedTemplateIds.has(template.id) &&
+            template.service_ids.some((serviceId) => pendingServiceIds.includes(serviceId)),
+        );
   const selectedTemplate =
-    availableTemplates.find((template) => template.id === selectedTemplateId) ?? null;
+    selectableTemplates.find((template) => template.id === selectedTemplateId) ?? null;
 
   const last = records[0] ?? null;
   const expired = isExpired(last?.filled_at);
@@ -182,6 +205,17 @@ export function AnamnesisTab({
   const saveCompanyForm = useMutation({
     mutationFn: async (submission: AnamnesisSubmit) => {
       if (!selectedTemplate) throw new Error("Selecione um formulário.");
+      if (appointmentId) {
+        const { data: existing, error: existingError } = await supabase
+          .from("anamnesis_records")
+          .select("id")
+          .eq("appointment_id", appointmentId)
+          .eq("template_id", selectedTemplate.id)
+          .limit(1)
+          .maybeSingle();
+        if (existingError) throw existingError;
+        if (existing) throw new Error("Esta ficha já foi preenchida para este atendimento.");
+      }
       const { data: userData } = await supabase.auth.getUser();
       const upload = async (group: "before" | "after", images: string[]) => {
         const paths: string[] = [];
@@ -202,6 +236,13 @@ export function AnamnesisTab({
       ]);
       const alerts = extractAlerts(selectedTemplate.sections, submission.answers);
       const terms = selectedTemplate.terms?.length ? selectedTemplate.terms : DEFAULT_TERMS;
+      const recordedServiceIds =
+        serviceIds === undefined
+          ? selectedTemplate.service_ids
+          : selectedTemplate.service_ids.filter((serviceId) => serviceIds.includes(serviceId));
+      const recordedServiceNames = recordedServiceIds
+        .map((serviceId) => serviceNames[serviceIds?.indexOf(serviceId) ?? -1])
+        .filter(Boolean);
       const { data: record, error } = await supabase
         .from("anamnesis_records")
         .insert({
@@ -223,8 +264,8 @@ export function AnamnesisTab({
             validity_months: selectedTemplate.validity_months,
             allow_before_photos: selectedTemplate.allow_before_photos,
             allow_after_photos: selectedTemplate.allow_after_photos,
-            service_ids: serviceIds ?? [],
-            service_names: serviceNames,
+            service_ids: recordedServiceIds,
+            service_names: recordedServiceNames,
           },
           consent_snapshot: terms.map((term) => ({
             ...term,
@@ -249,7 +290,7 @@ export function AnamnesisTab({
         customerId,
         recordId: record.id,
         action: "create",
-        detail: `Formulário “${selectedTemplate.name}” preenchido pela empresa${serviceNames.length ? ` · Serviços: ${serviceNames.join(", ")}` : ""}`,
+        detail: `Formulário “${selectedTemplate.name}” preenchido pela empresa${recordedServiceNames.length ? ` · Serviços: ${recordedServiceNames.join(", ")}` : ""}`,
       });
     },
     onSuccess: () => {
@@ -380,17 +421,40 @@ export function AnamnesisTab({
         <p className="text-xs text-muted-foreground">
           Os formulários personalizados são internos e preenchidos somente pela empresa.
         </p>
-        {!!availableTemplates.length && (
+        {!!selectableTemplates.length && (
           <Button size="sm" onClick={() => setShowNewForm((value) => !value)}>
             <Plus className="mr-2 h-4 w-4" /> Preencher formulário
           </Button>
         )}
       </div>
 
-      {!availableTemplates.length && (
+      {serviceIds !== undefined && pendingServiceIds.length === 0 && (
+        <p className="rounded-lg border border-green-500/30 bg-green-500/5 p-4 text-center text-sm font-medium text-green-700">
+          Todas as fichas deste atendimento foram preenchidas.
+        </p>
+      )}
+
+      {serviceIds !== undefined && pendingServiceIds.length > 0 && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+          <p className="text-sm font-medium text-amber-800">Fichas pendentes neste atendimento</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {pendingServiceNames.length
+              ? pendingServiceNames.join(", ")
+              : `${pendingServiceIds.length} serviço(s) ainda precisam de ficha preenchida.`}
+          </p>
+        </div>
+      )}
+
+      {!selectableTemplates.length && pendingServiceIds.length > 0 && (
         <p className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
-          Nenhum formulário ativo atende aos serviços selecionados. Vincule esses serviços a um
-          modelo ou crie um modelo geral nesta página.
+          Um ou mais serviços ainda não possuem ficha ativa. Crie ou ative a ficha antes de concluir
+          este atendimento.
+        </p>
+      )}
+
+      {serviceIds === undefined && !selectableTemplates.length && (
+        <p className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
+          Nenhum formulário ativo disponível. Crie ou ative um modelo nesta página.
         </p>
       )}
 
@@ -404,7 +468,7 @@ export function AnamnesisTab({
                   <SelectValue placeholder="Selecione o formulário" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableTemplates.map((template) => (
+                  {selectableTemplates.map((template) => (
                     <SelectItem key={template.id} value={template.id}>
                       {template.name}
                     </SelectItem>

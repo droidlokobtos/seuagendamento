@@ -46,3 +46,35 @@ export const DEFAULT_TERMS: ConsentTerm[] = [
 export function templateMatchesServices(template: AnamnesisTemplate, serviceIds: string[]) {
   return !template.service_ids.length || template.service_ids.some((id) => serviceIds.includes(id));
 }
+
+export type AppointmentTemplateRecord = {
+  appointment_id?: string | null;
+  template_id?: string | null;
+};
+
+export function completedTemplateIdsForAppointment(
+  records: AppointmentTemplateRecord[],
+  appointmentId?: string,
+) {
+  if (!appointmentId) return new Set<string>();
+  return new Set(
+    records
+      .filter((record) => record.appointment_id === appointmentId && record.template_id)
+      .map((record) => record.template_id as string),
+  );
+}
+
+export function pendingServiceIdsForAppointment(
+  templates: AnamnesisTemplate[],
+  records: AppointmentTemplateRecord[],
+  appointmentId: string | undefined,
+  serviceIds: string[],
+) {
+  const completedTemplateIds = completedTemplateIdsForAppointment(records, appointmentId);
+  const completedServiceIds = new Set(
+    templates
+      .filter((template) => completedTemplateIds.has(template.id))
+      .flatMap((template) => template.service_ids),
+  );
+  return serviceIds.filter((serviceId) => !completedServiceIds.has(serviceId));
+}

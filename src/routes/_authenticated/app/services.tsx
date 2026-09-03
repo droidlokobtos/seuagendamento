@@ -156,12 +156,18 @@ function Services() {
       if (typeof clean.category === "string") clean.category = clean.category.trim() || null;
       let serviceId = edit?.id;
       if (edit?.id) {
+        if (clean.show_on_booking && loadingFormServiceIds) {
+          throw new Error("Aguarde a verificação da ficha e tente novamente.");
+        }
+        if (clean.show_on_booking && !servicesWithForms.has(edit.id)) {
+          throw new Error("Crie e salve a ficha obrigatória antes de publicar este serviço.");
+        }
         const { error } = await supabase.from("services").update(clean).eq("id", edit.id);
         if (error) throw error;
       } else {
         const nextSort = data.length ? Math.max(...data.map((s) => s.sort_order ?? 0)) + 1 : 1;
         const { data: created, error } = await supabase.from("services").insert({
-          ...clean, company_id: companyId, sort_order: nextSort,
+          ...clean, company_id: companyId, sort_order: nextSort, show_on_booking: false,
         } as any).select("id").single();
         if (error) throw error;
         serviceId = created.id;
@@ -184,7 +190,9 @@ function Services() {
       return { serviceId, created: !edit?.id };
     },
     onSuccess: (result) => {
-      toast.success(edit ? "Serviço atualizado" : "Serviço criado. Agora prepare a ficha dele.");
+      toast.success(
+        edit ? "Serviço atualizado" : "Serviço criado e oculto até a ficha ser salva.",
+      );
       qc.invalidateQueries({ queryKey: ["services", companyId] });
       qc.invalidateQueries({ queryKey: ["svc_staff_links", companyId] });
       setOpen(false); setEdit(null);

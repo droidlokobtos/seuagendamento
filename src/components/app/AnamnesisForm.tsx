@@ -163,7 +163,7 @@ export function AnamnesisForm({
     if (requireSignature && !sig) return toast.error("Assinatura digital obrigatória.");
     void onSubmit({
       answers,
-      consent_truth: acceptedTerms.truth ?? true,
+      consent_truth: acceptedTerms.truth ?? acceptedTerms.veracidade ?? true,
       consent_procedure: acceptedTerms.procedure ?? true,
       consent_lgpd: acceptedTerms.lgpd ?? true,
       signature_data: sig,

@@ -188,11 +188,24 @@ function CustomFormsPage() {
         ? await query.update(payload).eq("id", draft.id).eq("company_id", companyId)
         : await query.insert(payload);
       if (error) throw error;
+      if (requestedServiceId && draft.service_ids.includes(requestedServiceId)) {
+        const { error: releaseError } = await supabase
+          .from("services")
+          .update({ show_on_booking: true })
+          .eq("id", requestedServiceId)
+          .eq("company_id", companyId);
+        if (releaseError) throw releaseError;
+      }
     },
     onSuccess: () => {
-      toast.success("Formulário salvo e pronto para os serviços selecionados.");
+      toast.success(
+        requestedServiceId
+          ? "Ficha salva. O serviço foi liberado para agendamento."
+          : "Formulário salvo e pronto para os serviços selecionados.",
+      );
       setDraft(blank());
       void qc.invalidateQueries({ queryKey: ["anamnesis-templates", companyId] });
+      void qc.invalidateQueries({ queryKey: ["services", companyId] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -309,9 +322,10 @@ function CustomFormsPage() {
                   customerName={selectedAppointment.customers?.name ?? "Cliente"}
                   appointmentId={selectedAppointment.id}
                   serviceIds={selectedServiceIds}
-                  serviceNames={services
-                    .filter((service) => selectedServiceIds.includes(service.id))
-                    .map((service) => service.name)}
+                  serviceNames={selectedServiceIds.map(
+                    (serviceId) =>
+                      services.find((service) => service.id === serviceId)?.name ?? "Serviço",
+                  )}
                 />
               ) : (
                 <p className="rounded-xl border border-dashed p-5 text-center text-sm text-muted-foreground">
