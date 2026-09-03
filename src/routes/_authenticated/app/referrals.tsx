@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { dateBR } from "@/lib/format";
+import { getOrCreateReferralCode } from "@/lib/referrals.functions";
 
 export const Route = createFileRoute("/_authenticated/app/referrals")({ component: Referrals });
 
@@ -42,11 +43,7 @@ function Referrals() {
     queryKey: ["company-referral-code", companyId],
     enabled: !!companyId,
     queryFn: async () => {
-      const { data, error } = await (supabase.rpc as any)(
-        "get_or_create_company_referral_code",
-        { _company_id: companyId },
-      );
-      if (error) throw error;
+      const data = await getOrCreateReferralCode({ data: { companyId: companyId! } });
       const value = String(data ?? "").trim();
       if (!value) throw new Error("Código de indicação não retornado");
       return value;
