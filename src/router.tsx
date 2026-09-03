@@ -21,7 +21,12 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
+    // Carrega o código da próxima tela enquanto o usuário aponta/toca no link.
+    // O resultado permanece válido por um minuto, evitando repetir loaders e
+    // downloads quando ele alterna entre abas do painel.
+    defaultPreload: "intent",
+    defaultPreloadDelay: 60,
+    defaultPreloadStaleTime: 60_000,
   });
 
 
