@@ -3,7 +3,12 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const CreativeInput = z.object({
-  theme: z.enum(["features", "practicality", "plans", "referral", "custom"]),
+  scope: z.enum(["saas", "company"]),
+  company_id: z.string().uuid().optional(),
+  theme: z.enum([
+    "features", "practicality", "plans", "referral", "custom",
+    "services", "availability", "promotion", "authority",
+  ]),
   format: z.enum(["square", "story"]),
   style: z.enum(["impact", "editorial", "product", "human"]),
   audience: z.enum(["multi", "salon", "barber", "aesthetic", "wellness"]),
@@ -49,6 +54,34 @@ const concepts: Record<string, { idea: string; scene: string; details: string }>
     details:
       "build one bold focal idea from the custom direction; avoid a generic person merely holding a phone",
   },
+  services: {
+    idea: "The quality of the service becomes a desirable visual experience",
+    scene:
+      "an authentic premium service moment with precise professional technique, tactile materials and a confident client reaction, composed as a memorable Brazilian brand campaign",
+    details:
+      "make the expertise, care and final experience tangible; avoid generic posing and obvious before-and-after splits",
+  },
+  availability: {
+    idea: "The perfect moment of care is within easy reach",
+    scene:
+      "a cinematic service-business environment prepared for the next client, with one inviting focal point, subtle sense of timing and elegant anticipation",
+    details:
+      "communicate convenience and desire without calendars, clocks, floating interface cards or literal booking icons",
+  },
+  promotion: {
+    idea: "A special opportunity presented with value, not cheapness",
+    scene:
+      "a highly desirable hero service or result staged with editorial confidence, bold controlled lighting and a refined visual reveal",
+    details:
+      "create urgency through composition and contrast; no price tags, sale stickers, percent signs, confetti or retail clichés",
+  },
+  authority: {
+    idea: "Professional mastery that earns trust before a word is spoken",
+    scene:
+      "a confident Brazilian specialist in a real working moment, framed with cinematic credibility, precise tools and an unmistakable signature atmosphere",
+    details:
+      "show expertise through action and detail rather than crossed arms, certificates, handshakes or stock-photo smiles",
+  },
 };
 
 const styles: Record<string, string> = {
@@ -79,11 +112,54 @@ export const generateAdminMarketingImage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((value: unknown) => CreativeInput.parse(value))
   .handler(async ({ context, data }) => {
-    const { data: isAdmin, error } = await context.supabase.rpc("is_super_admin");
-    if (error || !isAdmin) throw new Error("Apenas o Admin Master pode gerar campanhas.");
+    const { data: isAdmin, error: adminError } = await context.supabase.rpc("is_super_admin");
+    if (adminError) throw new Error("Não foi possível validar o acesso ao estúdio.");
+
+    let brandName = "SeuAgendamento";
+    let brandWorld =
+      "distinctive attainable premium, Brazilian entrepreneurial energy, deep espresso brown #241713, warm ivory #FBF8F3 and restrained champagne gold #C9A86A";
+    let targetContext = audiences[data.audience];
+
+    if (data.scope === "saas") {
+      if (!isAdmin) throw new Error("Apenas o Admin Master pode gerar campanhas do SaaS.");
+    } else {
+      if (!data.company_id) throw new Error("Selecione uma empresa para criar a campanha.");
+      const [{ data: company, error: companyError }, { data: membership }] = await Promise.all([
+        context.supabase
+          .from("companies")
+          .select("id,name,niche_id,plan_code,primary_color,secondary_color,status")
+          .eq("id", data.company_id)
+          .maybeSingle(),
+        context.supabase
+          .from("company_users")
+          .select("id")
+          .eq("company_id", data.company_id)
+          .eq("user_id", context.userId)
+          .eq("active", true)
+          .maybeSingle(),
+      ]);
+      if (companyError || !company) throw new Error("Empresa não encontrada ou sem acesso.");
+      if (!isAdmin && !membership) throw new Error("Você não tem acesso a esta empresa.");
+      if (company.plan_code?.toLowerCase() !== "pro") {
+        throw new Error("O estúdio de marketing com IA é exclusivo do plano Pro.");
+      }
+      if (["suspended", "overdue", "trial_expired"].includes(company.status ?? "")) {
+        throw new Error("A empresa precisa estar ativa para gerar campanhas.");
+      }
+      brandName = company.name;
+      brandWorld = `the authentic identity of ${company.name}, led by primary color ${company.primary_color ?? "#241713"} and accent color ${company.secondary_color ?? "#C9A86A"}, applied with premium restraint and consistent color grading`;
+      if (company.niche_id) {
+        const { data: niche } = await context.supabase
+          .from("niches")
+          .select("name")
+          .eq("id", company.niche_id)
+          .maybeSingle();
+        if (niche?.name) targetContext = `${niche.name}, a Brazilian appointment-based service business`;
+      }
+    }
 
     const concept = concepts[data.theme];
-    const prompt = `Create a genuinely award-worthy advertising key visual for SeuAgendamento, a Brazilian appointment-management SaaS for service businesses.
+    const prompt = `Create a genuinely award-worthy advertising key visual for ${brandName}, ${data.scope === "saas" ? "a Brazilian appointment-management SaaS for service businesses" : "a Brazilian service business advertising directly to its customers"}.
 
 CAMPAIGN MESSAGE (use only to understand the visual idea; do not render this text):
 Headline: "${data.title}"
@@ -92,11 +168,11 @@ Support: "${data.subtitle}"
 SINGLE BIG IDEA: ${concept.idea}.
 HERO SCENE: ${concept.scene}.
 STORY DETAILS: ${concept.details}.
-TARGET CONTEXT: ${audiences[data.audience]}.
+TARGET CONTEXT: ${targetContext}.
 ART-DIRECTION MODE: ${styles[data.style]}.
 ${data.direction ? `CLIENT'S ADDITIONAL DIRECTION: ${data.direction}.` : ""}
 
-BRAND WORLD: distinctive attainable premium, Brazilian entrepreneurial energy, deep espresso brown #241713, warm ivory #FBF8F3 and restrained champagne gold #C9A86A. Cinematic commercial lighting, realistic materials, intentional shadows, premium color separation, crisp focal subject, subtle depth and meticulous retouching. The result must feel commissioned by a top Brazilian advertising agency, not like an AI template, stock photo, generic corporate technology visual or predictable beauty ad.
+BRAND WORLD: ${brandWorld}. Cinematic commercial lighting, realistic materials, intentional shadows, premium color separation, crisp focal subject, subtle depth and meticulous retouching. The result must feel commissioned by a top Brazilian advertising agency, not like an AI template, stock photo, generic corporate technology visual or predictable beauty ad.
 
 LAYOUT: ${data.format === "story" ? "vertical 9:16 story poster; keep the hero action in the upper and middle zones" : "square 1:1 social campaign; keep the hero action above center or on the right"}. Preserve a calm, darkened lower third with enough negative space for a real headline, support line and CTA that will be added later. Strong visual hierarchy and immediate readability at phone size.
 

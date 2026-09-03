@@ -68,6 +68,7 @@ type NavItem = {
   end?: boolean;
   perm?: PermissionKey;
   external?: boolean;
+  proOnly?: boolean;
 };
 type NavGroup = { id: string; label: string; icon: LucideIcon; items: NavItem[] };
 
@@ -178,6 +179,7 @@ const GROUPS: NavGroup[] = [
     icon: Sparkles,
     items: [
       { to: "/app/ai", label: "Central de inteligência", icon: Sparkles, perm: "relatorios" },
+      { to: "/app/marketing", label: "Marketing e publicidade", icon: Megaphone, perm: "configuracoes", proOnly: true },
     ],
   },
   {
@@ -233,10 +235,13 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   );
   const groups = useMemo(
     () =>
-      GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => !i.perm || can(i.perm)) })).filter(
-        (g) => g.items.length > 0,
-      ),
-    [can],
+      GROUPS.map((g) => ({
+        ...g,
+        items: g.items.filter(
+          (i) => (!i.perm || can(i.perm)) && (!i.proOnly || activeCompany?.plan_code === "pro"),
+        ),
+      })).filter((g) => g.items.length > 0),
+    [activeCompany?.plan_code, can],
   );
   const quickActions = useMemo(() => QUICK_ACTIONS.filter((a) => can(a.perm)), [can]);
   const bottomNav = useMemo(() => BOTTOM_NAV.filter((i) => !i.perm || can(i.perm)), [can]);

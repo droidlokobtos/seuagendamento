@@ -51,6 +51,7 @@ function PermissionGate() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { isSuperAdmin } = useAuth();
   const { can, hasFeature, loading } = usePermissions();
+  const { activeCompany } = useCompany();
 
   if (isSuperAdmin) return <Outlet />;
 
@@ -61,9 +62,11 @@ function PermissionGate() {
   const isHelp = path === "/app/help" || path.startsWith("/app/help/");
   const permissionDenied = isDashboard ? !can("dashboard") : (!isHelp && ((!key) || !can(key)));
   const planDenied = !!feature && !hasFeature(feature);
+  const proPlanDenied = path.startsWith("/app/marketing") && activeCompany?.plan_code !== "pro";
 
-  if (permissionDenied || planDenied) {
-    return <Card className="max-w-lg mx-auto"><CardContent className="p-8 text-center"><h1 className="text-lg font-semibold">{planDenied ? "Recurso não disponível no seu plano" : "Acesso não autorizado"}</h1><p className="mt-2 text-sm text-muted-foreground">{planDenied ? "Este recurso faz parte de um plano superior. Fale com o administrador para alterar o plano da empresa." : "Seu perfil não tem permissão para acessar esta área. Fale com o administrador da empresa."}</p></CardContent></Card>;
+  if (permissionDenied || planDenied || proPlanDenied) {
+    const deniedByPlan = planDenied || proPlanDenied;
+    return <Card className="max-w-lg mx-auto"><CardContent className="p-8 text-center"><h1 className="text-lg font-semibold">{deniedByPlan ? "Recurso exclusivo do plano Pro" : "Acesso não autorizado"}</h1><p className="mt-2 text-sm text-muted-foreground">{deniedByPlan ? "O estúdio de Marketing e publicidade com IA está disponível para empresas do plano Pro. Fale com o administrador para alterar o plano da empresa." : "Seu perfil não tem permissão para acessar esta área. Fale com o administrador da empresa."}</p></CardContent></Card>;
   }
   return <Outlet />;
 }
