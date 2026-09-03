@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { brl } from "@/lib/format";
+import { useState } from "react";
 
 export const Route = createFileRoute("/")({ component: Landing });
 
@@ -46,8 +47,22 @@ const plans = [
   },
 ];
 
+const cycleOptions = [1, 3, 6, 12] as const;
+
+function priceForCycle(plan: (typeof plans)[number], months: number) {
+  if (months === 1) return { totalCents: plan.monthly_cents, discountPercent: 0 };
+
+  const discountPercent = plan.discount_percent ?? 0;
+  const configuredTotal =
+    months === plan.cycle_months && plan.cycle_total_cents
+      ? plan.cycle_total_cents
+      : Math.round(plan.monthly_cents * months * (1 - discountPercent / 100));
+  return { totalCents: configuredTotal, discountPercent };
+}
+
 function Landing() {
   const startingPlan = plans[0];
+  const [cycleMonths, setCycleMonths] = useState(1);
 
   return (
     <div className="premium-landing min-h-screen bg-background text-foreground">
@@ -110,50 +125,84 @@ function Landing() {
           <p className="mt-2 text-muted-foreground">
             Escolha a opção que melhor combina com sua empresa.
           </p>
+          <div className="mx-auto mt-6 flex w-fit flex-wrap justify-center gap-1 rounded-xl border bg-muted/40 p-1">
+            {cycleOptions.map((months) => (
+              <button
+                key={months}
+                type="button"
+                onClick={() => setCycleMonths(months)}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                  cycleMonths === months
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {months === 1 ? "1 mês" : `${months} meses`}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="grid gap-5 md:grid-cols-3">
-          {plans.map((plan) => (
-            <div
-              key={plan.code}
-              className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm flex flex-col"
-            >
-              <div>
-                <h3 className="text-xl font-semibold">{plan.name}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
-              </div>
-              <div className="mt-5">
-                <div className="flex items-end gap-1">
-                  <span className="text-3xl font-bold">{brl(plan.monthly_cents / 100)}</span>
-                  <span className="text-sm text-muted-foreground mb-1">/mês</span>
+          {plans.map((plan) => {
+            const price = priceForCycle(plan, cycleMonths);
+            const equivalentMonthly = price.totalCents / cycleMonths;
+            return (
+              <div
+                key={plan.code}
+                className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm flex flex-col"
+              >
+                <div>
+                  <h3 className="text-xl font-semibold">{plan.name}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
                 </div>
-                {plan.cycle_months > 1 && (
+                <div className="mt-5">
+                  <div className="flex items-end gap-1">
+                    <span className="text-3xl font-bold">{brl(equivalentMonthly / 100)}</span>
+                    <span className="text-sm text-muted-foreground mb-1">
+                      /mês {cycleMonths > 1 ? "equivalente" : ""}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm font-medium">
+                    Total por {cycleMonths === 1 ? "1 mês" : `${cycleMonths} meses`}:{" "}
+                    {brl(price.totalCents / 100)}
+                  </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Ciclo de {plan.cycle_months} meses por {brl(plan.cycle_total_cents / 100)}
-                    {plan.discount_percent > 0 ? ` · ${plan.discount_percent}% de desconto` : ""}
+                    {price.discountPercent > 0
+                      ? `${price.discountPercent}% de desconto no pagamento do período`
+                      : cycleMonths === 1
+                        ? "Cobrança mensal, sem fidelidade"
+                        : "Valor calculado pelo período selecionado"}
                   </p>
-                )}
-              </div>
-              <div className="mt-5 space-y-2 text-sm flex-1">
-                <p className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" /> Recursos conforme o plano selecionado
-                </p>
-                <p className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" /> Agendamento e gestão online
-                </p>
-                <p className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" /> Identidade visual da empresa
-                </p>
-                {plan.max_users ? (
+                </div>
+                <div className="mt-5 space-y-2 text-sm flex-1">
                   <p className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" /> Até {plan.max_users} usuários
+                    <Check className="h-4 w-4 text-primary" /> Recursos conforme o plano selecionado
                   </p>
-                ) : null}
+                  <p className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-primary" /> Agendamento e gestão online
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-primary" /> Identidade visual da empresa
+                  </p>
+                  {plan.max_users ? (
+                    <p className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" /> Até {plan.max_users} usuários
+                    </p>
+                  ) : null}
+                </div>
+                <Link
+                  to="/auth"
+                  className="mt-6"
+                  onClick={() => {
+                    sessionStorage.setItem("beauty:selectedPlan", plan.code);
+                    sessionStorage.setItem("beauty:selectedCycleMonths", String(cycleMonths));
+                  }}
+                >
+                  <Button className="w-full">Escolher {plan.name}</Button>
+                </Link>
               </div>
-              <Link to="/auth" className="mt-6">
-                <Button className="w-full">Escolher {plan.name}</Button>
-              </Link>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
