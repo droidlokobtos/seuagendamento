@@ -61,8 +61,12 @@ function ResellersAdmin() {
   });
   const createM = useMutation({
     mutationFn: () => createFn({ data: form }),
-    onSuccess: () => {
-      toast.success("Revendedor cadastrado");
+    onSuccess: (result) => {
+      toast.success(
+        result.reusedExistingAccount
+          ? "Revendedor vinculado à conta existente. A senha atual foi mantida."
+          : "Revendedor cadastrado e acesso criado.",
+      );
       setOpen(false);
       setForm(empty);
       qc.invalidateQueries({ queryKey: ["admin-resellers"] });
@@ -174,6 +178,9 @@ function ResellersAdmin() {
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                 />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Se o e-mail já possuir uma conta sem vínculo, a senha atual será mantida.
+                </p>
               </Field>
             </div>
             <Button onClick={() => createM.mutate()} disabled={createM.isPending}>
