@@ -7,6 +7,7 @@ import {
   BarChart3,
   ShieldCheck,
   Check,
+  Handshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { brl } from "@/lib/format";
@@ -75,6 +76,11 @@ function Landing() {
             <span className="text-lg font-semibold tracking-tight">BeautySaaS</span>
           </div>
           <div className="flex items-center gap-2">
+            <Link to="/reseller-login" className="hidden sm:block">
+              <Button variant="ghost" size="sm">
+                <Handshake className="mr-2 h-4 w-4" /> Revendedores
+              </Button>
+            </Link>
             <Link to="/auth">
               <Button variant="ghost" size="sm">
                 Entrar
@@ -261,7 +267,12 @@ function Landing() {
       <footer className="border-t border-border/60">
         <div className="mx-auto max-w-6xl px-4 py-6 text-sm text-muted-foreground flex flex-wrap justify-between gap-2">
           <p>© {new Date().getFullYear()} BeautySaaS</p>
-          <p>Plataforma white label para o segmento de beleza</p>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link to="/reseller-login" className="hover:text-foreground hover:underline">
+              Acesso do revendedor
+            </Link>
+            <p>Plataforma white label para o segmento de beleza</p>
+          </div>
         </div>
       </footer>
     </div>

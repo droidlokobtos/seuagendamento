@@ -266,6 +266,12 @@ function AuthPage() {
               Esqueci minha senha
             </button>
           </div>
+          <div className="mt-5 rounded-xl border bg-muted/30 p-3 text-center text-xs text-muted-foreground">
+            É revendedor?{" "}
+            <Link to="/reseller-login" className="font-semibold text-primary hover:underline">
+              Acesse o portal de vendas e repasses
+            </Link>
+          </div>
         </div>
       </div>
     </div>

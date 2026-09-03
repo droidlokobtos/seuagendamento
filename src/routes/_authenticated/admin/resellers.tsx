@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Handshake, Plus, Wallet } from "lucide-react";
+import { Copy, Handshake, LogIn, Plus, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createReseller } from "@/lib/resellers.functions";
@@ -41,6 +41,7 @@ const empty = {
 };
 function ResellersAdmin() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const createFn = useServerFn(createReseller);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
@@ -104,6 +105,21 @@ function ResellersAdmin() {
   const pending = sales
     .filter((s: any) => s.status === "earned")
     .reduce((n: number, s: any) => n + Number(s.commission_amount || 0), 0);
+  const accessPanel = async (item: any) => {
+    const { data: auth } = await supabase.auth.getUser();
+    await supabase.from("admin_access_logs").insert({
+      user_id: auth.user?.id,
+      email: auth.user?.email,
+      event: "reseller_panel_access",
+      user_agent: navigator.userAgent,
+      metadata: { reseller_id: item.id, reseller_name: item.name },
+    } as any);
+    void navigate({ to: "/reseller", search: { reseller: item.id } });
+  };
+  const copyLoginLink = async () => {
+    await navigator.clipboard.writeText(`${window.location.origin}/reseller-login`);
+    toast.success("Link de acesso do revendedor copiado.");
+  };
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-wrap items-center gap-3">
@@ -197,6 +213,61 @@ function ResellersAdmin() {
         <Stat label="Vendas vinculadas" value={sales.length} />
         <Stat label="Aguardando repasse" value={brl(pending)} />
       </div>
+      <Card>
+        <CardHeader className="flex-row items-center justify-between gap-3">
+          <div>
+            <CardTitle className="text-base">Acesso dos revendedores</CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Entre no painel de qualquer parceiro sem alterar a senha dele.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={copyLoginLink}>
+            <Copy className="mr-2 h-4 w-4" /> Copiar link de login
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="p-3 text-left">Revendedor</th>
+                  <th className="p-3 text-left">E-mail</th>
+                  <th className="p-3 text-left">Comissão</th>
+                  <th className="p-3 text-left">Situação</th>
+                  <th className="p-3 text-right">Acesso</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(data?.resellers ?? []).map((item: any) => (
+                  <tr key={item.id} className="border-t">
+                    <td className="p-3 font-medium">{item.name}</td>
+                    <td className="p-3 text-muted-foreground">{item.email}</td>
+                    <td className="p-3">{item.commission_percent}%</td>
+                    <td className="p-3">
+                      <Badge variant={item.active ? "secondary" : "outline"}>
+                        {item.active ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </td>
+                    <td className="p-3 text-right">
+                      <Button size="sm" variant="outline" onClick={() => accessPanel(item)}>
+                        <LogIn className="mr-2 h-4 w-4" />
+                        Entrar no painel
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+                {!data?.resellers?.length && (
+                  <tr>
+                    <td colSpan={5} className="p-10 text-center text-muted-foreground">
+                      Nenhum revendedor cadastrado.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Vincular nova venda</CardTitle>

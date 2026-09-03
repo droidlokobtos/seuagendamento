@@ -87,6 +87,10 @@ export const createReseller = createServerFn({ method: "POST" })
       } else {
         authUser = created.user;
         createdUserId = created.user.id;
+        await supabaseAdmin
+          .from("profiles")
+          .update({ must_change_password: true })
+          .eq("id", created.user.id);
       }
     }
 

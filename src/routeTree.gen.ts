@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermosRouteImport } from './routes/termos'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ResellerLoginRouteImport } from './routes/reseller-login'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -99,6 +100,11 @@ const TermosRoute = TermosRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResellerLoginRoute = ResellerLoginRouteImport.update({
+  id: '/reseller-login',
+  path: '/reseller-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketplaceRoute = MarketplaceRouteImport.update({
@@ -531,6 +537,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/marketplace': typeof MarketplaceRoute
+  '/reseller-login': typeof ResellerLoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
@@ -613,6 +620,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/marketplace': typeof MarketplaceRoute
+  '/reseller-login': typeof ResellerLoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
   '/change-password': typeof AuthenticatedChangePasswordRoute
@@ -694,6 +702,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/marketplace': typeof MarketplaceRoute
+  '/reseller-login': typeof ResellerLoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
@@ -778,6 +787,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/marketplace'
+    | '/reseller-login'
     | '/reset-password'
     | '/termos'
     | '/admin'
@@ -860,6 +870,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/marketplace'
+    | '/reseller-login'
     | '/reset-password'
     | '/termos'
     | '/change-password'
@@ -940,6 +951,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/marketplace'
+    | '/reseller-login'
     | '/reset-password'
     | '/termos'
     | '/_authenticated/admin'
@@ -1024,6 +1036,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   MarketplaceRoute: typeof MarketplaceRoute
+  ResellerLoginRoute: typeof ResellerLoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
   ApiHealthRoute: typeof ApiHealthRoute
@@ -1061,6 +1074,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reseller-login': {
+      id: '/reseller-login'
+      path: '/reseller-login'
+      fullPath: '/reseller-login'
+      preLoaderRoute: typeof ResellerLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketplace': {
@@ -1780,6 +1800,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   MarketplaceRoute: MarketplaceRoute,
+  ResellerLoginRoute: ResellerLoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
   ApiHealthRoute: ApiHealthRoute,

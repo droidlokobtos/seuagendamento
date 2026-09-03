@@ -5,19 +5,48 @@ import { brl, dateBR } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Clock, Wallet } from "lucide-react";
-export const Route = createFileRoute("/_authenticated/reseller/")({ component: Dashboard });
+import { z } from "zod";
+import { useAuth } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+export const Route = createFileRoute("/_authenticated/reseller/")({
+  validateSearch: z.object({ reseller: z.string().uuid().optional() }),
+  component: Dashboard,
+});
 function Dashboard() {
+  const { isSuperAdmin, user } = useAuth();
+  const { reseller: selectedReseller } = Route.useSearch();
   const { data, isLoading } = useQuery({
-    queryKey: ["reseller-dashboard"],
+    queryKey: ["reseller-dashboard", isSuperAdmin, selectedReseller, user?.id],
+    enabled: !isSuperAdmin || !!selectedReseller,
     queryFn: async () => {
-      const { data: r, error } = await (supabase.from as any)("resellers").select("*").single();
+      let profileQuery = (supabase.from as any)("resellers").select("*");
+      profileQuery = isSuperAdmin
+        ? profileQuery.eq("id", selectedReseller)
+        : profileQuery.eq("user_id", user?.id);
+      const { data: r, error } = await profileQuery.single();
       if (error) throw error;
       const { data: s } = await (supabase.from as any)("reseller_sales")
         .select("*,companies(name,plan_code)")
+        .eq("reseller_id", r.id)
         .order("created_at", { ascending: false });
       return { profile: r, sales: s ?? [] };
     },
   });
+  if (isSuperAdmin && !selectedReseller)
+    return (
+      <Card className="mx-auto max-w-lg">
+        <CardContent className="p-8 text-center">
+          <ShieldMessage />
+          <h1 className="mt-4 text-lg font-semibold">Selecione um revendedor</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Abra este painel pela área de revendedores do Admin Master.
+          </p>
+          <Button className="mt-5" asChild>
+            <a href="/admin/resellers">Voltar aos revendedores</a>
+          </Button>
+        </CardContent>
+      </Card>
+    );
   const sales = data?.sales ?? [];
   const earned = sales
     .filter((s: any) => s.status === "earned")
@@ -35,6 +64,11 @@ function Dashboard() {
         <p className="text-sm text-muted-foreground">
           Acompanhe suas vendas, comissões e próximos repasses.
         </p>
+        {isSuperAdmin && (
+          <Badge variant="outline" className="mt-3">
+            Visualização do Admin Master
+          </Badge>
+        )}
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat icon={Building2} label="Empresas vendidas" value={isLoading ? "…" : sales.length} />
@@ -101,6 +135,13 @@ function Dashboard() {
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+function ShieldMessage() {
+  return (
+    <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary">
+      <Wallet className="h-6 w-6" />
     </div>
   );
 }
