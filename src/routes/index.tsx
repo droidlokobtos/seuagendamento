@@ -156,15 +156,19 @@ function Landing() {
                   <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
                 </div>
                 <div className="mt-5">
-                  <div className="flex items-end gap-1">
-                    <span className="text-3xl font-bold">{brl(equivalentMonthly / 100)}</span>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Valor do ciclo selecionado
+                  </p>
+                  <div className="mt-1 flex items-end gap-1">
+                    <span className="text-3xl font-bold">{brl(price.totalCents / 100)}</span>
                     <span className="text-sm text-muted-foreground mb-1">
-                      /mês {cycleMonths > 1 ? "equivalente" : ""}
+                      /{cycleMonths === 1 ? "1 mês" : `${cycleMonths} meses`}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm font-medium">
-                    Total por {cycleMonths === 1 ? "1 mês" : `${cycleMonths} meses`}:{" "}
-                    {brl(price.totalCents / 100)}
+                  <p className="mt-2 text-sm font-medium text-muted-foreground">
+                    {cycleMonths === 1
+                      ? `${brl(plan.monthly_cents / 100)} por mês`
+                      : `Equivale a ${brl(equivalentMonthly / 100)} por mês`}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {price.discountPercent > 0
