@@ -1638,6 +1638,140 @@ export type Database = {
           },
         ]
       }
+      company_referral_codes: {
+        Row: {
+          code: string
+          company_id: string
+          created_at: string
+        }
+        Insert: {
+          code: string
+          company_id: string
+          created_at?: string
+        }
+        Update: {
+          code?: string
+          company_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_referral_codes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_referral_codes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_referrals: {
+        Row: {
+          applied_at: string | null
+          applied_payment_id: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          created_at: string
+          id: string
+          qualified_at: string | null
+          qualifying_payment_id: string | null
+          referral_code: string
+          referred_company_id: string
+          referred_plan_code: string | null
+          referrer_company_id: string
+          reward_percent: number | null
+          status: string
+        }
+        Insert: {
+          applied_at?: string | null
+          applied_payment_id?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          qualified_at?: string | null
+          qualifying_payment_id?: string | null
+          referral_code: string
+          referred_company_id: string
+          referred_plan_code?: string | null
+          referrer_company_id: string
+          reward_percent?: number | null
+          status?: string
+        }
+        Update: {
+          applied_at?: string | null
+          applied_payment_id?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          qualified_at?: string | null
+          qualifying_payment_id?: string | null
+          referral_code?: string
+          referred_company_id?: string
+          referred_plan_code?: string | null
+          referrer_company_id?: string
+          reward_percent?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_referrals_applied_payment_id_fkey"
+            columns: ["applied_payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_referrals_qualifying_payment_id_fkey"
+            columns: ["qualifying_payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_referrals_referred_company_id_fkey"
+            columns: ["referred_company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_referrals_referred_company_id_fkey"
+            columns: ["referred_company_id"]
+            isOneToOne: true
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_referrals_referred_plan_code_fkey"
+            columns: ["referred_plan_code"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "company_referrals_referrer_company_id_fkey"
+            columns: ["referrer_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_referrals_referrer_company_id_fkey"
+            columns: ["referrer_company_id"]
+            isOneToOne: false
+            referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_users: {
         Row: {
           active: boolean
@@ -3196,27 +3330,39 @@ export type Database = {
           company_id: string
           created_at: string
           created_by: string | null
+          gross_amount: number
           id: string
           note: string | null
           paid_at: string
+          referral_discount_amount: number
+          referral_discount_percent: number | null
+          referral_id: string | null
         }
         Insert: {
           amount: number
           company_id: string
           created_at?: string
           created_by?: string | null
+          gross_amount: number
           id?: string
           note?: string | null
           paid_at?: string
+          referral_discount_amount?: number
+          referral_discount_percent?: number | null
+          referral_id?: string | null
         }
         Update: {
           amount?: number
           company_id?: string
           created_at?: string
           created_by?: string | null
+          gross_amount?: number
           id?: string
           note?: string | null
           paid_at?: string
+          referral_discount_amount?: number
+          referral_discount_percent?: number | null
+          referral_id?: string | null
         }
         Relationships: [
           {
@@ -3231,6 +3377,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "public_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "company_referrals"
             referencedColumns: ["id"]
           },
         ]
@@ -5992,6 +6145,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_set_referral_status: {
+        Args: { _reason?: string; _referral_id: string; _status: string }
+        Returns: undefined
+      }
       can_access_appointment: {
         Args: { _company: string; _keys: string[]; _staff: string }
         Returns: boolean
@@ -6066,6 +6223,15 @@ export type Database = {
         Args: { _company: string }
         Returns: Json
       }
+      ensure_company_referral_code: {
+        Args: { _company_id: string }
+        Returns: string
+      }
+      get_admin_referral_dashboard: { Args: never; Returns: Json }
+      get_company_referral_dashboard: {
+        Args: { _company_id: string }
+        Returns: Json
+      }
       has_any_permission: {
         Args: { _company: string; _keys: string[] }
         Returns: boolean
@@ -6106,6 +6272,14 @@ export type Database = {
       recalc_appointment_finance: {
         Args: { _appt: string }
         Returns: undefined
+      }
+      register_company_referral: {
+        Args: { _referral_code: string; _referred_company_id: string }
+        Returns: Json
+      }
+      register_subscription_payment: {
+        Args: { _company_id: string; _gross_amount: number; _note?: string }
+        Returns: Json
       }
       reorder_services: {
         Args: { _company: string; _ids: string[] }
