@@ -30,11 +30,27 @@ export function renderReviewTemplate(template: string, vars: Partial<ReviewTempl
 }
 
 export const REVIEW_INVITE_STATUS: Record<string, { label: string; color: string }> = {
-  pending: { label: "Aguardando envio", color: "bg-muted text-muted-foreground border-border" },
-  sent: { label: "Enviado", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30" },
-  answered: { label: "Respondido", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30" },
-  expired: { label: "Expirado", color: "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300 border-neutral-500/30" },
-  failed: { label: "Falha no envio", color: "bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30" },
+  pending: { label: "Preparando", color: "bg-muted text-muted-foreground border-border" },
+  ready: {
+    label: "Pronto para enviar",
+    color: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30",
+  },
+  sent: {
+    label: "Enviado",
+    color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30",
+  },
+  answered: {
+    label: "Respondido",
+    color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+  },
+  expired: {
+    label: "Expirado",
+    color: "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300 border-neutral-500/30",
+  },
+  failed: {
+    label: "Falha no envio",
+    color: "bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30",
+  },
 };
 
 /** Notas a partir das quais o cliente é convidado a avaliar no Google. */

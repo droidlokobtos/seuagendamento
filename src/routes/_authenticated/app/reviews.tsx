@@ -27,6 +27,7 @@ import {
   QrCode,
   Download,
   Award,
+  Send,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
@@ -67,6 +68,7 @@ type Invite = {
   send_url: string | null;
   sent_at: string | null;
   last_sent_at: string | null;
+  send_attempts: number;
   rating: number | null;
   responded_at: string | null;
   expires_at: string;
@@ -243,13 +245,28 @@ function Reviews() {
     },
   });
 
+  const markInviteSent = useMutation({
+    mutationFn: async (i: Invite) => {
+      const { error } = await (supabase as any).rpc("mark_review_invite_sent", {
+        _invite_id: i.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["review-invites", companyId] });
+      toast.success("Convite marcado como enviado");
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Não foi possível confirmar o envio"),
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold">Avaliações</h1>
           <p className="text-sm text-muted-foreground">
-            Link próprio de avaliação enviado automaticamente após cada atendimento concluído.
+            O link é preparado automaticamente após o atendimento; o envio pelo WhatsApp é manual.
           </p>
         </div>
         <div className="text-right">
@@ -555,7 +572,16 @@ function Reviews() {
                           variant="outline"
                           onClick={() => window.open(i.send_url!, "_blank", "noopener")}
                         >
-                          <MessageCircle className="h-4 w-4 mr-1" /> Enviar
+                          <MessageCircle className="h-4 w-4 mr-1" /> Abrir WhatsApp
+                        </Button>
+                      )}
+                      {i.status === "ready" && (
+                        <Button
+                          size="sm"
+                          onClick={() => markInviteSent.mutate(i)}
+                          disabled={markInviteSent.isPending}
+                        >
+                          <Send className="h-4 w-4 mr-1" /> Marcar enviado
                         </Button>
                       )}
                       {i.status !== "answered" && (
@@ -838,12 +864,12 @@ function ReviewSettings({ companyId }: { companyId?: string }) {
     <div className="space-y-4 max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Envio automático</CardTitle>
+          <CardTitle className="text-base">Preparação automática</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <Label>Enviar convite após atendimento concluído</Label>
+              <Label>Preparar convite após atendimento concluído</Label>
               <p className="text-xs text-muted-foreground">
                 O link é gerado automaticamente e é de uso único.
               </p>

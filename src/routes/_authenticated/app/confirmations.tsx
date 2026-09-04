@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/lib/company";
-import { useAuth } from "@/lib/auth";
 import { openWhatsAppLink, saoPauloDate } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,7 +46,6 @@ type Conf = {
 function Confirmations() {
   const qc = useQueryClient();
   const { activeCompany } = useCompany();
-  const { user } = useAuth();
   const companyId = activeCompany!.id;
 
   const { data: confs = [], isLoading } = useQuery({
@@ -93,27 +91,10 @@ function Confirmations() {
 
   const markSent = useMutation({
     mutationFn: async (c: Conf) => {
-      const now = new Date().toISOString();
-      const { error } = await supabase
-        .from("appointment_confirmations")
-        .update({
-          status: "sent",
-          sent_at: c.sent_at ?? now,
-          last_sent_at: now,
-          send_attempts: (c.send_attempts ?? 0) + 1,
-        } as any)
-        .eq("id", c.id);
+      const { error } = await (supabase as any).rpc("mark_confirmation_sent", {
+        _confirmation_id: c.id,
+      });
       if (error) throw error;
-      await supabase.from("messaging_logs").insert({
-        company_id: companyId,
-        appointment_id: c.appointment_id,
-        confirmation_id: c.id,
-        channel: c.channel,
-        event: "marked_sent",
-        status: "sent",
-        detail: "Envio manual confirmado pelo usuário",
-        actor_user_id: user?.id ?? null,
-      } as any);
     },
     onSuccess: () => {
       toast.success("Mensagem marcada como enviada");
