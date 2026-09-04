@@ -16,7 +16,13 @@ export const CHANNELS: { id: MessageChannel; label: string; icon: string }[] = [
   { id: "email", label: "E-mail", icon: "✉️" },
 ];
 
-export const WHATSAPP_PROVIDERS = ["manual", "whatsapp_cloud_api", "evolution_api", "z_api", "twilio"];
+export const WHATSAPP_PROVIDERS = [
+  "manual",
+  "whatsapp_cloud_api",
+  "evolution_api",
+  "z_api",
+  "twilio",
+];
 export const SMS_PROVIDERS = ["manual", "twilio", "zenvia", "gatewayapi"];
 export const EMAIL_PROVIDERS = ["manual", "resend", "sendgrid", "smtp"];
 
@@ -49,12 +55,27 @@ export function renderTemplate(template: string, vars: Partial<TemplateVars>) {
 }
 
 export const CONFIRMATION_STATUS: Record<string, { label: string; color: string }> = {
-  pending: { label: "Aguardando envio", color: "bg-muted text-muted-foreground border-border" },
-  sent: { label: "Enviado", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30" },
-  confirmed: { label: "Confirmado", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30" },
-  cancelled: { label: "Cancelado", color: "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30" },
-  failed: { label: "Falha no envio", color: "bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30" },
-  expired: { label: "Expirado", color: "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300 border-neutral-500/30" },
+  pending: { label: "Pronto para enviar", color: "bg-muted text-muted-foreground border-border" },
+  sent: {
+    label: "Enviado",
+    color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30",
+  },
+  confirmed: {
+    label: "Confirmado",
+    color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+  },
+  cancelled: {
+    label: "Cancelado",
+    color: "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30",
+  },
+  failed: {
+    label: "Falha no envio",
+    color: "bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30",
+  },
+  expired: {
+    label: "Expirado",
+    color: "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300 border-neutral-500/30",
+  },
 };
 
 /** Intervalo mínimo entre reenvios manuais (minutos). */

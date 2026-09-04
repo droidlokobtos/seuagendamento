@@ -33,9 +33,19 @@ const required = [
   "20260901223000_harden_identity_helper_functions.sql",
   "20260901224500_enforce_financial_rpc_permissions.sql",
   "20260901230000_public_api_protection_and_observability.sql",
+  "20260904010000_secure_reliable_automations.sql",
 ];
 for (const file of required)
   if (!files.includes(file)) errors.push(`${file}: migration obrigatória ausente`);
+
+const latestSql = readFileSync(
+  resolve(dir, "20260904010000_secure_reliable_automations.sql"),
+  "utf8",
+);
+if (!/x-automation-secret/i.test(latestSql))
+  errors.push("automação: cabeçalho secreto obrigatório ausente");
+if (!/try_start_automation_run/i.test(latestSql))
+  errors.push("automação: trava contra execução simultânea ausente");
 
 if (errors.length) {
   console.error(errors.join("\n"));

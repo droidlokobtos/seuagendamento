@@ -20,6 +20,10 @@ export const Route = createFileRoute("/api/health")({
             checks.rate_limit_table,
             checks.observability_table,
             checks.verification_table,
+            checks.automation_config,
+            checks.automation_runs,
+            checks.automation_enabled,
+            checks.automation_jobs,
             checks.overlap_trigger,
           ].every(Boolean);
           return Response.json(
