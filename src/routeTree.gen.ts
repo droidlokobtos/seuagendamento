@@ -51,6 +51,7 @@ import { Route as AuthenticatedAppRewardsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppReviewsRouteImport } from './routes/_authenticated/app/reviews'
 import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app/reports'
 import { Route as AuthenticatedAppReferralsRouteImport } from './routes/_authenticated/app/referrals'
+import { Route as AuthenticatedAppProfessionalRouteImport } from './routes/_authenticated/app/professional'
 import { Route as AuthenticatedAppProductsRouteImport } from './routes/_authenticated/app/products'
 import { Route as AuthenticatedAppProceduresRouteImport } from './routes/_authenticated/app/procedures'
 import { Route as AuthenticatedAppPortalRouteImport } from './routes/_authenticated/app/portal'
@@ -306,6 +307,12 @@ const AuthenticatedAppReferralsRoute =
   AuthenticatedAppReferralsRouteImport.update({
     id: '/referrals',
     path: '/referrals',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedAppProfessionalRoute =
+  AuthenticatedAppProfessionalRouteImport.update({
+    id: '/professional',
+    path: '/professional',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
 const AuthenticatedAppProductsRoute =
@@ -587,6 +594,7 @@ export interface FileRoutesByFullPath {
   '/app/portal': typeof AuthenticatedAppPortalRoute
   '/app/procedures': typeof AuthenticatedAppProceduresRoute
   '/app/products': typeof AuthenticatedAppProductsRoute
+  '/app/professional': typeof AuthenticatedAppProfessionalRoute
   '/app/referrals': typeof AuthenticatedAppReferralsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/reviews': typeof AuthenticatedAppReviewsRoute
@@ -667,6 +675,7 @@ export interface FileRoutesByTo {
   '/app/portal': typeof AuthenticatedAppPortalRoute
   '/app/procedures': typeof AuthenticatedAppProceduresRoute
   '/app/products': typeof AuthenticatedAppProductsRoute
+  '/app/professional': typeof AuthenticatedAppProfessionalRoute
   '/app/referrals': typeof AuthenticatedAppReferralsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/reviews': typeof AuthenticatedAppReviewsRoute
@@ -752,6 +761,7 @@ export interface FileRoutesById {
   '/_authenticated/app/portal': typeof AuthenticatedAppPortalRoute
   '/_authenticated/app/procedures': typeof AuthenticatedAppProceduresRoute
   '/_authenticated/app/products': typeof AuthenticatedAppProductsRoute
+  '/_authenticated/app/professional': typeof AuthenticatedAppProfessionalRoute
   '/_authenticated/app/referrals': typeof AuthenticatedAppReferralsRoute
   '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
   '/_authenticated/app/reviews': typeof AuthenticatedAppReviewsRoute
@@ -837,6 +847,7 @@ export interface FileRouteTypes {
     | '/app/portal'
     | '/app/procedures'
     | '/app/products'
+    | '/app/professional'
     | '/app/referrals'
     | '/app/reports'
     | '/app/reviews'
@@ -917,6 +928,7 @@ export interface FileRouteTypes {
     | '/app/portal'
     | '/app/procedures'
     | '/app/products'
+    | '/app/professional'
     | '/app/referrals'
     | '/app/reports'
     | '/app/reviews'
@@ -1001,6 +1013,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/portal'
     | '/_authenticated/app/procedures'
     | '/_authenticated/app/products'
+    | '/_authenticated/app/professional'
     | '/_authenticated/app/referrals'
     | '/_authenticated/app/reports'
     | '/_authenticated/app/reviews'
@@ -1356,6 +1369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppReferralsRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/professional': {
+      id: '/_authenticated/app/professional'
+      path: '/professional'
+      fullPath: '/app/professional'
+      preLoaderRoute: typeof AuthenticatedAppProfessionalRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/products': {
       id: '/_authenticated/app/products'
       path: '/products'
@@ -1699,6 +1719,7 @@ interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppPortalRoute: typeof AuthenticatedAppPortalRoute
   AuthenticatedAppProceduresRoute: typeof AuthenticatedAppProceduresRoute
   AuthenticatedAppProductsRoute: typeof AuthenticatedAppProductsRoute
+  AuthenticatedAppProfessionalRoute: typeof AuthenticatedAppProfessionalRoute
   AuthenticatedAppReferralsRoute: typeof AuthenticatedAppReferralsRoute
   AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
   AuthenticatedAppReviewsRoute: typeof AuthenticatedAppReviewsRoute
@@ -1740,6 +1761,7 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppPortalRoute: AuthenticatedAppPortalRoute,
   AuthenticatedAppProceduresRoute: AuthenticatedAppProceduresRoute,
   AuthenticatedAppProductsRoute: AuthenticatedAppProductsRoute,
+  AuthenticatedAppProfessionalRoute: AuthenticatedAppProfessionalRoute,
   AuthenticatedAppReferralsRoute: AuthenticatedAppReferralsRoute,
   AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
   AuthenticatedAppReviewsRoute: AuthenticatedAppReviewsRoute,

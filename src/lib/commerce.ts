@@ -39,7 +39,8 @@ export type SaleItem = {
   id?: string;
   product_id: string | null;
   service_id?: string | null;
-  kind: "product" | "service";
+  plan_id?: string | null;
+  kind: "product" | "service" | "package";
   name: string;
   quantity: number;
   unit_price_cents: number;
@@ -68,8 +69,17 @@ export const MOVEMENT_OPERATIONS = [
 ] as const;
 
 export const DEFAULT_EXPENSE_CATEGORIES = [
-  "Internet", "Alimentação", "Aluguel", "Brindes", "Combustível", "Contabilidade",
-  "Marketing", "Energia elétrica", "Água", "Impostos", "Outros",
+  "Internet",
+  "Alimentação",
+  "Aluguel",
+  "Brindes",
+  "Combustível",
+  "Contabilidade",
+  "Marketing",
+  "Energia elétrica",
+  "Água",
+  "Impostos",
+  "Outros",
 ];
 
 export const money = (cents: number) =>
@@ -110,10 +120,22 @@ export function stockAlerts(products: Product[]): StockAlert[] {
 }
 
 export const ALERT_LABEL: Record<StockAlert["kind"], { label: string; className: string }> = {
-  out: { label: "Sem estoque", className: "bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-300" },
-  low: { label: "Abaixo do mínimo", className: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" },
-  expired: { label: "Vencido", className: "bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-300" },
-  expiring: { label: "Vence em breve", className: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" },
+  out: {
+    label: "Sem estoque",
+    className: "bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-300",
+  },
+  low: {
+    label: "Abaixo do mínimo",
+    className: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
+  },
+  expired: {
+    label: "Vencido",
+    className: "bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-300",
+  },
+  expiring: {
+    label: "Vence em breve",
+    className: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
+  },
 };
 
 /** Exporta uma matriz para CSV (Excel abre nativamente). */

@@ -43,6 +43,34 @@ async function audit(
   });
 }
 
+async function assertStaffLinkAvailable(
+  supabaseAdmin: any,
+  companyId: string,
+  staffId: string,
+  excludeMembershipId?: string,
+) {
+  const { data: staff, error: staffError } = await supabaseAdmin
+    .from("staff")
+    .select("id,active")
+    .eq("id", staffId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (staffError) throw new Error(staffError.message);
+  if (!staff) throw new Error("O profissional selecionado não pertence a esta empresa.");
+  if (staff.active === false) throw new Error("Ative o profissional antes de liberar o acesso.");
+
+  let query = supabaseAdmin
+    .from("company_users")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("staff_id", staffId)
+    .eq("active", true);
+  if (excludeMembershipId) query = query.neq("id", excludeMembershipId);
+  const { data: conflict, error: conflictError } = await query.limit(1).maybeSingle();
+  if (conflictError) throw new Error(conflictError.message);
+  if (conflict) throw new Error("Este profissional já possui um usuário de acesso ativo.");
+}
+
 const CreateZ = z.object({
   companyId: z.string().uuid(),
   email: z.string().trim().email().max(255),
@@ -62,6 +90,11 @@ export const createCompanyUser = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { findAuthUserByEmail } = await import("@/lib/admin-users.server");
     const email = data.email.toLowerCase();
+    const staffId = data.role === "staff" ? (data.staffId ?? null) : null;
+    if (data.role === "staff" && !staffId) {
+      throw new Error("Selecione o profissional que utilizará este acesso.");
+    }
+    if (staffId) await assertStaffLinkAvailable(supabaseAdmin, data.companyId, staffId);
 
     const existing = await findAuthUserByEmail(email);
     let userId: string;
@@ -106,20 +139,37 @@ export const createCompanyUser = createServerFn({ method: "POST" })
         job_title: data.jobTitle ?? null,
         permissions: data.permissions,
         active: true,
-        staff_id: data.staffId ?? null,
+        staff_id: staffId,
       } as any,
       { onConflict: "company_id,user_id" },
     );
     if (linkErr) throw new Error(linkErr.message);
 
+    if (staffId) {
+      const { error: staffLinkError } = await supabaseAdmin
+        .from("staff")
+        .update({ user_id: userId } as any)
+        .eq("id", staffId)
+        .eq("company_id", data.companyId);
+      if (staffLinkError) throw new Error(staffLinkError.message);
+    }
+
     await supabaseAdmin
       .from("user_roles")
       .upsert({ user_id: userId, role: data.role } as any, { onConflict: "user_id,role" });
 
-    await audit(context.supabase, data.companyId, context.userId, "user_created", "company_users", userId, {
-      email,
-      role: data.role,
-    });
+    await audit(
+      context.supabase,
+      data.companyId,
+      context.userId,
+      "user_created",
+      "company_users",
+      userId,
+      {
+        email,
+        role: data.role,
+      },
+    );
 
     return { ok: true, userId };
   });
@@ -139,14 +189,33 @@ export const updateCompanyUser = createServerFn({ method: "POST" })
   .validator((input: unknown) => UpdateZ.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId, data.companyId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: current, error: currentError } = await supabaseAdmin
+      .from("company_users")
+      .select("user_id,role,staff_id")
+      .eq("id", data.membershipId)
+      .eq("company_id", data.companyId)
+      .maybeSingle();
+    if (currentError) throw new Error(currentError.message);
+    if (!current) throw new Error("Usuário não encontrado nesta empresa.");
+
+    const nextRole = data.role ?? current.role;
+    const nextStaffId =
+      nextRole === "staff" ? (data.staffId !== undefined ? data.staffId : current.staff_id) : null;
+    if (nextRole === "staff" && !nextStaffId) {
+      throw new Error("Selecione o profissional que utilizará este acesso.");
+    }
+    if (nextStaffId) {
+      await assertStaffLinkAvailable(supabaseAdmin, data.companyId, nextStaffId, data.membershipId);
+    }
+
     const patch: Record<string, unknown> = {};
     if (data.role !== undefined) patch.role = data.role;
     if (data.jobTitle !== undefined) patch.job_title = data.jobTitle;
     if (data.permissions !== undefined) patch.permissions = data.permissions;
     if (data.active !== undefined) patch.active = data.active;
-    if (data.staffId !== undefined) patch.staff_id = data.staffId;
+    if (data.staffId !== undefined || nextRole !== "staff") patch.staff_id = nextStaffId;
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("company_users")
       .update(patch as any)
@@ -156,6 +225,24 @@ export const updateCompanyUser = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!row) throw new Error("Usuário não encontrado nesta empresa.");
+
+    if (current.staff_id && current.staff_id !== nextStaffId) {
+      const { error: unlinkError } = await supabaseAdmin
+        .from("staff")
+        .update({ user_id: null } as any)
+        .eq("id", current.staff_id)
+        .eq("company_id", data.companyId)
+        .eq("user_id", current.user_id);
+      if (unlinkError) throw new Error(unlinkError.message);
+    }
+    if (nextStaffId) {
+      const { error: staffLinkError } = await supabaseAdmin
+        .from("staff")
+        .update({ user_id: current.user_id } as any)
+        .eq("id", nextStaffId)
+        .eq("company_id", data.companyId);
+      if (staffLinkError) throw new Error(staffLinkError.message);
+    }
 
     if (data.role) {
       await supabaseAdmin
@@ -203,7 +290,14 @@ export const setCompanyUserPassword = createServerFn({ method: "POST" })
       password: data.password,
     });
     if (error) throw new Error(error.message);
-    await audit(context.supabase, data.companyId, context.userId, "user_password_reset", "company_users", data.membershipId);
+    await audit(
+      context.supabase,
+      data.companyId,
+      context.userId,
+      "user_password_reset",
+      "company_users",
+      data.membershipId,
+    );
     return { ok: true };
   });
 
@@ -216,13 +310,39 @@ export const removeCompanyUser = createServerFn({ method: "POST" })
   .validator((input: unknown) => RemoveZ.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId, data.companyId);
-    const { error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: membership, error: membershipError } = await supabaseAdmin
+      .from("company_users")
+      .select("user_id,staff_id")
+      .eq("id", data.membershipId)
+      .eq("company_id", data.companyId)
+      .maybeSingle();
+    if (membershipError) throw new Error(membershipError.message);
+    if (!membership) throw new Error("Usuário não encontrado nesta empresa.");
+
+    const { error } = await supabaseAdmin
       .from("company_users")
       .delete()
       .eq("id", data.membershipId)
       .eq("company_id", data.companyId);
     if (error) throw new Error(error.message);
-    await audit(context.supabase, data.companyId, context.userId, "user_removed", "company_users", data.membershipId);
+    if (membership.staff_id) {
+      const { error: unlinkError } = await supabaseAdmin
+        .from("staff")
+        .update({ user_id: null } as any)
+        .eq("id", membership.staff_id)
+        .eq("company_id", data.companyId)
+        .eq("user_id", membership.user_id);
+      if (unlinkError) throw new Error(unlinkError.message);
+    }
+    await audit(
+      context.supabase,
+      data.companyId,
+      context.userId,
+      "user_removed",
+      "company_users",
+      data.membershipId,
+    );
     return { ok: true };
   });
 
@@ -264,11 +384,13 @@ export const listCompanyUsers = createServerFn({ method: "GET" })
 export const updateCompanyUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) =>
-    z.object({
-      companyId: z.string().uuid(),
-      membershipId: z.string().uuid(),
-      role: RoleZ,
-    }).parse(input),
+    z
+      .object({
+        companyId: z.string().uuid(),
+        membershipId: z.string().uuid(),
+        role: RoleZ,
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId, data.companyId);

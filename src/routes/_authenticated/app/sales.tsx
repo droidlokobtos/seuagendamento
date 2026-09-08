@@ -10,16 +10,29 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, ShoppingCart, Download, Search, Receipt } from "lucide-react";
-import { dateBR } from "@/lib/format";
+import { BadgeCheck, Download, Plus, Receipt, Search, ShoppingCart, Trash2, X } from "lucide-react";
+import { dateBR, saoPauloDate } from "@/lib/format";
 import {
-  downloadCSV, effectivePriceCents, itemTotal, money, saleTotals, toCents,
-  type Product, type SaleItem, type SalePayment,
+  downloadCSV,
+  effectivePriceCents,
+  money,
+  toCents,
+  type Product,
+  type SaleItem,
+  type SalePayment,
 } from "@/lib/commerce";
 import { toast } from "sonner";
 
@@ -28,9 +41,16 @@ export const Route = createFileRoute("/_authenticated/app/sales")({
   head: () => ({
     meta: [
       { title: "Vendas e PDV · Produtos e serviços avulsos" },
-      { name: "description", content: "Registre vendas de produtos e serviços avulsos com múltiplas formas de pagamento, baixa automática de estoque e lançamento financeiro." },
+      {
+        name: "description",
+        content:
+          "Registre vendas de produtos e serviços avulsos com múltiplas formas de pagamento, baixa automática de estoque e lançamento financeiro.",
+      },
       { property: "og:title", content: "Vendas e PDV" },
-      { property: "og:description", content: "Registro de vendas com baixa de estoque e integração financeira." },
+      {
+        property: "og:description",
+        content: "Registro de vendas com baixa de estoque e integração financeira.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -38,10 +58,34 @@ export const Route = createFileRoute("/_authenticated/app/sales")({
 });
 
 type Sale = {
-  id: string; status: string; customer_id: string | null; staff_id: string | null;
-  subtotal_cents: number; discount_cents: number; surcharge_cents: number;
-  total_cents: number; notes: string | null; occurred_at: string;
+  id: string;
+  status: string;
+  customer_id: string | null;
+  staff_id: string | null;
+  subtotal_cents: number;
+  discount_cents: number;
+  surcharge_cents: number;
+  total_cents: number;
+  notes: string | null;
+  occurred_at: string;
+  created_by_name: string | null;
 };
+
+type SellablePlan = {
+  id: string;
+  name: string;
+  kind: "plan" | "package";
+  price_cents: number;
+  promo_price_cents: number | null;
+  plan_services: { service_id: string; sessions: number; services: { name: string } | null }[];
+};
+
+const normalizeSearch = (value: string | null | undefined) =>
+  (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR")
+    .trim();
 
 function SalesPage() {
   const qc = useQueryClient();
@@ -51,14 +95,21 @@ function SalesPage() {
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
 
   const from = `${month}-01T00:00:00`;
-  const to = new Date(new Date(`${month}-01`).getFullYear(), new Date(`${month}-01`).getMonth() + 1, 1)
-    .toISOString();
+  const to = new Date(
+    new Date(`${month}-01`).getFullYear(),
+    new Date(`${month}-01`).getMonth() + 1,
+    1,
+  ).toISOString();
 
   const { data: sales = [], isLoading } = useQuery({
     queryKey: ["sales", companyId, month],
     queryFn: async () => {
-      const { data, error } = await supabase.from("sales").select("*")
-        .eq("company_id", companyId).gte("occurred_at", from).lt("occurred_at", to)
+      const { data, error } = await supabase
+        .from("sales")
+        .select("*")
+        .eq("company_id", companyId)
+        .gte("occurred_at", from)
+        .lt("occurred_at", to)
         .order("occurred_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as Sale[];
@@ -68,8 +119,12 @@ function SalesPage() {
   const { data: products = [] } = useQuery({
     queryKey: ["products", companyId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*")
-        .eq("company_id", companyId).eq("active", true).order("name");
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("company_id", companyId)
+        .eq("active", true)
+        .order("name");
       if (error) throw error;
       return (data ?? []) as unknown as Product[];
     },
@@ -78,8 +133,12 @@ function SalesPage() {
   const { data: services = [] } = useQuery({
     queryKey: ["services-simple", companyId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("services")
-        .select("id,name,price_cents").eq("company_id", companyId).eq("active", true).order("name");
+      const { data, error } = await supabase
+        .from("services")
+        .select("id,name,price_cents")
+        .eq("company_id", companyId)
+        .eq("active", true)
+        .order("name");
       if (error) throw error;
       return data ?? [];
     },
@@ -88,18 +147,48 @@ function SalesPage() {
   const { data: customers = [] } = useQuery({
     queryKey: ["customers-simple", companyId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("customers")
-        .select("id,name").eq("company_id", companyId).order("name").limit(500);
+      const all: any[] = [];
+      const pageSize = 1000;
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase
+          .from("customers")
+          .select("id,name,phone,whatsapp,email")
+          .eq("company_id", companyId)
+          .order("name")
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        all.push(...(data ?? []));
+        if (!data || data.length < pageSize) break;
+      }
+      return all;
+    },
+  });
+
+  const { data: packages = [] } = useQuery({
+    queryKey: ["sales-plans", companyId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("plans")
+        .select(
+          "id,name,kind,price_cents,promo_price_cents,plan_services(service_id,sessions,services(name))",
+        )
+        .eq("company_id", companyId)
+        .eq("active", true)
+        .order("name");
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as unknown as SellablePlan[];
     },
   });
 
   const { data: options = [] } = useQuery({
     queryKey: ["payment_options", companyId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("payment_options")
-        .select("id,name").eq("company_id", companyId).eq("active", true).order("sort_order");
+      const { data, error } = await supabase
+        .from("payment_options")
+        .select("id,name")
+        .eq("company_id", companyId)
+        .eq("active", true)
+        .order("sort_order");
       if (error) throw error;
       return data ?? [];
     },
@@ -110,64 +199,64 @@ function SalesPage() {
     return {
       count: done.length,
       revenue: done.reduce((s, x) => s + x.total_cents, 0),
-      ticket: done.length ? Math.round(done.reduce((s, x) => s + x.total_cents, 0) / done.length) : 0,
+      ticket: done.length
+        ? Math.round(done.reduce((s, x) => s + x.total_cents, 0) / done.length)
+        : 0,
     };
   }, [sales]);
 
   const create = useMutation({
     mutationFn: async (v: {
-      items: SaleItem[]; payments: SalePayment[]; customer_id: string | null;
-      discount_cents: number; surcharge_cents: number; notes: string;
+      items: SaleItem[];
+      payments: SalePayment[];
+      customer_id: string | null;
+      discount_cents: number;
+      surcharge_cents: number;
+      notes: string;
     }) => {
-      const { subtotal, total } = saleTotals(v.items, v.discount_cents, v.surcharge_cents);
-      const { data: sale, error } = await supabase.from("sales").insert({
-        company_id: companyId, customer_id: v.customer_id, status: "draft",
-        subtotal_cents: subtotal, discount_cents: v.discount_cents,
-        surcharge_cents: v.surcharge_cents, total_cents: total,
-        services_cents: v.items.filter((i) => i.kind === "service").reduce((s, i) => s + itemTotal(i), 0),
-        notes: v.notes || null,
-      } as any).select().single();
+      const { data, error } = await (supabase as any).rpc("register_sale_with_credits", {
+        _company_id: companyId,
+        _customer_id: v.customer_id,
+        _items: v.items,
+        _payments: v.payments,
+        _discount_cents: v.discount_cents,
+        _surcharge_cents: v.surcharge_cents,
+        _notes: v.notes || null,
+      });
       if (error) throw error;
-
-      const { error: e2 } = await supabase.from("sale_items").insert(
-        v.items.map((i) => ({
-          company_id: companyId, sale_id: sale.id, product_id: i.product_id,
-          service_id: i.service_id ?? null, kind: i.kind, name: i.name,
-          quantity: i.quantity, unit_price_cents: i.unit_price_cents,
-          discount_cents: i.discount_cents, total_cents: itemTotal(i), unit_cost: i.unit_cost ?? null,
-        })) as any,
-      );
-      if (e2) throw e2;
-
-      if (v.payments.length) {
-        const { error: e3 } = await supabase.from("sale_payments").insert(
-          v.payments.map((p) => ({ company_id: companyId, sale_id: sale.id, ...p })) as any,
-        );
-        if (e3) throw e3;
-      }
-
-      const { error: e4 } = await supabase.from("sales")
-        .update({ status: "completed" }).eq("id", sale.id);
-      if (e4) throw e4;
+      return data as { credits_cents?: number; total_cents?: number };
     },
-    onSuccess: () => {
-      toast.success("Venda registrada");
+    onSuccess: (result) => {
+      toast.success(
+        Number(result?.credits_cents ?? 0) > 0
+          ? `Venda registrada · ${money(Number(result.credits_cents))} cobertos pelo pacote`
+          : "Venda registrada",
+      );
       qc.invalidateQueries({ queryKey: ["sales", companyId] });
       qc.invalidateQueries({ queryKey: ["products", companyId] });
       qc.invalidateQueries({ queryKey: ["finances", companyId] });
+      qc.invalidateQueries({ queryKey: ["customer-plans", companyId] });
+      qc.invalidateQueries({ queryKey: ["sale-customer-credits", companyId] });
       setOpen(false);
     },
     onError: (e: any) => toast.error(e.message),
   });
 
   const cancel = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("sales").update({ status: "cancelled" }).eq("id", id);
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+      const { error } = await (supabase as any).rpc("cancel_sale_with_reversal", {
+        _sale_id: id,
+        _reason: reason || null,
+      });
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Venda cancelada");
+      toast.success("Venda cancelada e créditos/estoque estornados");
       qc.invalidateQueries({ queryKey: ["sales", companyId] });
+      qc.invalidateQueries({ queryKey: ["products", companyId] });
+      qc.invalidateQueries({ queryKey: ["finances", companyId] });
+      qc.invalidateQueries({ queryKey: ["customer-plans", companyId] });
+      qc.invalidateQueries({ queryKey: ["sale-customer-credits", companyId] });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -176,8 +265,12 @@ function SalesPage() {
     downloadCSV(`vendas-${month}.csv`, [
       ["Data", "Status", "Subtotal", "Desconto", "Acréscimo", "Total"],
       ...sales.map((s) => [
-        dateBR(s.occurred_at), s.status, money(s.subtotal_cents),
-        money(s.discount_cents), money(s.surcharge_cents), money(s.total_cents),
+        dateBR(s.occurred_at),
+        s.status,
+        money(s.subtotal_cents),
+        money(s.discount_cents),
+        money(s.surcharge_cents),
+        money(s.total_cents),
       ]),
     ]);
   };
@@ -192,16 +285,39 @@ function SalesPage() {
           </p>
         </div>
         <div className="flex gap-2 items-center">
-          <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="w-40" />
-          <Button variant="outline" onClick={exportCSV}><Download className="h-4 w-4 mr-2" /> Exportar</Button>
-          <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" /> Nova venda</Button>
+          <Input
+            type="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="w-40"
+          />
+          <Button variant="outline" onClick={exportCSV}>
+            <Download className="h-4 w-4 mr-2" /> Exportar
+          </Button>
+          <Button onClick={() => setOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Nova venda
+          </Button>
         </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
-        <Kpi label="Vendas no mês" value={String(totals.count)} icon={<ShoppingCart className="h-5 w-5" />} />
-        <Kpi label="Faturamento" value={money(totals.revenue)} icon={<Receipt className="h-5 w-5" />} tone="text-emerald-600" />
-        <Kpi label="Ticket médio" value={money(totals.ticket)} icon={<Receipt className="h-5 w-5" />} tone="text-primary" />
+        <Kpi
+          label="Vendas no mês"
+          value={String(totals.count)}
+          icon={<ShoppingCart className="h-5 w-5" />}
+        />
+        <Kpi
+          label="Faturamento"
+          value={money(totals.revenue)}
+          icon={<Receipt className="h-5 w-5" />}
+          tone="text-emerald-600"
+        />
+        <Kpi
+          label="Ticket médio"
+          value={money(totals.ticket)}
+          icon={<Receipt className="h-5 w-5" />}
+          tone="text-primary"
+        />
       </div>
 
       <Card>
@@ -218,22 +334,52 @@ function SalesPage() {
                     <p className="font-medium truncate">
                       {money(s.total_cents)}
                       {s.discount_cents > 0 && (
-                        <span className="text-xs text-muted-foreground"> · desc. {money(s.discount_cents)}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {" "}
+                          · desc. {money(s.discount_cents)}
+                        </span>
                       )}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {dateBR(s.occurred_at)}{s.notes ? ` · ${s.notes}` : ""}
+                      {dateBR(s.occurred_at)}
+                      {s.created_by_name ? ` · Registrada por ${s.created_by_name}` : ""}
+                      {s.notes ? ` · ${s.notes}` : ""}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Badge variant="outline" className={
-                      s.status === "completed" ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300"
-                        : s.status === "cancelled" ? "bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-300" : ""
-                    }>
-                      {s.status === "completed" ? "Concluída" : s.status === "cancelled" ? "Cancelada" : "Rascunho"}
+                    <Badge
+                      variant="outline"
+                      className={
+                        s.status === "completed"
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300"
+                          : s.status === "cancelled"
+                            ? "bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-300"
+                            : ""
+                      }
+                    >
+                      {s.status === "completed"
+                        ? "Concluída"
+                        : s.status === "cancelled"
+                          ? "Cancelada"
+                          : "Rascunho"}
                     </Badge>
                     {s.status === "completed" && (
-                      <Button size="icon" variant="ghost" onClick={() => confirm("Cancelar venda?") && cancel.mutate(s.id)}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          if (
+                            !confirm(
+                              "Cancelar esta venda e estornar créditos, estoque e financeiro?",
+                            )
+                          )
+                            return;
+                          cancel.mutate({
+                            id: s.id,
+                            reason: prompt("Motivo do cancelamento:") ?? "",
+                          });
+                        }}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
@@ -250,8 +396,10 @@ function SalesPage() {
           <SaleDialog
             products={products as Product[]}
             services={services as any[]}
+            packages={packages}
             customers={customers as any[]}
             options={options as any[]}
+            companyId={companyId}
             loading={create.isPending}
             onSave={(v) => create.mutate(v)}
           />
@@ -261,8 +409,16 @@ function SalesPage() {
   );
 }
 
-function Kpi({ label, value, icon, tone = "text-foreground" }: {
-  label: string; value: string; icon: React.ReactNode; tone?: string;
+function Kpi({
+  label,
+  value,
+  icon,
+  tone = "text-foreground",
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  tone?: string;
 }) {
   return (
     <Card>
@@ -277,12 +433,30 @@ function Kpi({ label, value, icon, tone = "text-foreground" }: {
   );
 }
 
-function SaleDialog({ products, services, customers, options, onSave, loading }: {
-  products: Product[]; services: any[]; customers: any[]; options: any[];
+function SaleDialog({
+  products,
+  services,
+  packages,
+  customers,
+  options,
+  companyId,
+  onSave,
+  loading,
+}: {
+  products: Product[];
+  services: any[];
+  packages: SellablePlan[];
+  customers: any[];
+  options: any[];
+  companyId: string;
   loading: boolean;
   onSave: (v: {
-    items: SaleItem[]; payments: SalePayment[]; customer_id: string | null;
-    discount_cents: number; surcharge_cents: number; notes: string;
+    items: SaleItem[];
+    payments: SalePayment[];
+    customer_id: string | null;
+    discount_cents: number;
+    surcharge_cents: number;
+    notes: string;
   }) => void;
 }) {
   const [items, setItems] = useState<SaleItem[]>([]);
@@ -294,90 +468,294 @@ function SaleDialog({ products, services, customers, options, onSave, loading }:
   const [notes, setNotes] = useState("");
   const [q, setQ] = useState("");
 
+  const selectedCustomer = useMemo(
+    () => customers.find((entry) => entry.id === customer) ?? null,
+    [customer, customers],
+  );
+  const customerResults = useMemo(() => {
+    const term = normalizeSearch(customerSearch);
+    if (!term) return selectedCustomer ? [] : customers.slice(0, 100);
+    return customers
+      .filter((entry) =>
+        [entry.name, entry.phone, entry.whatsapp, entry.email]
+          .map(normalizeSearch)
+          .some((value) => value.includes(term)),
+      )
+      .slice(0, 100);
+  }, [customerSearch, customers, selectedCustomer]);
+
+  const { data: customerCredits = [] } = useQuery({
+    enabled: !!customer,
+    queryKey: ["sale-customer-credits", companyId, customer],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("customer_plans")
+        .select(
+          "id,plan_name,expires_at,customer_plan_services(id,service_id,service_name,sessions_total,sessions_used)",
+        )
+        .eq("company_id", companyId)
+        .eq("customer_id", customer)
+        .eq("status", "active")
+        .or(`expires_at.is.null,expires_at.gte.${saoPauloDate()}`)
+        .order("expires_at", { ascending: true, nullsFirst: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const creditBalance = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const plan of customerCredits as any[]) {
+      for (const balance of plan.customer_plan_services ?? []) {
+        const available = Math.max(
+          0,
+          Number(balance.sessions_total ?? 0) - Number(balance.sessions_used ?? 0),
+        );
+        map.set(balance.service_id, (map.get(balance.service_id) ?? 0) + available);
+      }
+    }
+    return map;
+  }, [customerCredits]);
+
   const sellable = useMemo(
     () => products.filter((p) => (p.scope ?? "sale") === "sale"),
     [products],
   );
   const results = useMemo(() => {
-    const t = q.trim().toLowerCase();
-    if (!t) return [];
+    const t = normalizeSearch(q);
+    if (!t) {
+      return packages.slice(0, 12).map((plan) => ({
+        kind: "package" as const,
+        id: plan.id,
+        name: plan.name,
+        cents:
+          plan.promo_price_cents && plan.promo_price_cents > 0
+            ? plan.promo_price_cents
+            : plan.price_cents,
+        cost: 0,
+      }));
+    }
     return [
-      ...sellable.filter((p) => [p.name, p.barcode, p.sku, p.internal_code]
-        .some((v) => (v ?? "").toLowerCase().includes(t))).slice(0, 6)
-        .map((p) => ({ kind: "product" as const, id: p.id, name: p.name, cents: effectivePriceCents(p), cost: Number(p.avg_cost || p.cost_price) })),
-      ...services.filter((s) => (s.name ?? "").toLowerCase().includes(t)).slice(0, 6)
-        .map((s) => ({ kind: "service" as const, id: s.id, name: s.name, cents: Number(s.price_cents ?? 0), cost: 0 })),
+      ...sellable
+        .filter((p) =>
+          [p.name, p.barcode, p.sku, p.internal_code].some((v) => normalizeSearch(v).includes(t)),
+        )
+        .slice(0, 12)
+        .map((p) => ({
+          kind: "product" as const,
+          id: p.id,
+          name: p.name,
+          cents: effectivePriceCents(p),
+          cost: Number(p.avg_cost || p.cost_price),
+        })),
+      ...services
+        .filter((s) => normalizeSearch(s.name).includes(t))
+        .slice(0, 12)
+        .map((s) => ({
+          kind: "service" as const,
+          id: s.id,
+          name: s.name,
+          cents: Number(s.price_cents ?? 0),
+          cost: 0,
+        })),
+      ...packages
+        .filter((plan) => normalizeSearch(plan.name).includes(t))
+        .slice(0, 12)
+        .map((plan) => ({
+          kind: "package" as const,
+          id: plan.id,
+          name: plan.name,
+          cents:
+            plan.promo_price_cents && plan.promo_price_cents > 0
+              ? plan.promo_price_cents
+              : plan.price_cents,
+          cost: 0,
+        })),
     ];
-  }, [q, sellable, services]);
+  }, [q, sellable, services, packages]);
 
-  const add = (r: { kind: "product" | "service"; id: string; name: string; cents: number; cost: number }) => {
+  const add = (r: {
+    kind: "product" | "service" | "package";
+    id: string;
+    name: string;
+    cents: number;
+    cost: number;
+  }) => {
+    if (r.kind === "package" && !customer) {
+      toast.error("Selecione o cliente antes de adicionar um plano ou pacote.");
+      return;
+    }
     setItems((prev) => {
-      const i = prev.findIndex((x) => (r.kind === "product" ? x.product_id : x.service_id) === r.id);
+      const i = prev.findIndex((x) =>
+        r.kind === "product"
+          ? x.product_id === r.id
+          : r.kind === "service"
+            ? x.service_id === r.id
+            : x.plan_id === r.id,
+      );
       if (i >= 0) {
         const next = [...prev];
         next[i] = { ...next[i], quantity: next[i].quantity + 1 };
         return next;
       }
-      return [...prev, {
-        kind: r.kind,
-        product_id: r.kind === "product" ? r.id : null,
-        service_id: r.kind === "service" ? r.id : null,
-        name: r.name, quantity: 1, unit_price_cents: r.cents,
-        discount_cents: 0, total_cents: r.cents, unit_cost: r.cost,
-      }];
+      return [
+        ...prev,
+        {
+          kind: r.kind,
+          product_id: r.kind === "product" ? r.id : null,
+          service_id: r.kind === "service" ? r.id : null,
+          plan_id: r.kind === "package" ? r.id : null,
+          name: r.name,
+          quantity: 1,
+          unit_price_cents: r.cents,
+          discount_cents: 0,
+          total_cents: r.cents,
+          unit_cost: r.cost,
+        },
+      ];
     });
     setQ("");
   };
 
-  const { subtotal, total } = saleTotals(items, toCents(discount), toCents(surcharge));
+  const creditPreview = useMemo(() => {
+    const remaining = new Map(creditBalance);
+    return items.map((item) => {
+      if (item.kind !== "service" || !item.service_id) return 0;
+      const available = remaining.get(item.service_id) ?? 0;
+      const used = Math.min(Math.max(0, Math.floor(item.quantity)), available);
+      remaining.set(item.service_id, available - used);
+      return used;
+    });
+  }, [items, creditBalance]);
+  const subtotal = items.reduce(
+    (sum, item) => sum + Math.max(0, Math.round(item.quantity * item.unit_price_cents)),
+    0,
+  );
+  const packageCreditCents = items.reduce(
+    (sum, item, index) => sum + creditPreview[index] * item.unit_price_cents,
+    0,
+  );
+  const itemDiscountCents = items.reduce(
+    (sum, item) => sum + Math.max(0, item.discount_cents || 0),
+    0,
+  );
+  const total = Math.max(
+    0,
+    subtotal - packageCreditCents - itemDiscountCents - toCents(discount) + toCents(surcharge),
+  );
   const paid = payments.reduce((s, p) => s + p.amount_cents, 0);
   const remaining = total - paid;
 
   const addPayment = () => {
     const opt = options[0];
-    setPayments([...payments, {
-      payment_option_id: opt?.id ?? null,
-      method_name: opt?.name ?? "Dinheiro",
-      amount_cents: Math.max(0, remaining),
-      installments: 1,
-    }]);
+    setPayments([
+      ...payments,
+      {
+        payment_option_id: opt?.id ?? null,
+        method_name: opt?.name ?? "Dinheiro",
+        amount_cents: Math.max(0, remaining),
+        installments: 1,
+      },
+    ]);
   };
 
   return (
     <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader><DialogTitle>Nova venda</DialogTitle></DialogHeader>
+      <DialogHeader>
+        <DialogTitle>Nova venda</DialogTitle>
+      </DialogHeader>
       <div className="space-y-4">
         <div>
-          <Label>Cliente (opcional)</Label>
+          <Label>Cliente</Label>
+          <p className="mb-2 text-xs text-muted-foreground">
+            Pesquise por nome, telefone, WhatsApp ou e-mail. O sistema verificará os créditos do
+            pacote automaticamente.
+          </p>
+          {selectedCustomer && (
+            <div className="mb-2 flex items-center justify-between rounded-lg border bg-muted/40 px-3 py-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{selectedCustomer.name}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {selectedCustomer.whatsapp ||
+                    selectedCustomer.phone ||
+                    selectedCustomer.email ||
+                    "Cliente cadastrado"}
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  setCustomer("");
+                  setCustomerSearch("");
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
           <Input
             value={customerSearch}
             onChange={(e) => setCustomerSearch(e.target.value)}
-            placeholder="Digite o nome do cliente…"
+            placeholder={selectedCustomer ? "Trocar cliente…" : "Digite nome, telefone ou e-mail…"}
             autoComplete="off"
-            className="mb-2"
           />
-          <Select value={customer} onValueChange={(v) => { setCustomer(v); setCustomerSearch(""); }}>
-            <SelectTrigger><SelectValue placeholder="Consumidor final" /></SelectTrigger>
-            <SelectContent>
-              {(customers as any[]).filter((c) => c.name.toLocaleLowerCase("pt-BR").includes(customerSearch.trim().toLocaleLowerCase("pt-BR"))).slice(0, 50).map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          {customerResults.length > 0 && (
+            <div className="mt-1 max-h-52 overflow-y-auto rounded-lg border bg-background shadow-sm">
+              {customerResults.map((entry) => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  className="flex w-full items-center justify-between gap-3 border-b px-3 py-2 text-left last:border-0 hover:bg-muted"
+                  onClick={() => {
+                    setCustomer(entry.id);
+                    setCustomerSearch("");
+                  }}
+                >
+                  <span className="truncate text-sm">{entry.name}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {entry.whatsapp || entry.phone || entry.email || ""}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+          {customerSearch.trim() && customerResults.length === 0 && (
+            <p className="mt-2 text-xs text-muted-foreground">Nenhum contato encontrado.</p>
+          )}
         </div>
 
         <div>
           <Label>Adicionar item</Label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input className="pl-9" placeholder="Buscar produto ou serviço…" value={q}
-              onChange={(e) => setQ(e.target.value)} />
+            <Input
+              className="pl-9"
+              placeholder="Buscar produto ou serviço…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
           </div>
           {results.length > 0 && (
             <div className="mt-1 rounded-md border divide-y">
               {results.map((r) => (
-                <button key={`${r.kind}-${r.id}`} type="button" onClick={() => add(r)}
-                  className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-muted text-left">
-                  <span className="truncate">{r.name}
-                    <span className="text-xs text-muted-foreground"> · {r.kind === "product" ? "Produto" : "Serviço"}</span>
+                <button
+                  key={`${r.kind}-${r.id}`}
+                  type="button"
+                  onClick={() => add(r)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-muted text-left"
+                >
+                  <span className="truncate">
+                    {r.name}
+                    <span className="text-xs text-muted-foreground">
+                      {" · "}
+                      {r.kind === "product"
+                        ? "Produto"
+                        : r.kind === "service"
+                          ? "Serviço"
+                          : "Plano/Pacote"}
+                    </span>
                   </span>
                   <span className="font-medium shrink-0">{money(r.cents)}</span>
                 </button>
@@ -391,42 +769,87 @@ function SaleDialog({ products, services, customers, options, onSave, loading }:
             {items.map((i, idx) => (
               <div key={idx} className="p-3 space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium truncate">{i.name}</p>
-                  <Button size="icon" variant="ghost"
-                    onClick={() => setItems(items.filter((_, k) => k !== idx))}>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{i.name}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {i.kind === "product"
+                        ? "Produto"
+                        : i.kind === "service"
+                          ? "Serviço"
+                          : "Plano/Pacote"}
+                    </p>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => setItems(items.filter((_, k) => k !== idx))}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <Label className="text-xs">Qtd</Label>
-                    <Input type="number" step="0.001" value={i.quantity}
+                    <Input
+                      type="number"
+                      min={1}
+                      step={i.kind === "product" ? "0.001" : "1"}
+                      value={i.quantity}
                       onChange={(e) => {
                         const next = [...items];
-                        next[idx] = { ...i, quantity: parseFloat(e.target.value || "0") };
+                        const parsed = parseFloat(e.target.value || "0");
+                        next[idx] = {
+                          ...i,
+                          quantity: i.kind === "product" ? parsed : Math.floor(parsed),
+                        };
                         setItems(next);
-                      }} />
+                      }}
+                    />
                   </div>
                   <div>
                     <Label className="text-xs">Unit. (R$)</Label>
-                    <Input type="number" step="0.01" value={(i.unit_price_cents / 100).toFixed(2)}
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={(i.unit_price_cents / 100).toFixed(2)}
                       onChange={(e) => {
                         const next = [...items];
                         next[idx] = { ...i, unit_price_cents: toCents(e.target.value) };
                         setItems(next);
-                      }} />
+                      }}
+                    />
                   </div>
                   <div>
                     <Label className="text-xs">Desc. (R$)</Label>
-                    <Input type="number" step="0.01" value={(i.discount_cents / 100).toFixed(2)}
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={(i.discount_cents / 100).toFixed(2)}
                       onChange={(e) => {
                         const next = [...items];
                         next[idx] = { ...i, discount_cents: toCents(e.target.value) };
                         setItems(next);
-                      }} />
+                      }}
+                    />
                   </div>
                 </div>
-                <p className="text-xs text-right text-muted-foreground">Total: {money(itemTotal(i))}</p>
+                {creditPreview[idx] > 0 && (
+                  <div className="flex items-center gap-2 rounded-md bg-emerald-50 px-2 py-1.5 text-xs text-emerald-700">
+                    <BadgeCheck className="h-3.5 w-3.5" />
+                    {creditPreview[idx]}{" "}
+                    {creditPreview[idx] === 1 ? "sessão coberta" : "sessões cobertas"} pelo pacote
+                  </div>
+                )}
+                <p className="text-xs text-right text-muted-foreground">
+                  Total:{" "}
+                  {money(
+                    Math.max(
+                      0,
+                      Math.round((i.quantity - creditPreview[idx]) * i.unit_price_cents) -
+                        i.discount_cents,
+                    ),
+                  )}
+                </p>
               </div>
             ))}
           </div>
@@ -435,54 +858,107 @@ function SaleDialog({ products, services, customers, options, onSave, loading }:
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Desconto (R$)</Label>
-            <Input type="number" step="0.01" value={discount}
-              onChange={(e) => setDiscount(parseFloat(e.target.value || "0"))} />
+            <Input
+              type="number"
+              step="0.01"
+              value={discount}
+              onChange={(e) => setDiscount(parseFloat(e.target.value || "0"))}
+            />
           </div>
           <div>
             <Label>Acréscimo (R$)</Label>
-            <Input type="number" step="0.01" value={surcharge}
-              onChange={(e) => setSurcharge(parseFloat(e.target.value || "0"))} />
+            <Input
+              type="number"
+              step="0.01"
+              value={surcharge}
+              onChange={(e) => setSurcharge(parseFloat(e.target.value || "0"))}
+            />
           </div>
         </div>
 
         <div className="rounded-md bg-muted p-3 text-sm space-y-1">
-          <div className="flex justify-between"><span>Subtotal</span><span>{money(subtotal)}</span></div>
-          <div className="flex justify-between font-semibold text-base">
-            <span>Total</span><span>{money(total)}</span>
+          <div className="flex justify-between">
+            <span>Subtotal</span>
+            <span>{money(subtotal)}</span>
           </div>
+          {packageCreditCents > 0 && (
+            <div className="flex justify-between font-medium text-emerald-700">
+              <span>Créditos de pacote</span>
+              <span>− {money(packageCreditCents)}</span>
+            </div>
+          )}
+          {itemDiscountCents + toCents(discount) > 0 && (
+            <div className="flex justify-between text-muted-foreground">
+              <span>Outros descontos</span>
+              <span>− {money(itemDiscountCents + toCents(discount))}</span>
+            </div>
+          )}
+          <div className="flex justify-between font-semibold text-base">
+            <span>Total</span>
+            <span>{money(total)}</span>
+          </div>
+          {total === 0 && packageCreditCents > 0 && (
+            <p className="pt-1 text-xs text-emerald-700">
+              Venda coberta pelo pacote: nenhuma forma de pagamento é necessária.
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label>Formas de pagamento</Label>
-            <Button size="sm" variant="outline" onClick={addPayment}>
+            <Button size="sm" variant="outline" onClick={addPayment} disabled={remaining <= 0}>
               <Plus className="h-4 w-4 mr-1" /> Adicionar
             </Button>
           </div>
           {payments.map((p, idx) => (
             <div key={idx} className="grid grid-cols-[1fr_auto_auto] gap-2 items-end">
               <div>
-                <Select value={p.payment_option_id ?? "cash"}
+                <Select
+                  value={p.payment_option_id ?? "cash"}
                   onValueChange={(v) => {
                     const opt = options.find((o) => o.id === v);
                     const next = [...payments];
-                    next[idx] = { ...p, payment_option_id: opt?.id ?? null, method_name: opt?.name ?? "Dinheiro" };
+                    next[idx] = {
+                      ...p,
+                      payment_option_id: opt?.id ?? null,
+                      method_name: opt?.name ?? "Dinheiro",
+                    };
                     setPayments(next);
-                  }}>
-                  <SelectTrigger><SelectValue placeholder="Forma" /></SelectTrigger>
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Forma" />
+                  </SelectTrigger>
                   <SelectContent>
-                    {options.length ? options.map((o) => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)
-                      : <SelectItem value="cash">Dinheiro</SelectItem>}
+                    {options.length ? (
+                      options.map((o) => (
+                        <SelectItem key={o.id} value={o.id}>
+                          {o.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="cash">Dinheiro</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
-              <Input className="w-28" type="number" step="0.01" value={(p.amount_cents / 100).toFixed(2)}
+              <Input
+                className="w-28"
+                type="number"
+                step="0.01"
+                value={(p.amount_cents / 100).toFixed(2)}
                 onChange={(e) => {
                   const next = [...payments];
                   next[idx] = { ...p, amount_cents: toCents(e.target.value) };
                   setPayments(next);
-                }} />
-              <Button size="icon" variant="ghost" onClick={() => setPayments(payments.filter((_, k) => k !== idx))}>
+                }}
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setPayments(payments.filter((_, k) => k !== idx))}
+              >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
@@ -501,11 +977,23 @@ function SaleDialog({ products, services, customers, options, onSave, loading }:
       </div>
       <DialogFooter>
         <Button
-          disabled={loading || !items.length}
-          onClick={() => onSave({
-            items, payments, customer_id: customer || null,
-            discount_cents: toCents(discount), surcharge_cents: toCents(surcharge), notes,
-          })}
+          disabled={
+            loading ||
+            !items.length ||
+            items.some((item) => item.quantity <= 0) ||
+            (items.some((item) => item.kind === "package") && !customer) ||
+            paid !== total
+          }
+          onClick={() =>
+            onSave({
+              items,
+              payments,
+              customer_id: customer || null,
+              discount_cents: toCents(discount),
+              surcharge_cents: toCents(surcharge),
+              notes,
+            })
+          }
         >
           Finalizar venda
         </Button>
