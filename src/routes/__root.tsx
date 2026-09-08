@@ -174,12 +174,37 @@ function RootComponent() {
     return () => window.clearTimeout(timer);
   }, []);
   useEffect(() => {
+    // Após uma nova publicação, arquivos antigos deixam de existir. Se a tela
+    // aberta tentar carregar um arquivo antigo, recarregamos uma única vez.
+    const isChunkError = (value: unknown) => {
+      const message = value instanceof Error ? value.message : String(value ?? "");
+      return /dynamically imported module|Importing a module script failed|ChunkLoadError/i.test(message);
+    };
+    const recover = () => {
+      const last = Number(sessionStorage.getItem(RECOVERY_KEY) ?? 0);
+      if (Date.now() - last < 30_000) return;
+      sessionStorage.setItem(RECOVERY_KEY, Date.now().toString());
+      void recoverApplication();
+    };
+    const onRejection = (event: PromiseRejectionEvent) => {
+      if (isChunkError(event.reason)) recover();
+    };
+    const onPreloadError = () => recover();
+    window.addEventListener("unhandledrejection", onRejection);
+    window.addEventListener("vite:preloadError", onPreloadError);
+    return () => {
+      window.removeEventListener("unhandledrejection", onRejection);
+      window.removeEventListener("vite:preloadError", onPreloadError);
+    };
+  }, []);
+  useEffect(() => {
     if (import.meta.env.PROD && "serviceWorker" in navigator) {
       void navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch((error) => {
         console.warn("Não foi possível ativar o modo instalável:", error);
       });
     }
   }, []);
+
   const { queryClient } = Route.useRouteContext();
 
   return (
