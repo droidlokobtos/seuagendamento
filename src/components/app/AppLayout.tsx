@@ -4,6 +4,7 @@ import { useCompany } from "@/lib/company";
 import {
   LayoutDashboard,
   Calendar,
+  Clock,
   Users,
   UserCog,
   Scissors,
@@ -80,7 +81,13 @@ const GROUPS: NavGroup[] = [
     items: [
       { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true, perm: "dashboard" },
       { to: "/app/reports", label: "Relatórios e análises", icon: BarChart3, perm: "relatorios" },
-      { to: "/app/marketing", label: "Marketing IA (Pro)", icon: Megaphone, perm: "configuracoes", proOnly: true },
+      {
+        to: "/app/marketing",
+        label: "Marketing IA (Pro)",
+        icon: Megaphone,
+        perm: "configuracoes",
+        proOnly: true,
+      },
     ],
   },
   {
@@ -208,6 +215,43 @@ const GROUPS: NavGroup[] = [
   },
 ];
 
+const PROFESSIONAL_GROUPS: NavGroup[] = [
+  {
+    id: "inicio",
+    label: "Meu painel",
+    icon: LayoutDashboard,
+    items: [
+      { to: "/app", label: "Visão geral", icon: LayoutDashboard, end: true, perm: "dashboard" },
+    ],
+  },
+  {
+    id: "rotina",
+    label: "Minha rotina",
+    icon: Calendar,
+    items: [
+      { to: "/app/agenda", label: "Minha agenda", icon: Calendar, perm: "agenda" },
+      { to: "/app/blocks", label: "Meus bloqueios", icon: Clock, perm: "agenda" },
+    ],
+  },
+  {
+    id: "ganhos",
+    label: "Meus ganhos",
+    icon: Wallet,
+    items: [
+      { to: "/app/commissions", label: "Minhas comissões", icon: BadgePercent, perm: "comissoes" },
+    ],
+  },
+  {
+    id: "ajuda",
+    label: "Ajuda",
+    icon: BookOpen,
+    items: [
+      { to: "/app/help", label: "Central de Ajuda", icon: BookOpen },
+      { to: "https://wa.me/5517992816108", label: "Suporte", icon: MessageCircle, external: true },
+    ],
+  },
+];
+
 const QUICK_ACTIONS: { to: string; label: string; icon: LucideIcon; perm: PermissionKey }[] = [
   { to: "/app/agenda", label: "Novo agendamento", icon: Calendar, perm: "agendamentos" },
   { to: "/app/customers", label: "Novo cliente", icon: Users, perm: "clientes_cadastro" },
@@ -220,6 +264,11 @@ const BOTTOM_NAV: NavItem[] = [
   { to: "/app/customers", label: "Clientes", icon: Users, perm: "clientes" },
   { to: "/app/finances", label: "Financeiro", icon: Wallet, perm: "financeiro" },
 ];
+const PROFESSIONAL_BOTTOM_NAV: NavItem[] = [
+  { to: "/app", label: "Início", icon: LayoutDashboard, end: true, perm: "dashboard" },
+  { to: "/app/agenda", label: "Agenda", icon: Calendar, perm: "agenda" },
+  { to: "/app/commissions", label: "Ganhos", icon: BadgePercent, perm: "comissoes" },
+];
 
 export function AppLayout({ children }: { children?: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -227,7 +276,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const { companies, activeCompany, setActiveCompanyId } = useCompany();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const { can } = usePermissions();
+  const { can, isProfessional } = usePermissions();
   const impersonating = isSuperAdmin && !!getImpersonation();
   const isActive = useCallback(
     (to: string, end?: boolean) => (end ? path === to : path === to || path.startsWith(to + "/")),
@@ -235,21 +284,30 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   );
   const groups = useMemo(
     () =>
-      GROUPS.map((g) => ({
-        ...g,
-        items: g.items.filter(
-          (i) =>
-            (!i.perm || can(i.perm)) &&
-            (!i.proOnly || activeCompany?.plan_code?.trim().toLowerCase() === "pro"),
-        ),
-      })).filter((g) => g.items.length > 0),
-    [activeCompany?.plan_code, can],
+      (isProfessional ? PROFESSIONAL_GROUPS : GROUPS)
+        .map((g) => ({
+          ...g,
+          items: g.items.filter(
+            (i) =>
+              (!i.perm || can(i.perm)) &&
+              (!i.proOnly || activeCompany?.plan_code?.trim().toLowerCase() === "pro"),
+          ),
+        }))
+        .filter((g) => g.items.length > 0),
+    [activeCompany?.plan_code, can, isProfessional],
   );
   const quickActions = useMemo(() => QUICK_ACTIONS.filter((a) => can(a.perm)), [can]);
-  const bottomNav = useMemo(() => BOTTOM_NAV.filter((i) => !i.perm || can(i.perm)), [can]);
+  const bottomNav = useMemo(
+    () =>
+      (isProfessional ? PROFESSIONAL_BOTTOM_NAV : BOTTOM_NAV).filter((i) => !i.perm || can(i.perm)),
+    [can, isProfessional],
+  );
   const activeGroup = useMemo(
-    () => GROUPS.find((g) => g.items.some((i) => isActive(i.to, i.end)))?.id ?? "inicio",
-    [isActive],
+    () =>
+      (isProfessional ? PROFESSIONAL_GROUPS : GROUPS).find((g) =>
+        g.items.some((i) => isActive(i.to, i.end)),
+      )?.id ?? "inicio",
+    [isActive, isProfessional],
   );
   const [openGroup, setOpenGroup] = useState<string | null>(activeGroup);
   useEffect(() => setOpenGroup(activeGroup), [activeGroup]);
@@ -273,7 +331,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
           {activeCompany?.name ?? "Minha empresa"}
         </p>
         <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          Gestão empresarial
+          {isProfessional ? "Painel do profissional" : "Gestão empresarial"}
         </p>
       </div>
     </div>

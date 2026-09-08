@@ -107,6 +107,7 @@ function UsersPage() {
         .from("staff")
         .select("id,name")
         .eq("company_id", companyId!)
+        .eq("active", true)
         .order("name");
       return data ?? [];
     },
@@ -159,7 +160,7 @@ function UsersPage() {
             role: form.role,
             jobTitle: form.jobTitle || null,
             permissions: form.permissions as Record<string, boolean>,
-            staffId: form.staffId,
+            staffId: form.role === "staff" ? form.staffId : null,
           },
         });
       }
@@ -172,12 +173,14 @@ function UsersPage() {
           jobTitle: form.jobTitle || null,
           role: form.role,
           permissions: form.permissions as Record<string, boolean>,
-          staffId: form.staffId,
+          staffId: form.role === "staff" ? form.staffId : null,
         },
       });
     },
     onSuccess: () => {
-      toast.success(editing ? "Usuário atualizado" : "Usuário cadastrado — já pode acessar o sistema");
+      toast.success(
+        editing ? "Usuário atualizado" : "Usuário cadastrado — já pode acessar o sistema",
+      );
       setOpen(false);
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["company-users", companyId] });
@@ -209,8 +212,7 @@ function UsersPage() {
   });
 
   const removeMut = useMutation({
-    mutationFn: (membershipId: string) =>
-      remove({ data: { companyId: companyId!, membershipId } }),
+    mutationFn: (membershipId: string) => remove({ data: { companyId: companyId!, membershipId } }),
     onSuccess: () => {
       toast.success("Usuário removido da empresa");
       qc.invalidateQueries({ queryKey: ["company-users", companyId] });
@@ -298,8 +300,16 @@ function UsersPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
                             {m.fullName || m.email || "Usuário"}{" "}
-                            {isMe && <Badge variant="secondary" className="ml-1">Você</Badge>}
-                            {!m.active && <Badge variant="destructive" className="ml-1">Inativo</Badge>}
+                            {isMe && (
+                              <Badge variant="secondary" className="ml-1">
+                                Você
+                              </Badge>
+                            )}
+                            {!m.active && (
+                              <Badge variant="destructive" className="ml-1">
+                                Inativo
+                              </Badge>
+                            )}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">
                             {m.email} · {ROLE_LABEL[m.role] ?? m.role}
@@ -315,7 +325,9 @@ function UsersPage() {
                                 toggleActive.mutate({ membershipId: m.id, active: v })
                               }
                             />
-                            <span className="text-xs text-muted-foreground hidden sm:inline">Ativo</span>
+                            <span className="text-xs text-muted-foreground hidden sm:inline">
+                              Ativo
+                            </span>
                           </div>
                           <Button
                             variant="outline"
@@ -335,7 +347,8 @@ function UsersPage() {
                             size="icon"
                             disabled={isMe}
                             onClick={() => {
-                              if (confirm("Remover este usuário da empresa?")) removeMut.mutate(m.id);
+                              if (confirm("Remover este usuário da empresa?"))
+                                removeMut.mutate(m.id);
                             }}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
@@ -377,7 +390,13 @@ function UsersPage() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
+      <Dialog
+        open={open}
+        onOpenChange={(v) => {
+          setOpen(v);
+          if (!v) setEditing(null);
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Editar usuário" : "Novo usuário"}</DialogTitle>
@@ -430,7 +449,9 @@ function UsersPage() {
                     setForm((f) => ({ ...f, role: v, permissions: { ...ROLE_PRESETS[v] } }))
                   }
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="company_admin">Administrador</SelectItem>
                     <SelectItem value="receptionist">Recepcionista</SelectItem>
@@ -443,19 +464,22 @@ function UsersPage() {
                 <div>
                   <Label>Vincular ao profissional</Label>
                   <Select
-                    value={form.staffId ?? "none"}
-                    onValueChange={(v) => setForm({ ...form, staffId: v === "none" ? null : v })}
+                    value={form.staffId ?? ""}
+                    onValueChange={(v) => setForm({ ...form, staffId: v || null })}
                   >
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Não vinculado</SelectItem>
                       {staffList.map((s: any) => (
-                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Necessário para exibir a agenda e as comissões dele.
+                    Obrigatório para exibir somente a agenda, os serviços e as comissões dele.
                   </p>
                 </div>
               )}
@@ -496,7 +520,9 @@ function UsersPage() {
                 <div className="mt-2 space-y-4">
                   {PERMISSION_GROUPS.map((g) => (
                     <div key={g.label}>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase">{g.label}</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase">
+                        {g.label}
+                      </p>
                       <div className="mt-2 grid gap-2 sm:grid-cols-2">
                         {g.items.map((it) => (
                           <label
@@ -506,7 +532,9 @@ function UsersPage() {
                             <span className="text-sm">
                               {it.label}
                               {it.hint && (
-                                <span className="block text-xs text-muted-foreground">{it.hint}</span>
+                                <span className="block text-xs text-muted-foreground">
+                                  {it.hint}
+                                </span>
                               )}
                             </span>
                             <Switch
@@ -527,6 +555,7 @@ function UsersPage() {
               onClick={() => saveMut.mutate()}
               disabled={
                 saveMut.isPending ||
+                (form.role === "staff" && !form.staffId) ||
                 (!editing && (!form.email || !form.fullName || form.password.length < 8))
               }
             >
@@ -536,14 +565,23 @@ function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!pwTarget} onOpenChange={(v) => { if (!v) setPwTarget(null); }}>
+      <Dialog
+        open={!!pwTarget}
+        onOpenChange={(v) => {
+          if (!v) setPwTarget(null);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Redefinir senha</DialogTitle>
           </DialogHeader>
           <div>
             <Label>Nova senha para {pwTarget?.email}</Label>
-            <Input value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="Mínimo 8 caracteres" />
+            <Input
+              value={newPw}
+              onChange={(e) => setNewPw(e.target.value)}
+              placeholder="Mínimo 8 caracteres"
+            />
           </div>
           <DialogFooter>
             <Button onClick={() => pwMut.mutate()} disabled={newPw.length < 8 || pwMut.isPending}>

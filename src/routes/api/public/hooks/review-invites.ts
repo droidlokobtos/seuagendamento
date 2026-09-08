@@ -38,7 +38,9 @@ export const Route = createFileRoute("/api/public/hooks/review-invites")({
 
           if (!invites?.length) return { processed: 0, skipped: 0, failed: 0 };
 
-          const companyIds = Array.from(new Set(invites.map((i: any) => i.company_id)));
+          const companyIds = Array.from(
+            new Set(invites.map((i: { company_id: string }) => i.company_id)),
+          );
           const [companiesResult, settingsResult] = await Promise.all([
             supabaseAdmin.from("companies").select("id, name").in("id", companyIds),
             supabaseAdmin.from("review_settings").select("*").in("company_id", companyIds),

@@ -178,7 +178,9 @@ function RootComponent() {
     // aberta tentar carregar um arquivo antigo, recarregamos uma única vez.
     const isChunkError = (value: unknown) => {
       const message = value instanceof Error ? value.message : String(value ?? "");
-      return /dynamically imported module|Importing a module script failed|ChunkLoadError/i.test(message);
+      return /dynamically imported module|Importing a module script failed|ChunkLoadError/i.test(
+        message,
+      );
     };
     const recover = () => {
       const last = Number(sessionStorage.getItem(RECOVERY_KEY) ?? 0);

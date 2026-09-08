@@ -62,9 +62,13 @@ export const createCompanyUser = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { findAuthUserByEmail } = await import("@/lib/admin-users.server");
     const email = data.email.toLowerCase();
-
+    const staffId = data.role === "staff" ? (data.staffId ?? null) : null;
+    if (data.role === "staff" && !staffId) {
+      throw new Error("Selecione o profissional que utilizará este acesso.");
+    }
     const existing = await findAuthUserByEmail(email);
     let userId: string;
+    let createdNewUser = false;
 
     if (existing) {
       // Um mesmo e-mail só pode pertencer a uma empresa
@@ -90,36 +94,44 @@ export const createCompanyUser = createServerFn({ method: "POST" })
       });
       if (createErr) throw new Error(createErr.message);
       userId = created.user!.id;
+      createdNewUser = true;
     }
 
-    await supabaseAdmin
-      .from("profiles")
-      .upsert({ id: userId, full_name: data.fullName, must_change_password: false } as any, {
-        onConflict: "id",
+    try {
+      const { error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .upsert({ id: userId, full_name: data.fullName, must_change_password: false } as any, {
+          onConflict: "id",
+        });
+      if (profileError) throw profileError;
+
+      const { error: linkError } = await (context.supabase as any).rpc("sync_company_user_access", {
+        _company_id: data.companyId,
+        _user_id: userId,
+        _role: data.role,
+        _job_title: data.jobTitle ?? null,
+        _permissions: data.permissions,
+        _active: true,
+        _staff_id: staffId,
       });
+      if (linkError) throw linkError;
+    } catch (error) {
+      if (createdNewUser) await supabaseAdmin.auth.admin.deleteUser(userId);
+      throw error;
+    }
 
-    const { error: linkErr } = await supabaseAdmin.from("company_users").upsert(
+    await audit(
+      context.supabase,
+      data.companyId,
+      context.userId,
+      "user_created",
+      "company_users",
+      userId,
       {
-        company_id: data.companyId,
-        user_id: userId,
+        email,
         role: data.role,
-        job_title: data.jobTitle ?? null,
-        permissions: data.permissions,
-        active: true,
-        staff_id: data.staffId ?? null,
-      } as any,
-      { onConflict: "company_id,user_id" },
+      },
     );
-    if (linkErr) throw new Error(linkErr.message);
-
-    await supabaseAdmin
-      .from("user_roles")
-      .upsert({ user_id: userId, role: data.role } as any, { onConflict: "user_id,role" });
-
-    await audit(context.supabase, data.companyId, context.userId, "user_created", "company_users", userId, {
-      email,
-      role: data.role,
-    });
 
     return { ok: true, userId };
   });
@@ -139,34 +151,39 @@ export const updateCompanyUser = createServerFn({ method: "POST" })
   .validator((input: unknown) => UpdateZ.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId, data.companyId);
-    const patch: Record<string, unknown> = {};
-    if (data.role !== undefined) patch.role = data.role;
-    if (data.jobTitle !== undefined) patch.job_title = data.jobTitle;
-    if (data.permissions !== undefined) patch.permissions = data.permissions;
-    if (data.active !== undefined) patch.active = data.active;
-    if (data.staffId !== undefined) patch.staff_id = data.staffId;
-
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
+    const { data: current, error: currentError } = await supabaseAdmin
       .from("company_users")
-      .update(patch as any)
+      .select("user_id,role,staff_id,job_title,permissions,active")
       .eq("id", data.membershipId)
       .eq("company_id", data.companyId)
-      .select("user_id,role")
       .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!row) throw new Error("Usuário não encontrado nesta empresa.");
+    if (currentError) throw new Error(currentError.message);
+    if (!current) throw new Error("Usuário não encontrado nesta empresa.");
 
-    if (data.role) {
-      await supabaseAdmin
-        .from("user_roles")
-        .delete()
-        .eq("user_id", row.user_id)
-        .in("role", ["company_admin", "staff", "receptionist"]);
-      await supabaseAdmin
-        .from("user_roles")
-        .upsert({ user_id: row.user_id, role: data.role } as any, { onConflict: "user_id,role" });
+    const nextRole = data.role ?? current.role;
+    const nextStaffId =
+      nextRole === "staff" ? (data.staffId !== undefined ? data.staffId : current.staff_id) : null;
+    if (nextRole === "staff" && !nextStaffId) {
+      throw new Error("Selecione o profissional que utilizará este acesso.");
     }
+    const patch = {
+      role: nextRole,
+      job_title: data.jobTitle !== undefined ? data.jobTitle : current.job_title,
+      permissions: data.permissions !== undefined ? data.permissions : current.permissions,
+      active: data.active !== undefined ? data.active : current.active,
+      staff_id: nextStaffId,
+    };
+    const { error } = await (context.supabase as any).rpc("sync_company_user_access", {
+      _company_id: data.companyId,
+      _user_id: current.user_id,
+      _role: patch.role,
+      _job_title: patch.job_title,
+      _permissions: patch.permissions,
+      _active: patch.active,
+      _staff_id: patch.staff_id,
+    });
+    if (error) throw new Error(error.message);
 
     await audit(
       context.supabase,
@@ -203,7 +220,14 @@ export const setCompanyUserPassword = createServerFn({ method: "POST" })
       password: data.password,
     });
     if (error) throw new Error(error.message);
-    await audit(context.supabase, data.companyId, context.userId, "user_password_reset", "company_users", data.membershipId);
+    await audit(
+      context.supabase,
+      data.companyId,
+      context.userId,
+      "user_password_reset",
+      "company_users",
+      data.membershipId,
+    );
     return { ok: true };
   });
 
@@ -216,13 +240,19 @@ export const removeCompanyUser = createServerFn({ method: "POST" })
   .validator((input: unknown) => RemoveZ.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId, data.companyId);
-    const { error } = await context.supabase
-      .from("company_users")
-      .delete()
-      .eq("id", data.membershipId)
-      .eq("company_id", data.companyId);
+    const { error } = await (context.supabase as any).rpc("remove_company_user_access", {
+      _company_id: data.companyId,
+      _membership_id: data.membershipId,
+    });
     if (error) throw new Error(error.message);
-    await audit(context.supabase, data.companyId, context.userId, "user_removed", "company_users", data.membershipId);
+    await audit(
+      context.supabase,
+      data.companyId,
+      context.userId,
+      "user_removed",
+      "company_users",
+      data.membershipId,
+    );
     return { ok: true };
   });
 
@@ -264,19 +294,33 @@ export const listCompanyUsers = createServerFn({ method: "GET" })
 export const updateCompanyUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) =>
-    z.object({
-      companyId: z.string().uuid(),
-      membershipId: z.string().uuid(),
-      role: RoleZ,
-    }).parse(input),
+    z
+      .object({
+        companyId: z.string().uuid(),
+        membershipId: z.string().uuid(),
+        role: RoleZ,
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId, data.companyId);
-    const { error } = await context.supabase
+    const { data: current, error: currentError } = await context.supabase
       .from("company_users")
-      .update({ role: data.role })
+      .select("user_id,job_title,permissions,active,staff_id")
       .eq("id", data.membershipId)
-      .eq("company_id", data.companyId);
+      .eq("company_id", data.companyId)
+      .maybeSingle();
+    if (currentError) throw new Error(currentError.message);
+    if (!current) throw new Error("Usuário não encontrado nesta empresa.");
+    const { error } = await (context.supabase as any).rpc("sync_company_user_access", {
+      _company_id: data.companyId,
+      _user_id: current.user_id,
+      _role: data.role,
+      _job_title: current.job_title,
+      _permissions: current.permissions,
+      _active: current.active,
+      _staff_id: data.role === "staff" ? current.staff_id : null,
+    });
     if (error) throw new Error(error.message);
     return { ok: true };
   });

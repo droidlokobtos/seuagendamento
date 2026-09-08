@@ -10,9 +10,14 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, UserCog, Calendar } from "lucide-react";
+import { Plus, Pencil, Trash2, UserCog, Calendar, LayoutDashboard, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
 
@@ -21,15 +26,20 @@ export const Route = createFileRoute("/_authenticated/app/staff")({
 });
 
 type S = {
-  id: string; name: string; phone: string | null; email: string | null;
-  role_title: string | null; color: string | null; commission_pct: number | null;
-  photo_url: string | null; active: boolean;
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  role_title: string | null;
+  color: string | null;
+  commission_pct: number | null;
+  photo_url: string | null;
+  active: boolean;
 };
 
 type Sched = { weekday: number; start_time: string; end_time: string };
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-
 
 function Staff() {
   const qc = useQueryClient();
@@ -41,7 +51,11 @@ function Staff() {
   const { data = [], isLoading } = useQuery({
     queryKey: ["staff", companyId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("staff").select("*").eq("company_id", companyId).order("name");
+      const { data, error } = await supabase
+        .from("staff")
+        .select("*")
+        .eq("company_id", companyId)
+        .order("name");
       if (error) throw error;
       return (data ?? []) as S[];
     },
@@ -51,8 +65,12 @@ function Staff() {
   const { data: services = [] } = useQuery({
     queryKey: ["staff_services_options", companyId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("services").select("id,name,active")
-        .eq("company_id", companyId).order("sort_order").order("name");
+      const { data, error } = await supabase
+        .from("services")
+        .select("id,name,active")
+        .eq("company_id", companyId)
+        .order("sort_order")
+        .order("name");
       if (error) throw error;
       return (data ?? []) as { id: string; name: string; active: boolean }[];
     },
@@ -60,10 +78,15 @@ function Staff() {
 
   // Os vínculos e horários de cada funcionário são carregados sob demanda no diálogo de edição.
 
-
   const save = useMutation({
-    mutationFn: async ({ v, serviceIds, schedules }: {
-      v: Partial<S>; serviceIds: string[] | null; schedules: Sched[] | null;
+    mutationFn: async ({
+      v,
+      serviceIds,
+      schedules,
+    }: {
+      v: Partial<S>;
+      serviceIds: string[] | null;
+      schedules: Sched[] | null;
     }) => {
       let staffId = edit?.id;
       if (edit) {
@@ -73,8 +96,11 @@ function Staff() {
           if (error) throw error;
         }
       } else {
-        const { data: created, error } = await supabase.from("staff")
-          .insert({ ...v, company_id: companyId } as any).select("id").single();
+        const { data: created, error } = await supabase
+          .from("staff")
+          .insert({ ...v, company_id: companyId } as any)
+          .select("id")
+          .single();
         if (error) throw error;
         staffId = created.id;
       }
@@ -83,18 +109,24 @@ function Staff() {
       // Sincroniza vínculos de serviços apenas quando houve alteração
       if (serviceIds) {
         const { data: currentRows, error: curErr } = await supabase
-          .from("staff_services").select("service_id").eq("staff_id", staffId);
+          .from("staff_services")
+          .select("service_id")
+          .eq("staff_id", staffId);
         if (curErr) throw curErr;
         const current = (currentRows ?? []).map((r) => r.service_id);
         const toAdd = serviceIds.filter((id) => !current.includes(id));
         const toRemove = current.filter((id) => !serviceIds.includes(id));
         if (toRemove.length) {
-          const { error } = await supabase.from("staff_services").delete()
-            .eq("staff_id", staffId).in("service_id", toRemove);
+          const { error } = await supabase
+            .from("staff_services")
+            .delete()
+            .eq("staff_id", staffId)
+            .in("service_id", toRemove);
           if (error) throw error;
         }
         if (toAdd.length) {
-          const { error } = await supabase.from("staff_services")
+          const { error } = await supabase
+            .from("staff_services")
             .insert(toAdd.map((service_id) => ({ staff_id: staffId!, service_id })));
           if (error) throw error;
         }
@@ -102,10 +134,14 @@ function Staff() {
 
       // Sincroniza jornada de trabalho apenas quando houve alteração
       if (schedules) {
-        const { error: delErr } = await supabase.from("staff_schedules").delete().eq("staff_id", staffId);
+        const { error: delErr } = await supabase
+          .from("staff_schedules")
+          .delete()
+          .eq("staff_id", staffId);
         if (delErr) throw delErr;
         if (schedules.length) {
-          const { error } = await supabase.from("staff_schedules")
+          const { error } = await supabase
+            .from("staff_schedules")
             .insert(schedules.map((s) => ({ ...s, staff_id: staffId! })));
           if (error) throw error;
         }
@@ -116,52 +152,73 @@ function Staff() {
       qc.invalidateQueries({ queryKey: ["staff", companyId] });
       qc.invalidateQueries({ queryKey: ["staff_services_links", companyId] });
       qc.invalidateQueries({ queryKey: ["staff_detail"] });
-      setOpen(false); setEdit(null);
+      setOpen(false);
+      setEdit(null);
     },
     onError: (e: any) => toast.error(e.message),
   });
-
 
   const del = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("staff").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Removido"); qc.invalidateQueries({ queryKey: ["staff", companyId] }); },
+    onSuccess: () => {
+      toast.success("Removido");
+      qc.invalidateQueries({ queryKey: ["staff", companyId] });
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold">Funcionários</h1>
           <p className="text-sm text-muted-foreground">Profissionais que atendem na empresa.</p>
         </div>
-        <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEdit(null); }}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setEdit(null)}><Plus className="h-4 w-4 mr-2" /> Novo funcionário</Button>
-          </DialogTrigger>
-          {open && (
-            <StaffDialog
-              key={edit?.id ?? "new"}
-              editId={edit?.id ?? null}
-              services={services}
-              onSave={(v, serviceIds, schedules) => save.mutate({ v, serviceIds, schedules })}
-              loading={save.isPending}
-            />
-          )}
-        </Dialog>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link to="/app/users">
+              <KeyRound className="h-4 w-4 mr-2" /> Acessos da equipe
+            </Link>
+          </Button>
+          <Dialog
+            open={open}
+            onOpenChange={(o) => {
+              setOpen(o);
+              if (!o) setEdit(null);
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button onClick={() => setEdit(null)}>
+                <Plus className="h-4 w-4 mr-2" /> Novo funcionário
+              </Button>
+            </DialogTrigger>
+            {open && (
+              <StaffDialog
+                key={edit?.id ?? "new"}
+                editId={edit?.id ?? null}
+                services={services}
+                onSave={(v, serviceIds, schedules) => save.mutate({ v, serviceIds, schedules })}
+                loading={save.isPending}
+              />
+            )}
+          </Dialog>
+        </div>
       </div>
 
-
       {isLoading ? (
-        <Card><CardContent className="p-12 text-center text-muted-foreground">Carregando…</CardContent></Card>
+        <Card>
+          <CardContent className="p-12 text-center text-muted-foreground">Carregando…</CardContent>
+        </Card>
       ) : !data.length ? (
         <Card>
           <CardContent className="p-12 text-center">
             <UserCog className="h-8 w-8 mx-auto text-muted-foreground" />
-            <p className="mt-2 text-sm text-muted-foreground">Nenhum funcionário cadastrado ainda.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Nenhum funcionário cadastrado ainda.
+            </p>
           </CardContent>
         </Card>
       ) : (
@@ -173,20 +230,38 @@ function Staff() {
                   <div className="flex items-center gap-3 min-w-0">
                     <Avatar className="h-11 w-11" style={{ background: s.color ?? "#8b7355" }}>
                       {s.photo_url && <AvatarImage src={s.photo_url} alt={s.name} />}
-                      <AvatarFallback className="text-white" style={{ background: s.color ?? "#8b7355" }}>
+                      <AvatarFallback
+                        className="text-white"
+                        style={{ background: s.color ?? "#8b7355" }}
+                      >
                         {s.name.slice(0, 1).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
                       <p className="font-medium truncate">{s.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{s.role_title ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {s.role_title ?? "—"}
+                      </p>
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <Button size="icon" variant="ghost" onClick={() => { setEdit(s); setOpen(true); }}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => {
+                        setEdit(s);
+                        setOpen(true);
+                      }}
+                    >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover?")) del.mutate(s.id); }}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => {
+                        if (confirm("Remover?")) del.mutate(s.id);
+                      }}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -195,11 +270,18 @@ function Staff() {
                   {s.phone && <p>📞 {s.phone}</p>}
                   {s.commission_pct != null && <p>Comissão: {s.commission_pct}%</p>}
                 </div>
-                <Button asChild variant="outline" size="sm" className="w-full mt-3">
-                  <Link to="/app/agenda" search={{ staff: s.id } as any}>
-                    <Calendar className="h-4 w-4 mr-2" /> Agenda própria
-                  </Link>
-                </Button>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/app/agenda" search={{ staff: s.id } as any}>
+                      <Calendar className="h-4 w-4 mr-2" /> Agenda
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/app/professional" search={{ staff: s.id }}>
+                      <LayoutDashboard className="h-4 w-4 mr-2" /> Ver painel
+                    </Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -210,7 +292,10 @@ function Staff() {
 }
 
 function StaffDialog({
-  editId, onSave, loading, services,
+  editId,
+  onSave,
+  loading,
+  services,
 }: {
   editId: string | null;
   onSave: (v: Partial<S>, serviceIds: string[] | null, schedules: Sched[] | null) => void;
@@ -226,7 +311,11 @@ function StaffDialog({
       const [row, links, scheds] = await Promise.all([
         supabase.from("staff").select("*").eq("id", editId!).maybeSingle(),
         supabase.from("staff_services").select("service_id").eq("staff_id", editId!),
-        supabase.from("staff_schedules").select("weekday,start_time,end_time").eq("staff_id", editId!).order("weekday"),
+        supabase
+          .from("staff_schedules")
+          .select("weekday,start_time,end_time")
+          .eq("staff_id", editId!)
+          .order("weekday"),
       ]);
       if (row.error) throw row.error;
       if (links.error) throw links.error;
@@ -246,8 +335,12 @@ function StaffDialog({
   if (editId && (isLoading || !detail)) {
     return (
       <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>Editar funcionário</DialogTitle></DialogHeader>
-        <p className="py-8 text-center text-sm text-muted-foreground">Carregando dados do funcionário…</p>
+        <DialogHeader>
+          <DialogTitle>Editar funcionário</DialogTitle>
+        </DialogHeader>
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          Carregando dados do funcionário…
+        </p>
       </DialogContent>
     );
   }
@@ -266,12 +359,23 @@ function StaffDialog({
 }
 
 const EMPTY_FORM: Partial<S> = {
-  name: "", phone: "", email: "", role_title: "",
-  color: "#8b7355", active: true, commission_pct: 0, photo_url: null,
+  name: "",
+  phone: "",
+  email: "",
+  role_title: "",
+  color: "#8b7355",
+  active: true,
+  commission_pct: 0,
+  photo_url: null,
 };
 
 function StaffForm({
-  original, originalServiceIds, originalSchedules, services, onSave, loading,
+  original,
+  originalServiceIds,
+  originalSchedules,
+  services,
+  onSave,
+  loading,
 }: {
   original: S | null;
   originalServiceIds: string[];
@@ -289,9 +393,13 @@ function StaffForm({
 
   const dayOf = (w: number) => scheds.find((s) => s.weekday === w);
   const toggleDay = (w: number) =>
-    setScheds((prev) => prev.some((s) => s.weekday === w)
-      ? prev.filter((s) => s.weekday !== w)
-      : [...prev, { weekday: w, start_time: "09:00", end_time: "18:00" }].sort((a, b) => a.weekday - b.weekday));
+    setScheds((prev) =>
+      prev.some((s) => s.weekday === w)
+        ? prev.filter((s) => s.weekday !== w)
+        : [...prev, { weekday: w, start_time: "09:00", end_time: "18:00" }].sort(
+            (a, b) => a.weekday - b.weekday,
+          ),
+    );
   const setDay = (w: number, patch: Partial<Sched>) =>
     setScheds((prev) => prev.map((s) => (s.weekday === w ? { ...s, ...patch } : s)));
 
@@ -320,28 +428,58 @@ function StaffForm({
 
   return (
     <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
-      <DialogHeader><DialogTitle>{original ? "Editar funcionário" : "Novo funcionário"}</DialogTitle></DialogHeader>
+      <DialogHeader>
+        <DialogTitle>{original ? "Editar funcionário" : "Novo funcionário"}</DialogTitle>
+      </DialogHeader>
       <div className="space-y-3">
         <div>
           <Label>Foto</Label>
-          <ImageUpload value={f.photo_url} folder="staff" preset="avatar" onChange={(url) => setF({ ...f, photo_url: url })} />
+          <ImageUpload
+            value={f.photo_url}
+            folder="staff"
+            preset="avatar"
+            onChange={(url) => setF({ ...f, photo_url: url })}
+          />
         </div>
-        <div><Label>Nome</Label>
-          <Input value={f.name ?? ""} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
-        <div className="grid grid-cols-2 gap-3">
-          <div><Label>Telefone / WhatsApp</Label>
-            <Input value={f.phone ?? ""} onChange={(e) => setF({ ...f, phone: e.target.value })} /></div>
-          <div><Label>E-mail</Label>
-            <Input value={f.email ?? ""} onChange={(e) => setF({ ...f, email: e.target.value })} /></div>
+        <div>
+          <Label>Nome</Label>
+          <Input value={f.name ?? ""} onChange={(e) => setF({ ...f, name: e.target.value })} />
         </div>
-        <div><Label>Cargo / Função</Label>
-          <Input value={f.role_title ?? ""} onChange={(e) => setF({ ...f, role_title: e.target.value })} /></div>
         <div className="grid grid-cols-2 gap-3">
-          <div><Label>Comissão (%)</Label>
-            <Input type="number" step="0.01" value={f.commission_pct ?? 0}
-              onChange={(e) => setF({ ...f, commission_pct: parseFloat(e.target.value || "0") })} /></div>
-          <div><Label>Cor da agenda</Label>
-            <Input type="color" value={f.color ?? "#8b7355"} onChange={(e) => setF({ ...f, color: e.target.value })} /></div>
+          <div>
+            <Label>Telefone / WhatsApp</Label>
+            <Input value={f.phone ?? ""} onChange={(e) => setF({ ...f, phone: e.target.value })} />
+          </div>
+          <div>
+            <Label>E-mail</Label>
+            <Input value={f.email ?? ""} onChange={(e) => setF({ ...f, email: e.target.value })} />
+          </div>
+        </div>
+        <div>
+          <Label>Cargo / Função</Label>
+          <Input
+            value={f.role_title ?? ""}
+            onChange={(e) => setF({ ...f, role_title: e.target.value })}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label>Comissão (%)</Label>
+            <Input
+              type="number"
+              step="0.01"
+              value={f.commission_pct ?? 0}
+              onChange={(e) => setF({ ...f, commission_pct: parseFloat(e.target.value || "0") })}
+            />
+          </div>
+          <div>
+            <Label>Cor da agenda</Label>
+            <Input
+              type="color"
+              value={f.color ?? "#8b7355"}
+              onChange={(e) => setF({ ...f, color: e.target.value })}
+            />
+          </div>
         </div>
 
         <div className="rounded-lg border p-3 space-y-2">
@@ -355,14 +493,29 @@ function StaffForm({
               return (
                 <div key={w} className="flex items-center gap-2 text-sm">
                   <label className="flex items-center gap-2 w-20 cursor-pointer">
-                    <input type="checkbox" className="h-4 w-4" checked={!!d} onChange={() => toggleDay(w)} />
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4"
+                      checked={!!d}
+                      onChange={() => toggleDay(w)}
+                    />
                     <span>{label}</span>
                   </label>
-                  <Input type="time" className="h-8" disabled={!d}
-                    value={d?.start_time ?? ""} onChange={(e) => setDay(w, { start_time: e.target.value })} />
+                  <Input
+                    type="time"
+                    className="h-8"
+                    disabled={!d}
+                    value={d?.start_time ?? ""}
+                    onChange={(e) => setDay(w, { start_time: e.target.value })}
+                  />
                   <span className="text-muted-foreground">às</span>
-                  <Input type="time" className="h-8" disabled={!d}
-                    value={d?.end_time ?? ""} onChange={(e) => setDay(w, { end_time: e.target.value })} />
+                  <Input
+                    type="time"
+                    className="h-8"
+                    disabled={!d}
+                    value={d?.end_time ?? ""}
+                    onChange={(e) => setDay(w, { end_time: e.target.value })}
+                  />
                 </div>
               );
             })}
@@ -380,8 +533,15 @@ function StaffForm({
             <div className="max-h-44 overflow-y-auto space-y-1">
               {services.map((s) => (
                 <label key={s.id} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
-                  <input type="checkbox" className="h-4 w-4" checked={svcIds.includes(s.id)} onChange={() => toggleSvc(s.id)} />
-                  <span className={s.active ? "" : "text-muted-foreground line-through"}>{s.name}</span>
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4"
+                    checked={svcIds.includes(s.id)}
+                    onChange={() => toggleSvc(s.id)}
+                  />
+                  <span className={s.active ? "" : "text-muted-foreground line-through"}>
+                    {s.name}
+                  </span>
                 </label>
               ))}
             </div>
@@ -393,9 +553,10 @@ function StaffForm({
         </div>
       </div>
       <DialogFooter>
-        <Button onClick={submit} disabled={loading || !f.name}>Salvar</Button>
+        <Button onClick={submit} disabled={loading || !f.name}>
+          Salvar
+        </Button>
       </DialogFooter>
     </DialogContent>
   );
 }
-

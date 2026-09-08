@@ -60,6 +60,7 @@ function PlansPage() {
         .from("plan_session_usage")
         .select("id", { count: "exact", head: true })
         .eq("company_id", companyId)
+        .is("reversed_at", null)
         .gte("used_at", start.toISOString());
       return count ?? 0;
     },

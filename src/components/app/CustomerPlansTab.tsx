@@ -4,7 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { brl, dateBR } from "@/lib/format";
-import { PLAN_KINDS, PLAN_STATUS, isExpiredPlan, useCustomerPlansOf, type PlanKind } from "@/lib/plans";
+import {
+  PLAN_KINDS,
+  PLAN_STATUS,
+  isExpiredPlan,
+  useCustomerPlansOf,
+  type PlanKind,
+} from "@/lib/plans";
 
 /** Aba "Planos e Pacotes" na ficha do cliente. */
 export function CustomerPlansTab({ customerId }: { customerId: string }) {
@@ -19,6 +25,7 @@ export function CustomerPlansTab({ customerId }: { customerId: string }) {
         .from("plan_session_usage")
         .select("*")
         .in("customer_plan_id", ids)
+        .is("reversed_at", null)
         .order("used_at", { ascending: false })
         .limit(200);
       return data ?? [];
@@ -27,7 +34,9 @@ export function CustomerPlansTab({ customerId }: { customerId: string }) {
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   if (!plans.length) {
-    return <p className="text-sm text-muted-foreground">Este cliente não possui planos ou pacotes.</p>;
+    return (
+      <p className="text-sm text-muted-foreground">Este cliente não possui planos ou pacotes.</p>
+    );
   }
 
   return (
@@ -48,16 +57,22 @@ export function CustomerPlansTab({ customerId }: { customerId: string }) {
                     {PLAN_KINDS[p.kind as PlanKind]} · {brl((p.amount_cents ?? 0) / 100)}
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    Compra {dateBR(p.sold_at)} · Validade {p.expires_at ? dateBR(p.expires_at) : "sem validade"}
+                    Compra {dateBR(p.sold_at)} · Validade{" "}
+                    {p.expires_at ? dateBR(p.expires_at) : "sem validade"}
                   </p>
                 </div>
-                <Badge variant="outline" className={PLAN_STATUS[st as keyof typeof PLAN_STATUS].className}>
+                <Badge
+                  variant="outline"
+                  className={PLAN_STATUS[st as keyof typeof PLAN_STATUS].className}
+                >
                   {PLAN_STATUS[st as keyof typeof PLAN_STATUS].label}
                 </Badge>
               </div>
               <div className="flex items-center gap-2">
                 <Progress value={total ? (used / total) * 100 : 0} className="h-1.5 flex-1" />
-                <span className="text-[11px] text-muted-foreground whitespace-nowrap">{used}/{total} sessões</span>
+                <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                  {used}/{total} sessões
+                </span>
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 {balances.map((b: any) => (

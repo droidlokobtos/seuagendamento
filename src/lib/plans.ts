@@ -193,6 +193,7 @@ export function usePlanUsage(customerPlanIds: string[]) {
         .from("plan_session_usage")
         .select("*")
         .in("customer_plan_id", customerPlanIds)
+        .is("reversed_at", null)
         .order("used_at", { ascending: false })
         .limit(500);
       if (error) throw error;

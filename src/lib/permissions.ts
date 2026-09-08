@@ -118,6 +118,7 @@ export function hasPermission(
 }
 
 export const ROUTE_PERMISSIONS: { prefix: string; key: PermissionKey }[] = [
+  { prefix: "/app/professional", key: "dashboard" },
   { prefix: "/app/operations", key: "agendamentos" },
   { prefix: "/app/cash", key: "caixa" },
   { prefix: "/app/expenses", key: "financeiro" },

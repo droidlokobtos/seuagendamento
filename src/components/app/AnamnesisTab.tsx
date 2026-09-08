@@ -574,7 +574,7 @@ export function AnamnesisTab({
                       {sec.emoji} {sec.label}
                     </p>
                     <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-                      {sec.questions.map((q: any) => {
+                      {sec.questions.map((q) => {
                         const v = r.answers?.[q.key];
                         if (v === undefined || v === null || v === "") return null;
                         const val = v === true ? "Sim" : v === false ? "Não" : String(v);
