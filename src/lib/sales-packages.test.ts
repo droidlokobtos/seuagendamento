@@ -18,6 +18,15 @@ const proceduresPage = readFileSync(
   resolve("src/routes/_authenticated/app/procedures.tsx"),
   "utf8",
 ).toLowerCase();
+const consistencyMigration = readFileSync(
+  resolve("supabase/migrations/20260908040000_consistency_followup.sql"),
+  "utf8",
+).toLowerCase();
+const customerPlans = readFileSync(
+  resolve("src/components/app/CustomerPlansTab.tsx"),
+  "utf8",
+).toLowerCase();
+const teamFunctions = readFileSync(resolve("src/lib/team.functions.ts"), "utf8").toLowerCase();
 
 describe("PDV com pacotes e créditos", () => {
   it("registra venda, créditos, estoque e autoria na mesma transação", () => {
@@ -47,6 +56,21 @@ describe("PDV com pacotes e créditos", () => {
     expect(salesPage).toContain('kind: "package"');
     expect(salesPage).toContain("créditos de pacote");
   });
+
+  it("vincula a venda ao agendamento e impede consumir a mesma sessão duas vezes", () => {
+    expect(migration).toContain("_appointment_id uuid default null");
+    expect(salesPage).toContain("_appointment_id: v.appointment_id");
+    expect(consistencyMigration).toContain("plan_session_usage_active_appt_service_uidx");
+    expect(consistencyMigration).toContain("on conflict do nothing");
+  });
+
+  it("oculta usos estornados e classifica o financeiro pelo conteúdo da venda", () => {
+    expect(customerPlans).toContain('.is("reversed_at", null)');
+    expect(consistencyMigration).toContain("venda mista");
+    expect(consistencyMigration).toContain("planos e pacotes");
+    expect(consistencyMigration).toContain("serviços");
+    expect(consistencyMigration).toContain("produtos");
+  });
 });
 
 describe("Custeio simplificado", () => {
@@ -54,5 +78,15 @@ describe("Custeio simplificado", () => {
     expect(costingMigration).toContain("save_costing_configuration");
     expect(costingMigration).toContain("somente administradores podem alterar o custeio");
     expect(proceduresPage).toContain('rpc("save_costing_configuration"');
+    expect(proceduresPage).toContain("existe um custo mensal repetido");
+  });
+});
+
+describe("Acesso da equipe", () => {
+  it("sincroniza vínculo, papel e profissional por funções atômicas", () => {
+    expect(consistencyMigration).toContain("sync_company_user_access");
+    expect(consistencyMigration).toContain("remove_company_user_access");
+    expect(teamFunctions).toContain('rpc("sync_company_user_access"');
+    expect(teamFunctions).toContain('rpc("remove_company_user_access"');
   });
 });

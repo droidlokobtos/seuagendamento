@@ -1806,6 +1806,10 @@ function CostingSettingsDialog({
       const conversionKeys = validConv.map(
         (c) => `${normalizeUnit(c.from_unit)}:${normalizeUnit(c.to_unit)}`,
       );
+      const overheadKeys = valid.map((o) => normalizeUnit(o.label));
+      if (new Set(overheadKeys).size !== overheadKeys.length) {
+        throw new Error("Existe um custo mensal repetido.");
+      }
       if (new Set(conversionKeys).size !== conversionKeys.length) {
         throw new Error("Existe uma conversão de embalagem repetida.");
       }

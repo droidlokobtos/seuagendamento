@@ -28,8 +28,9 @@ BEGIN
     RAISE EXCEPTION 'Somente administradores podem alterar o custeio';
   END IF;
   IF basis NOT IN ('hour', 'appointment') THEN RAISE EXCEPTION 'Base de rateio inválida'; END IF;
-  IF hours <= 0 OR appointments <= 0 THEN
-    RAISE EXCEPTION 'Horas e atendimentos mensais devem ser maiores que zero';
+  IF (basis = 'hour' AND hours <= 0)
+     OR (basis = 'appointment' AND appointments <= 0) THEN
+    RAISE EXCEPTION 'A quantidade mensal da base escolhida deve ser maior que zero';
   END IF;
   IF default_margin < 0 OR default_margin >= 100 OR min_margin < 0 OR min_margin >= 100 THEN
     RAISE EXCEPTION 'As margens devem ficar entre 0 e 99,99';

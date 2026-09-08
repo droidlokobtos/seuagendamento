@@ -61,7 +61,7 @@ export const Route = createFileRoute("/api/public/hooks/confirmations")({
               .select("appointment_id")
               .in(
                 "appointment_id",
-                appts.map((a) => a.id),
+                appts.map((a: { id: string }) => a.id),
               );
             if (existingError)
               throw new Error(
@@ -69,7 +69,9 @@ export const Route = createFileRoute("/api/public/hooks/confirmations")({
               );
             const already = new Set((existing ?? []).map((r: any) => r.appointment_id));
 
-            const companyIds = Array.from(new Set(appts.map((a) => a.company_id)));
+            const companyIds = Array.from(
+              new Set(appts.map((a: { company_id: string }) => a.company_id)),
+            );
             const { data: companies, error: companiesError } = await supabaseAdmin
               .from("companies")
               .select("id, name")

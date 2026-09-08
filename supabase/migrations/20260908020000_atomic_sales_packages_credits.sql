@@ -51,7 +51,8 @@ CREATE OR REPLACE FUNCTION public.register_sale_with_credits(
   _payments jsonb DEFAULT '[]'::jsonb,
   _discount_cents integer DEFAULT 0,
   _surcharge_cents integer DEFAULT 0,
-  _notes text DEFAULT NULL
+  _notes text DEFAULT NULL,
+  _appointment_id uuid DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -92,6 +93,7 @@ DECLARE
   payment_option uuid;
   first_payment_method text;
   customer_name text;
+  appointment_status text;
   package_number integer;
 BEGIN
   IF actor_id IS NULL THEN RAISE EXCEPTION 'Não autenticado'; END IF;
@@ -123,11 +125,30 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'Cliente não pertence a esta empresa'; END IF;
   END IF;
 
+  IF _appointment_id IS NOT NULL THEN
+    IF _customer_id IS NULL THEN
+      RAISE EXCEPTION 'Selecione o cliente do agendamento';
+    END IF;
+    SELECT status::text INTO appointment_status
+    FROM public.appointments
+    WHERE id = _appointment_id
+      AND company_id = _company_id
+      AND customer_id = _customer_id
+    FOR UPDATE;
+    IF NOT FOUND THEN RAISE EXCEPTION 'Agendamento inválido para este cliente'; END IF;
+    IF appointment_status IN (
+      'completed', 'cancelled', 'cancelled_by_customer',
+      'cancelled_by_company', 'no_show'
+    ) THEN
+      RAISE EXCEPTION 'Selecione um agendamento aberto';
+    END IF;
+  END IF;
+
   INSERT INTO public.sales(
-    company_id, customer_id, status, subtotal_cents, discount_cents,
+    company_id, customer_id, appointment_id, status, subtotal_cents, discount_cents,
     surcharge_cents, total_cents, services_cents, notes, created_by, created_by_name
   ) VALUES (
-    _company_id, _customer_id, 'draft', 0, 0,
+    _company_id, _customer_id, _appointment_id, 'draft', 0, 0,
     COALESCE(_surcharge_cents, 0), 0, 0, NULLIF(trim(COALESCE(_notes, '')), ''), actor_id, actor_name
   ) RETURNING id INTO sale_id;
 
@@ -169,6 +190,12 @@ BEGIN
       SELECT * INTO service_row FROM public.services
       WHERE id = item_id AND company_id = _company_id AND active;
       IF NOT FOUND THEN RAISE EXCEPTION 'Serviço inválido ou inativo'; END IF;
+      IF _appointment_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM public.appointment_services aps
+        WHERE aps.appointment_id = _appointment_id AND aps.service_id = item_id
+      ) THEN
+        RAISE EXCEPTION 'O serviço % não pertence ao agendamento selecionado', service_row.name;
+      END IF;
       item_name := service_row.name;
       unit_price := GREATEST(0, COALESCE(NULLIF((item->>'unit_price_cents')::integer, 0), service_row.price_cents, 0));
 
@@ -213,10 +240,10 @@ BEGIN
           );
           INSERT INTO public.plan_session_usage(
             company_id, customer_plan_id, customer_id, service_id, service_name,
-            sale_id, sale_item_id, quantity, actor_user_id, notes
+            appointment_id, sale_id, sale_item_id, quantity, actor_user_id, notes
           ) VALUES (
             _company_id, balance_row.customer_plan_id, _customer_id, item_id, item_name,
-            sale_id, sale_item_id, take_qty, actor_id, 'Crédito consumido no PDV'
+            _appointment_id, sale_id, sale_item_id, take_qty, actor_id, 'Crédito consumido no PDV'
           );
           INSERT INTO public.plan_audit_log(
             company_id, entity, entity_id, action, description, new_data, actor_user_id
@@ -375,9 +402,9 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.register_sale_with_credits(uuid,uuid,jsonb,jsonb,integer,integer,text)
+REVOKE ALL ON FUNCTION public.register_sale_with_credits(uuid,uuid,jsonb,jsonb,integer,integer,text,uuid)
 FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.register_sale_with_credits(uuid,uuid,jsonb,jsonb,integer,integer,text)
+GRANT EXECUTE ON FUNCTION public.register_sale_with_credits(uuid,uuid,jsonb,jsonb,integer,integer,text,uuid)
 TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.cancel_sale_with_reversal(
@@ -462,7 +489,15 @@ BEGIN
       cancel_reason = COALESCE(NULLIF(trim(_reason), ''), 'Venda cancelada')
   WHERE sale_id = _sale_id AND status = 'active';
 
-  IF sale_row.total_cents > 0 AND sale_row.appointment_id IS NULL THEN
+  IF sale_row.total_cents > 0
+     AND EXISTS (
+       SELECT 1 FROM public.financial_transactions
+       WHERE sale_id = _sale_id AND type = 'income'
+     )
+     AND NOT EXISTS (
+       SELECT 1 FROM public.financial_transactions
+       WHERE sale_id = _sale_id AND type = 'expense' AND category = 'Estorno de venda'
+     ) THEN
     INSERT INTO public.financial_transactions(
       company_id, type, category, description, amount, occurred_on, sale_id, staff_id, created_by
     ) VALUES (

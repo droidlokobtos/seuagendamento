@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { BadgeCheck, Download, Plus, Receipt, Search, ShoppingCart, Trash2, X } from "lucide-react";
-import { dateBR, saoPauloDate } from "@/lib/format";
+import { dateBR, saoPauloDate, saoPauloDateAddDays, saoPauloDayStartIso } from "@/lib/format";
 import {
   downloadCSV,
   effectivePriceCents,
@@ -213,6 +213,7 @@ function SalesPage() {
       discount_cents: number;
       surcharge_cents: number;
       notes: string;
+      appointment_id: string | null;
     }) => {
       const { data, error } = await (supabase as any).rpc("register_sale_with_credits", {
         _company_id: companyId,
@@ -222,6 +223,7 @@ function SalesPage() {
         _discount_cents: v.discount_cents,
         _surcharge_cents: v.surcharge_cents,
         _notes: v.notes || null,
+        _appointment_id: v.appointment_id,
       });
       if (error) throw error;
       return data as { credits_cents?: number; total_cents?: number };
@@ -457,12 +459,14 @@ function SaleDialog({
     discount_cents: number;
     surcharge_cents: number;
     notes: string;
+    appointment_id: string | null;
   }) => void;
 }) {
   const [items, setItems] = useState<SaleItem[]>([]);
   const [payments, setPayments] = useState<SalePayment[]>([]);
   const [customer, setCustomer] = useState<string>("");
   const [customerSearch, setCustomerSearch] = useState("");
+  const [appointment, setAppointment] = useState("");
   const [discount, setDiscount] = useState(0);
   const [surcharge, setSurcharge] = useState(0);
   const [notes, setNotes] = useState("");
@@ -502,6 +506,43 @@ function SaleDialog({
       return data ?? [];
     },
   });
+
+  const { data: customerAppointments = [] } = useQuery({
+    enabled: !!customer,
+    queryKey: ["sale-customer-appointments", companyId, customer],
+    queryFn: async () => {
+      const today = saoPauloDate();
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("id,starts_at,status,appointment_services(service_id,services(name))")
+        .eq("company_id", companyId)
+        .eq("customer_id", customer)
+        .gte("starts_at", saoPauloDayStartIso(saoPauloDateAddDays(-1, today)))
+        .lt("starts_at", saoPauloDayStartIso(saoPauloDateAddDays(61, today)))
+        .order("starts_at");
+      if (error) throw error;
+      const closed = new Set([
+        "completed",
+        "cancelled",
+        "cancelled_by_customer",
+        "cancelled_by_company",
+        "no_show",
+      ]);
+      return (data ?? []).filter((row: any) => !closed.has(String(row.status)));
+    },
+  });
+
+  const selectedAppointment = useMemo(
+    () => (customerAppointments as any[]).find((row) => row.id === appointment) ?? null,
+    [appointment, customerAppointments],
+  );
+  const appointmentServiceIds = useMemo(
+    () =>
+      new Set<string>(
+        (selectedAppointment?.appointment_services ?? []).map((row: any) => row.service_id),
+      ),
+    [selectedAppointment],
+  );
 
   const creditBalance = useMemo(() => {
     const map = new Map<string, number>();
@@ -549,7 +590,11 @@ function SaleDialog({
           cost: Number(p.avg_cost || p.cost_price),
         })),
       ...services
-        .filter((s) => normalizeSearch(s.name).includes(t))
+        .filter(
+          (s) =>
+            normalizeSearch(s.name).includes(t) &&
+            (!appointment || appointmentServiceIds.has(s.id)),
+        )
         .slice(0, 12)
         .map((s) => ({
           kind: "service" as const,
@@ -572,7 +617,7 @@ function SaleDialog({
           cost: 0,
         })),
     ];
-  }, [q, sellable, services, packages]);
+  }, [q, sellable, services, packages, appointment, appointmentServiceIds]);
 
   const add = (r: {
     kind: "product" | "service" | "package";
@@ -627,6 +672,11 @@ function SaleDialog({
       return used;
     });
   }, [items, creditBalance]);
+  const hasServiceOutsideAppointment =
+    !!appointment &&
+    items.some(
+      (item) => item.kind === "service" && !appointmentServiceIds.has(item.service_id ?? ""),
+    );
   const subtotal = items.reduce(
     (sum, item) => sum + Math.max(0, Math.round(item.quantity * item.unit_price_cents)),
     0,
@@ -689,6 +739,7 @@ function SaleDialog({
                 onClick={() => {
                   setCustomer("");
                   setCustomerSearch("");
+                  setAppointment("");
                 }}
               >
                 <X className="h-4 w-4" />
@@ -711,6 +762,7 @@ function SaleDialog({
                   onClick={() => {
                     setCustomer(entry.id);
                     setCustomerSearch("");
+                    setAppointment("");
                   }}
                 >
                   <span className="truncate text-sm">{entry.name}</span>
@@ -725,6 +777,43 @@ function SaleDialog({
             <p className="mt-2 text-xs text-muted-foreground">Nenhum contato encontrado.</p>
           )}
         </div>
+
+        {customer && (
+          <div>
+            <Label>Agendamento relacionado</Label>
+            <Select
+              value={appointment || "none"}
+              onValueChange={(value) => setAppointment(value === "none" ? "" : value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Venda avulsa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Venda avulsa, sem agendamento</SelectItem>
+                {(customerAppointments as any[]).map((row) => (
+                  <SelectItem key={row.id} value={row.id}>
+                    {new Date(row.starts_at).toLocaleString("pt-BR", {
+                      timeZone: "America/Sao_Paulo",
+                      day: "2-digit",
+                      month: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    {" · "}
+                    {(row.appointment_services ?? [])
+                      .map((service: any) => service.services?.name)
+                      .filter(Boolean)
+                      .join(", ") || "Atendimento"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Ao vincular, o crédito será reservado uma única vez e não será descontado novamente
+              quando o atendimento for concluído.
+            </p>
+          </div>
+        )}
 
         <div>
           <Label>Adicionar item</Label>
@@ -855,6 +944,12 @@ function SaleDialog({
           </div>
         )}
 
+        {hasServiceOutsideAppointment && (
+          <p className="text-xs text-rose-600">
+            Remova os serviços que não pertencem ao agendamento selecionado.
+          </p>
+        )}
+
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Desconto (R$)</Label>
@@ -982,6 +1077,7 @@ function SaleDialog({
             !items.length ||
             items.some((item) => item.quantity <= 0) ||
             (items.some((item) => item.kind === "package") && !customer) ||
+            hasServiceOutsideAppointment ||
             paid !== total
           }
           onClick={() =>
@@ -992,6 +1088,7 @@ function SaleDialog({
               discount_cents: toCents(discount),
               surcharge_cents: toCents(surcharge),
               notes,
+              appointment_id: appointment || null,
             })
           }
         >

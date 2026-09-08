@@ -37,6 +37,7 @@ const required = [
   "20260908010000_secure_professional_portal.sql",
   "20260908020000_atomic_sales_packages_credits.sql",
   "20260908030000_atomic_simple_costing.sql",
+  "20260908040000_consistency_followup.sql",
 ];
 for (const file of required)
   if (!files.includes(file)) errors.push(`${file}: migration obrigatória ausente`);
@@ -90,6 +91,23 @@ if (!/save_costing_configuration/i.test(costingSql))
   errors.push("custeio: salvamento atômico da configuração ausente");
 if (!/Somente administradores podem alterar o custeio/i.test(costingSql))
   errors.push("custeio: alteração não está limitada ao administrador");
+
+const consistencySql = readFileSync(
+  resolve(dir, "20260908040000_consistency_followup.sql"),
+  "utf8",
+);
+if (!/plan_session_usage_active_appt_service_uidx/i.test(consistencySql))
+  errors.push("vendas: proteção contra consumo duplicado por agendamento ausente");
+if (!/FOR UPDATE OF cps/i.test(consistencySql) || !/ON CONFLICT DO NOTHING/i.test(consistencySql))
+  errors.push("vendas: consumo do pacote não é concorrente e idempotente");
+for (const category of ["Venda mista", "Planos e pacotes", "Serviços", "Produtos"]) {
+  if (!consistencySql.includes(category))
+    errors.push(`financeiro: categoria automática ausente (${category})`);
+}
+if (!/sync_company_user_access/i.test(consistencySql))
+  errors.push("equipe: sincronização atômica do acesso profissional ausente");
+if (!/remove_company_user_access/i.test(consistencySql))
+  errors.push("equipe: remoção atômica do acesso profissional ausente");
 
 if (errors.length) {
   console.error(errors.join("\n"));
